@@ -2431,7 +2431,7 @@
             const selectedIsleId = $('#select-isle').val(); 
             const isCreditSale = $('#is-credit-sale').is(':checked');
             const isVueltoAdicional = $('#is-vuelto-adicional').is(':checked');
-            const vehiclePlate = $('#vehicle_plate').val();
+            let vehiclePlate = $('#vehicle_plate').val();
             const adicional = $('#adicional').val();
             console.log('adicional', adicional);
             if ($('#tbl-order-items tr').length === 0) {
