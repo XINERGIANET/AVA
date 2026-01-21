@@ -1,0 +1,4 @@
+composer install
+
+--para generar migraciones (igual ya no se debería mover bd y regenerarlas, sino solo mover y darle php artisan migrate)
+php artisan generate:migrations --path=database/migrations
