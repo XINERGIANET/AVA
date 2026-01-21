@@ -383,7 +383,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="{{ route('flowmeter.create') }}">
+                                <a class="nav-link" href="{{ route('flowmeters.create') }}">
                                     <i class="bi bi-safe-fill"></i>
                                     <span class="item-name">Contómetro</span>
                                 </a>

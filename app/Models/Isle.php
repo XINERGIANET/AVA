@@ -32,4 +32,8 @@ class Isle extends Model
     {
         return $this->belongsTo(Location::class, 'location_id');
     }
+    public function sides()
+    {
+        return $this->hasMany(Pump::class, 'isle_id');
+    }
 }

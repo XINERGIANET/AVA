@@ -28,14 +28,18 @@ class FlowMeterController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    // Asegúrate de importar el modelo Location arriba
+    public function create(Request $request)
     {
-        $islas = Isle::with(['lados' => function($query) {
-            $query->orderBy('surtidor_id') // Ordenar por surtidor
-                ->with('surtidor', 'producto'); 
-        }])->get();
-        
-        return view('flowmeter.create', compact('islas'));
+        $locations = Location::all();
+        $currentLocationId = $request->input('location_id', auth()->user()->location_id);
+
+        $islas = Isle::where('location_id', $currentLocationId)
+            ->with(['sides' => function($query) {
+                $query->orderBy('side', 'asc')->with('product'); 
+            }])->get();
+
+        return view('flowmeter.create', compact('islas', 'locations', 'currentLocationId'));
     }
 
     /**
