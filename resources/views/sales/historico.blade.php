@@ -167,7 +167,7 @@
                                                     <span class="badge bg-secondary">N/A</span>
                                                 @endif
                                             </td>
-                                            <td>{{ $sale->client->business_name ?? 'varios' }}</td>
+                                            <td>{{ $sale->client_name ?? 'Varios' }}</td>
                                             <td>{{ $sale->vehicle_plate ?? 'N/A' }}</td>
                                             <td>{{ $sale->date->format('d/m/Y') }}</td>
                                             <td>

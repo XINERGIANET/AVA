@@ -391,7 +391,7 @@ class SaleController extends Controller
     {
         $validationRules = [
             'client_id' => 'nullable|exists:clients,id',
-            'client' => 'nullable|string|max:255',
+            'client_name' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:20',
             'order_detail_id' => 'nullable|exists:order_details,id',
             'vehicle_plate' => 'nullable|string|max:20',
@@ -456,7 +456,7 @@ class SaleController extends Controller
                 'location_id' => $sede,
                 'isle_id' => $request->isle_id, 
                 'client_id' => $request->client_id,
-                'client' => $request->client,
+                'client_name' => $request->client_name,
                 'phone' => $request->phone,
                 'type_sale' => $request->type_sale ?? 0,
                 'total' => $total,
@@ -551,8 +551,8 @@ class SaleController extends Controller
             }
             $clientName = $request->client_name ?? $request->client ?? null;
             if (!$clientName && $request->client_id) {
-                $c = Client::find($request->client_id);
-                if ($c) $clientName = $c->business_name ?: $c->contact_name;
+                $client = Client::find($request->client_id);
+                if ($client) $clientName = $client->business_name ?: $client->contact_name;
             }
 
             if (($request->type_sale ?? 0) == 0) { 
@@ -561,7 +561,7 @@ class SaleController extends Controller
                         'sale_id' => $sale->id,
                         'user_id' => Auth::id(),
                         'client_id' => $request->client_id,
-                        'client_name' => $clientName,
+                        'client_name' => $clientName ?? null,
                         'amount' => $paymentData['amount'],
                         'payment_method_id' => $paymentData['payment_method_id'],
                         'voucher_type' => $paymentData['voucher_type'] ?? null,
