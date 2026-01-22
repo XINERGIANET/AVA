@@ -1,23 +1,22 @@
 @extends('template.index')
 
 @section('header')
-    <h1>Modulo de Contómetros</h1>
-    <p>Modulo de gestión de contómetros</p>
+    <h1>Registro de Contómetros</h1>
+    <p>Ingreso de lecturas por turno</p>
 @endsection
 
 @section('content')
-<div class="container-fluid py-4">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="text-primary"><i class="fas fa-tachometer-alt"></i> Registro de Contómetros</h2>
-            </div>
-            
-            <div class="card card-body shadow-sm mb-4 bg-light">
-                <div class="row g-3">
-                    {{-- 1. FILTRO LOCATION (Recarga la página) --}}
-                    <div class="col-md-4">
-                        <label class="form-label fw-bold">Sede / Ubicación:</label>
+<div class="container-fluid content-inner mt-n5 py-0">
+    
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="mb-4">
+                {{-- SECCIÓN DE FILTROS --}}
+                <div class="row align-items-end"> 
+                    
+                    {{-- 1. FILTRO SEDE --}}
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label fw-bold text-primary">1. Sede</label>
                         <form method="GET" action="{{ route('flowmeters.create') }}" id="form-location-filter">
                             <select name="location_id" class="form-select border-primary" onchange="document.getElementById('form-location-filter').submit()">
                                 @foreach($locations as $location)
@@ -29,253 +28,217 @@
                         </form>
                     </div>
 
-                    {{-- 2. FILTRO ISLA (JavaScript) --}}
-                    <div class="col-md-4">
-                        <label class="form-label fw-bold">Filtrar por Isla:</label>
+                    {{-- 2. FILTRO ISLA --}}
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label fw-bold">2. Isla</label>
                         <select id="filter_isle" class="form-select">
                             <option value="all">Todas las Islas</option>
                             @foreach($islas as $isla)
-                                <option value="{{ $isla->id }}">{{ $isla->nombre }}</option>
+                                <option value="{{ $isla->id }}">{{ $isla->name ?? $isla->nombre }}</option> 
                             @endforeach
                         </select>
                     </div>
 
-                    {{-- 3. FILTRO LADO (JavaScript) --}}
-                    <div class="col-md-4">
-                        <label class="form-label fw-bold">Filtrar por Lado:</label>
-                        <select id="filter_side" class="form-select">
+                    {{-- 3. FILTRO LADO --}}
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label fw-bold">3. Lado</label>
+                        <select id="filter_side_number" class="form-select">
                             <option value="all">Todos los Lados</option>
-                            @foreach($islas as $isla)
-                                <optgroup label="{{ $isla->nombre }}">
-                                    @foreach($isla->sides as $side)
-                                        {{-- Usamos un value compuesto: islaID-ladoID --}}
-                                        <option value="{{ $isla->id }}-{{ $side->id }}">
-                                            Lado {{ $side->side }} ({{ $side->product->name ?? 'N/A' }})
-                                        </option>
-                                    @endforeach
-                                </optgroup>
+                            @php
+                                $uniqueSides = $islas->pluck('sides')->flatten()->pluck('side')->unique()->sort();
+                            @endphp
+                            @foreach($uniqueSides as $sideNum)
+                                <option value="{{ $sideNum }}">Lado {{ $sideNum }}</option>
                             @endforeach
                         </select>
                     </div>
-                </div>
-            </div>
 
-            {{-- FORMULARIO PRINCIPAL --}}
-            <form action="{{ route('flowmeters.store') }}" method="POST" id="form-contometros">
-                @csrf
-                
-                @foreach($islas as $isla)
-                {{-- AGREGAMOS data-isle-id PARA IDENTIFICAR LA TARJETA --}}
-                <div class="card mb-4 border-0 shadow-sm card-isla" data-isle-id="{{ $isla->id }}">
-                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Isla: {{ $isla->nombre ?? 'Sin Nombre' }}</h5>
-                        <small>ID: {{ $isla->id }}</small>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-hover mb-0 align-middle">
-                                <thead class="table-light text-center">
-                                    <tr>
-                                        <th style="width: 15%">Surtidor</th>
-                                        <th style="width: 10%">Lado</th>
-                                        <th style="width: 15%">Producto</th>
-                                        <th style="width: 15%" class="bg-light-yellow">Lectura Anterior</th>
-                                        <th style="width: 15%" class="bg-light-blue">Lectura Actual</th>
-                                        <th style="width: 15%">Venta (Galones)</th>
-                                        <th style="width: 15%">Venta Sistema</th>
-                                        <th style="width: 15%">Diferencia</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse($isla->sides as $lado)
-                                    {{-- AGREGAMOS data-side-id PARA IDENTIFICAR LA FILA --}}
-                                    <tr class="row-lado" data-side-id="{{ $lado->id }}">
-                                        {{-- DATOS INFORMATIVOS --}}
-                                        <td class="fw-bold text-center">
-                                            {{ $lado->name ?? 'Surtidor '.$lado->id }}
-                                        </td>
-                                        <td class="text-center">
-                                            <span class="badge bg-secondary">Lado {{ $lado->side }}</span>
-                                            <input type="hidden" name="lecturas[{{ $lado->id }}][lado_id]" value="{{ $lado->id }}">
-                                        </td>
-                                        <td class="text-center">
-                                            <span class="badge text-bg-light border">
-                                                {{ $lado->product->name ?? 'Generico' }}
-                                            </span>
-                                        </td>
-                                        
-                                        {{-- 1. LECTURA ANTERIOR --}}
-                                        <td>
-                                            <input type="number" step="0.001" 
-                                                class="form-control text-end bg-light input-inicial" 
-                                                name="lecturas[{{ $lado->id }}][inicial]" 
-                                                value="{{ $lado->ultima_lectura ?? 0 }}" 
-                                                readonly tabindex="-1">
-                                        </td>
-
-                                        {{-- 2. LECTURA ACTUAL --}}
-                                        <td>
-                                            <input type="number" step="0.001" 
-                                                class="form-control text-end fw-bold border-primary input-final" 
-                                                name="lecturas[{{ $lado->id }}][final]" 
-                                                placeholder="0.000"
-                                                required>
-                                        </td>
-
-                                        {{-- 3. VENTA CALCULADA --}}
-                                        <td>
-                                            <input type="number" step="0.001" 
-                                                class="form-control text-end bg-white input-venta" 
-                                                readonly tabindex="-1">
-                                        </td>
-
-                                        {{-- 4. VENTA SISTEMA --}}
-                                        <td>
-                                            <input type="number" step="0.001" 
-                                                class="form-control text-end bg-light input-teorico" 
-                                                name="lecturas[{{ $lado->id }}][teorico]" 
-                                                value="{{ $lado->venta_sistema_actual ?? 0 }}" 
-                                                readonly tabindex="-1">
-                                        </td>
-
-                                        {{-- 5. DIFERENCIA --}}
-                                        <td>
-                                            <input type="number" step="0.001" 
-                                                class="form-control text-end fw-bold input-diferencia" 
-                                                readonly tabindex="-1">
-                                        </td>
-                                    </tr>
-                                    @empty
-                                    <tr>
-                                        <td colspan="8" class="text-center text-muted py-3">
-                                            No hay lados configurados para esta isla.
-                                        </td>
-                                    </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                @endforeach
-
-                {{-- BOTONES --}}
-                <div class="card shadow-sm mb-5 sticky-bottom">
-                    <div class="card-body d-flex justify-content-end gap-2">
-                        <button type="button" class="btn btn-secondary" onclick="window.history.back()">Cancelar</button>
-                        <button type="submit" class="btn btn-success px-5">
-                            <i class="fas fa-save me-2"></i> Guardar Lecturas
+                    {{-- 4. BOTÓN FILTRAR --}}
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label d-none d-md-block">&nbsp;</label>
+                        <button type="button" id="btn_filter" class="btn btn-dark w-100">
+                            <i class="fas fa-filter me-2"></i> Aplicar Filtros
                         </button>
                     </div>
                 </div>
+            </div>
+            
+            <hr class="my-4">
+
+            <form action="{{ route('flowmeters.store') }}" method="POST" id="form-contometros">
+                @csrf
+                {{-- IMPORTANTE: Enviamos la sede actual --}}
+                <input type="hidden" name="location_id" value="{{ $currentLocationId }}">
+
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped align-middle">
+                        <thead class="bg-light text-center">
+                            <tr>
+                                <th style="width: 12%">Surtidor</th>
+                                <th style="width: 8%">Lado</th>
+                                <th style="width: 12%">Producto</th>
+                                <th style="width: 15%">Valor Inicial</th>
+                                <th style="width: 15%">Valor Final</th>
+                                <th style="width: 10%">Valor Teórico</th>
+                                <th style="width: 13%">Diferencia</th>
+                            </tr>
+                        </thead>
+                        
+                        @foreach($islas as $isla)
+                        <tbody class="tbody-isla" data-isle-id="{{ $isla->id }}">
+                            @foreach($isla->sides as $lado)
+                            <tr class="row-lado" data-side-number="{{ $lado->side }}">
+                                
+                                <td class="text-center fw-bold">
+                                    {{ $lado->name ?? 'Surtidor '.$lado->id }}
+                                </td>
+
+                                <td class="text-center">
+                                    <span class="badge bg-primary">Lado {{ $lado->side }}</span>
+                                    <input type="hidden" name="lecturas[{{ $lado->id }}][lado_id]" value="{{ $lado->id }}">
+                                </td>
+
+                                <td class="text-center">
+                                    <span class="text-muted small fw-bold">{{ $lado->product->name ?? 'Generico' }}</span>
+                                </td>
+
+                                <td>
+                                    <input type="number" step="0.001" 
+                                        class="form-control form-control-sm text-end bg-light input-inicial" 
+                                        name="lecturas[{{ $lado->id }}][inicial]" 
+                                        value="{{ $lado->ultima_lectura ?? 0 }}" 
+                                        readonly tabindex="-1">
+                                </td>
+
+                                <td>
+                                    <input type="number" step="0.001" 
+                                        class="form-control form-control-sm text-end fw-bold border-primary input-final" 
+                                        name="lecturas[{{ $lado->id }}][final]" 
+                                        placeholder="">
+                                </td>
+
+                                {{-- Input Oculto para enviar Galones calculados (Opcional, se calcula en backend también) --}}
+                                <input type="hidden" class="input-venta" name="lecturas[{{ $lado->id }}][galones]"> 
+
+                                <td>
+                                    <input type="number" step="0.001" 
+                                        class="form-control form-control-sm text-end bg-light input-teorico" 
+                                        name="lecturas[{{ $lado->id }}][teorico]" 
+                                        value="{{ $lado->venta_sistema_actual ?? 0 }}" 
+                                        readonly tabindex="-1">
+                                </td>
+
+                                <td>
+                                    <input type="number" step="0.001" 
+                                        class="form-control form-control-sm text-end fw-bold input-diferencia" 
+                                        readonly tabindex="-1">
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                        @endforeach
+                    </table>
+                </div>
+
+                <div class="row mt-4 mb-3">
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url()->previous() }}" class="btn btn-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-success px-4">Guardar Registros</button>
+                    </div>
+                </div>
             </form>
+
         </div>
     </div>
 </div>
 
-{{-- JAVASCRIPT: Lógica de Filtros y Cálculos --}}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     
     // --- LÓGICA DE FILTROS ---
+    const btnFilter = document.getElementById('btn_filter');
     const filterIsle = document.getElementById('filter_isle');
-    const filterSide = document.getElementById('filter_side');
-    const allCards = document.querySelectorAll('.card-isla');
-    const allRows = document.querySelectorAll('.row-lado');
+    const filterSide = document.getElementById('filter_side_number');
+    
+    btnFilter.addEventListener('click', function() {
+        const selectedIsleId = filterIsle.value;
+        const selectedSideNum = filterSide.value;
+        const allTbodies = document.querySelectorAll('.tbody-isla');
 
-    // 1. Evento Filtro Isla
-    filterIsle.addEventListener('change', function() {
-        const selectedIsleId = this.value;
-        
-        // Resetear filtro de lados al cambiar isla
-        filterSide.value = 'all'; 
-        allRows.forEach(row => row.style.display = ''); // Mostrar todas las filas internas
+        allTbodies.forEach(tbody => {
+            const isleId = tbody.dataset.isleId;
+            let visibleRowsCount = 0;
+            const isIsleMatch = (selectedIsleId === 'all' || selectedIsleId === isleId);
 
-        if (selectedIsleId === 'all') {
-            allCards.forEach(card => card.style.display = '');
-        } else {
-            allCards.forEach(card => {
-                if (card.dataset.isleId === selectedIsleId) {
-                    card.style.display = '';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-        }
-    });
-
-    // 2. Evento Filtro Lado
-    filterSide.addEventListener('change', function() {
-        const value = this.value; // Formato: "islaID-ladoID" o "all"
-        
-        if (value === 'all') {
-            // Mostrar todo segun lo que diga el filtro de isla
-            filterIsle.dispatchEvent(new Event('change'));
-            return;
-        }
-
-        const [isleId, sideId] = value.split('-');
-
-        // Primero ocultamos todas las islas excepto la que contiene el lado
-        allCards.forEach(card => {
-            if (card.dataset.isleId === isleId) {
-                card.style.display = '';
-                // Dentro de esta isla, filtramos las filas (tr)
-                const rowsInCard = card.querySelectorAll('.row-lado');
-                rowsInCard.forEach(row => {
-                    if (row.dataset.sideId === sideId) {
+            if (isIsleMatch) {
+                const rows = tbody.querySelectorAll('.row-lado');
+                rows.forEach(row => {
+                    const rowSideNum = row.dataset.sideNumber;
+                    const isSideMatch = (selectedSideNum === 'all' || selectedSideNum === rowSideNum);
+                    if (isSideMatch) {
                         row.style.display = '';
+                        visibleRowsCount++;
                     } else {
                         row.style.display = 'none';
                     }
                 });
+                tbody.style.display = (visibleRowsCount > 0) ? '' : 'none';
             } else {
-                card.style.display = 'none';
+                tbody.style.display = 'none';
             }
         });
-        
-        // Sincronizar el select de isla visualmente
-        filterIsle.value = isleId; 
     });
 
-
-    // --- LÓGICA DE CÁLCULOS (Ya la tenías, la mantengo igual) ---
+    // --- CÁLCULOS ---
     const inputsFinal = document.querySelectorAll('.input-final');
+
     inputsFinal.forEach(input => {
         input.addEventListener('input', calcularFila);
+        // Calcular al inicio
         if(input.value) calcularFila.call(input); 
     });
 
     function calcularFila() {
-        // ... (Tu código de cálculo de antes va aquí exacto igual) ...
-        const row = this.closest('tr');
+        const row = this.closest('tr');        
         const inicial = parseFloat(row.querySelector('.input-inicial').value) || 0;
-        const final = parseFloat(this.value) || 0;
+        const finalVal = this.value; // Valor crudo para saber si está vacío
+        const final = parseFloat(finalVal) || 0;
         const teorico = parseFloat(row.querySelector('.input-teorico').value) || 0;
         
-        let ventaFisica = 0;
-        if(final > 0) ventaFisica = final - inicial;
+        // Si está vacío, limpiamos y salimos (no mostramos error ni ceros)
+        if (finalVal === '') {
+            row.querySelector('.input-venta').value = '';
+            row.querySelector('.input-diferencia').value = '';
+            row.querySelector('.input-diferencia').className = 'form-control form-control-sm text-end fw-bold input-diferencia';
+            return;
+        }
+
+        let ventaFisica = inicial - final;
         
-        row.querySelector('.input-venta').value = ventaFisica.toFixed(3);
-        const diferencia = ventaFisica - teorico;
+        const inputVenta = row.querySelector('.input-venta');
+        if (inputVenta) {
+            inputVenta.value = ventaFisica.toFixed(3);
+        }
+
+        // 2. Diferencia: Física - Teórica
+        // (2 - 1 = +1 Sobra) o (2 - 6 = -4 Falta)
+        const diferencia = ventaFisica - teorico;        
         const inputDiferencia = row.querySelector('.input-diferencia');
+        
         inputDiferencia.value = diferencia.toFixed(3);
 
-        inputDiferencia.className = 'form-control text-end fw-bold input-diferencia'; 
-        if (Math.abs(diferencia) <= 0.1) {
-            inputDiferencia.classList.add('bg-success', 'text-white'); 
-        } else if (diferencia < -0.1) {
-            inputDiferencia.classList.add('bg-danger', 'text-white'); 
+        // 3. Semáforo
+        inputDiferencia.className = 'form-control form-control-sm text-end fw-bold input-diferencia'; 
+        
+        if (Math.abs(diferencia) <= 0.02) {
+            inputDiferencia.classList.add('bg-success', 'text-white'); // Verde (Ok)
+        } else if (diferencia < -0.02) {
+            inputDiferencia.classList.add('bg-danger', 'text-white'); // Rojo (Falta / Negativo)
         } else {
-            inputDiferencia.classList.add('bg-warning', 'text-dark'); 
+            inputDiferencia.classList.add('bg-warning', 'text-dark'); // Amarillo (Sobra / Positivo)
         }
     }
 });
 </script>
-
-<style>
-    .bg-light-yellow { background-color: #fffae6 !important; }
-    .bg-light-blue { background-color: #e6f7ff !important; }
-    .sticky-bottom { position: sticky; bottom: 0; z-index: 100; }
-</style>
 @endsection
