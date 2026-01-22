@@ -128,7 +128,7 @@
             <div class="row g-3">
                 <!-- Columna IZQUIERDA: Productos, Contratos y Creditos -->
                 <div class="col-md-5">
-                    <div
+                    {{-- <div
                         class="bg-white p-3 rounded shadow-sm mb-3 
                     @if (auth()->user()->role->nombre === 'worker') d-none @endif
                     ">
@@ -140,7 +140,7 @@
                                 <i class="bi bi-speedometer2"> Cerrar Contómetro</i>
                             </button>
                         </div>
-                    </div>
+                    </div> --}}
 
                     <!-- Card 1: Tipo de venta -->
                     <div class="bg-white p-3 rounded shadow-sm mb-3">

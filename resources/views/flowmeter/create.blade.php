@@ -53,13 +53,6 @@
                         </select>
                     </div>
 
-                    {{-- 4. BOTÓN FILTRAR --}}
-                    <div class="col-md-3 mb-3">
-                        <label class="form-label d-none d-md-block">&nbsp;</label>
-                        <button type="button" id="btn_filter" class="btn btn-dark w-100">
-                            <i class="fas fa-filter me-2"></i> Aplicar Filtros
-                        </button>
-                    </div>
                 </div>
             </div>
             
@@ -157,11 +150,10 @@
 document.addEventListener('DOMContentLoaded', function() {
     
     // --- LÓGICA DE FILTROS ---
-    const btnFilter = document.getElementById('btn_filter');
     const filterIsle = document.getElementById('filter_isle');
     const filterSide = document.getElementById('filter_side_number');
-    
-    btnFilter.addEventListener('click', function() {
+
+    function aplicarFiltros() {
         const selectedIsleId = filterIsle.value;
         const selectedSideNum = filterSide.value;
         const allTbodies = document.querySelectorAll('.tbody-isla');
@@ -188,7 +180,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 tbody.style.display = 'none';
             }
         });
-    });
+    }
+
+    filterIsle.addEventListener('change', aplicarFiltros);
+    filterSide.addEventListener('change', aplicarFiltros);
 
     // --- CÁLCULOS ---
     const inputsFinal = document.querySelectorAll('.input-final');

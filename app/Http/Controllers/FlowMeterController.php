@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Location;
 use App\Models\Transaction;
+use App\Models\Pump;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use App\Models\Isle;
@@ -140,6 +142,88 @@ class FlowMeterController extends Controller
             DB::rollBack();
             return back()->with('error', 'Error al guardar: ' . $e->getMessage());
         }
+    }
+
+    public function historico(Request $request)
+    {
+        $start_date = $request->start_date;
+        $end_date = $request->end_date;
+        $location_id = $request->location_id;
+        $isle_id = $request->isle_id;
+        $pump_id = $request->pump_id;
+        $user_id = $request->user_id;
+
+        $currentUser = auth()->user();
+        $isMaster = $currentUser->role->nombre === 'master';
+
+        $locations = Location::where('deleted', 0)
+            ->when(!$isMaster && $currentUser->location_id, function ($q) use ($currentUser) {
+                $q->where('id', $currentUser->location_id);
+            })
+            ->get();
+
+        $effectiveLocationId = $location_id ?: (!$isMaster ? $currentUser->location_id : null);
+
+        $isles = Isle::where('deleted', 0)
+            ->when($effectiveLocationId, function ($q) use ($effectiveLocationId) {
+                $q->where('location_id', $effectiveLocationId);
+            })
+            ->get();
+
+        $pumpsQuery = Pump::with(['product', 'isle'])
+            ->where('deleted', 0);
+
+        if ($isle_id) {
+            $pumpsQuery->where('isle_id', $isle_id);
+        } elseif ($effectiveLocationId) {
+            $pumpsQuery->whereIn('isle_id', $isles->pluck('id'));
+        }
+
+        $pumps = $pumpsQuery->get();
+
+        if ($isMaster) {
+            $users = User::where('deleted', false)->get();
+        } else {
+            $users = User::whereHas('role', function ($q) {
+                $q->where('nombre', 'worker');
+            })
+                ->where('location_id', $currentUser->location_id)
+                ->where('deleted', false)
+                ->get();
+        }
+
+        $query = Measurement::with(['user', 'location', 'pump.isle', 'pump.product'])
+            ->when($start_date, function ($q) use ($start_date) {
+                $q->whereDate('date', '>=', $start_date);
+            })
+            ->when($end_date, function ($q) use ($end_date) {
+                $q->whereDate('date', '<=', $end_date);
+            })
+            ->when($location_id, function ($q) use ($location_id) {
+                $q->where('location_id', $location_id);
+            })
+            ->when($user_id, function ($q) use ($user_id) {
+                $q->where('user_id', $user_id);
+            })
+            ->when($isle_id, function ($q) use ($isle_id) {
+                $q->whereHas('pump', function ($p) use ($isle_id) {
+                    $p->where('isle_id', $isle_id);
+                });
+            })
+            ->when($pump_id, function ($q) use ($pump_id) {
+                $q->where('pump_id', $pump_id);
+            })
+            ->where('deleted', 0)
+            ->orderBy('date', 'desc')
+            ->orderByDesc('id');
+
+        if (!$isMaster && $currentUser->location_id) {
+            $query->where('location_id', $currentUser->location_id);
+        }
+
+        $measurements = $query->paginate(20)->withQueryString();
+
+        return view('flowmeter.historico', compact('measurements', 'locations', 'isles', 'pumps', 'users', 'isMaster'));
     }
 
     /**

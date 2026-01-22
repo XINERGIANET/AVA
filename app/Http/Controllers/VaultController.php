@@ -79,7 +79,7 @@ class VaultController extends Controller
             ->whereIn('type', ['eb', 'sb'])
             ->when($user->role->nombre != 'master' || $user->location_id, function ($query) use ($user) {
                 return $query->where('location_id', $user->location_id);
-            })
+            })->orderByDesc('id')
             ->paginate(10);
 
         $location = Location::find($user->location_id);

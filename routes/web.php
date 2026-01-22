@@ -117,6 +117,7 @@ Route::group(['middleware' => 'auth'], function () {
     });
 
     //CRUD CONTOMETRO
+    Route::get('flowmeters/historico', [FlowMeterController::class, 'historico'])->name('flowmeters.historico');
     Route::resource('flowmeters', FlowMeterController::class);
 
     //CRUD PRODUCTO
