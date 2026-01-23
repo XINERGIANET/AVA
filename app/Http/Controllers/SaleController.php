@@ -533,7 +533,12 @@ class SaleController extends Controller
                     if ($tank) {
                         $current = floatval($tank->stored_quantity ?? 0);
                         $restar = floatval($productData['quantity']);
-                        if ($current < $restar) throw new \Exception('Stock insuficiente en tanque ' . $tank->name);
+                        if ($current < $restar)
+                        return response()->json([
+                            'status' => false,
+                            'message' => 'Stock insuficiente en tanque ' . $tank->name
+                        ], 400);
+                        
                         $tank->stored_quantity = max(0, $current - $restar);
                         $tank->save();
                     }
