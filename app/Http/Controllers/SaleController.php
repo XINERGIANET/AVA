@@ -20,6 +20,7 @@ use App\Models\Isle;
 use App\Models\Pump;
 use App\Models\Measurement;
 use App\Models\Truck;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -171,7 +172,8 @@ class SaleController extends Controller
                 $q->where('vehicle_plate', '!=', '0-0') 
                 ->orWhereNull('vehicle_plate');       
             })
-            ->orderBy('date', 'desc');
+            ->orderBy('date', 'desc')
+            ->orderBy('id', 'desc');
 
         // Aplicar filtro de sede para usuarios no master
         if (auth()->user()->role->nombre != 'master' && auth()->user()->location_id) {
@@ -204,6 +206,33 @@ class SaleController extends Controller
         $sales = $query->paginate(20);
 
         return view('sales.historico', compact('sales', 'paymentMethods', 'locations', 'users', 'total', 'isMaster'));
+    }
+
+    public function updateDate(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'date' => 'required|date',
+        ]);
+
+        $sale = Sale::findOrFail($id);
+        $user = auth()->user();
+
+        if ($user->role->nombre !== 'master' && $user->location_id && $sale->location_id != $user->location_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permisos para editar esta venta.',
+            ], 403);
+        }
+
+        $timePart = $sale->date ? $sale->date->format('H:i:s') : '00:00:00';
+        $sale->date = Carbon::parse($validated['date'] . ' ' . $timePart);
+        $sale->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Fecha actualizada correctamente.',
+            'date' => $sale->date->format('Y-m-d'),
+        ]);
     }
 
     /**
