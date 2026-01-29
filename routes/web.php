@@ -134,6 +134,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::put('sales/{sale}/date', [SaleController::class, 'updateDate'])->name('sales.updateDate');
     Route::resource('sales', SaleController::class);
     Route::get('/sunat/consultar', [SaleController::class, 'consultarSunat']);
+    Route::get('/cash-closes/check-status/{isle_id}', [CashCloseController::class, 'checkStatus'])->name('cash_closes.check_status');
     
     //CRUD RECALIBRACION
     Route::get('recalibration/index', [RecalibrationController::class, 'index'])->name('recalibration.index');
@@ -147,6 +148,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/sales/measurements/theoretical', [SaleController::class, 'getTheoreticalValue'])->name('sales.measurements.theoretical');
     Route::post('/sales/measurements/save', [SaleController::class, 'saveMeasurement'])->name('sales.measurements.save');
     
+    Route::get('expenses/historico', [ExpenseController::class, 'index'])->name('expenses.historico');
     Route::resource('expenses', ExpenseController::class);
 
     //CRUD CLIENTE

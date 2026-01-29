@@ -81,11 +81,9 @@ class CashCloseController extends Controller
         $date = now()->format('Y-m-d');
         $user = Auth::user();
 
-        // Iniciamos transacción
         DB::beginTransaction();
 
         try {
-            // 1. Buscar y bloquear la isla
             $isle = Isle::lockForUpdate()->find($isleId);
 
             if (!$isle) {
@@ -96,17 +94,17 @@ class CashCloseController extends Controller
                 ], 404);
             }
 
-            // 2. Verificar duplicados
-            $existingCashClose = CashClose::where('isle_id', $isleId)
-                ->whereDate('date', $date)
-                ->first();
+            $lastCashClose = CashClose::where('isle_id', $isleId)
+                                ->latest('id')
+                                ->first();
 
-            if ($existingCashClose) {
-                DB::rollBack();
+            if ($lastCashClose && is_null($lastCashClose->real_cash_amount)) {
+                DB::rollBack(); 
+                
                 return response()->json([
                     'status' => false,
-                    'message' => 'Ya existe una apertura de caja para esta isla hoy'
-                ], 400);
+                    'message' => 'No se puede abrir caja: Ya existe una sesión abierta en esta isla. Debe realizar el cierre primero.'
+                ], 422); 
             }
 
             $cash_close = CashClose::create([
@@ -115,6 +113,7 @@ class CashCloseController extends Controller
                 'user_id' => $user->id,
                 'location_id' => $isle->location_id,
                 'isle_id' => $isleId,
+                // 'real_cash_amount' => NULL (Por defecto en BD)
             ]);
 
             $isle->cash_amount = $initialCashAmount;
@@ -124,7 +123,7 @@ class CashCloseController extends Controller
 
             return response()->json([
                 'status' => true,
-                'message' => 'Apertura de Caja registrada. Saldo de isla reiniciado al monto inicial.',
+                'message' => 'Apertura de Caja registrada correctamente.',
                 'orders' => $cash_close,
                 'new_balance' => $isle->cash_amount
             ]);
@@ -151,50 +150,57 @@ class CashCloseController extends Controller
     public function show($id)
     {
         try {
-            $date = now()->format('Y-m-d');
-            
-            // 1. Validar Isla y obtener saldo real
+            // 1. Validar Isla
             $isle = Isle::find($id);
             if (!$isle) {
                 return response()->json(['status' => false, 'message' => 'Isla no encontrada'], 404);
             }
 
-            // 2. Buscar Apertura del Día
             $cashClose = CashClose::where('isle_id', $id)
-                ->whereDate('date', $date)
+                ->whereNull('real_cash_amount') 
+                ->latest('id') 
                 ->first();
 
-            // 3. CALCULAR EGRESOS DEL DÍA (Tabla transactions)
-            // Esto se mantiene igual porque las transacciones se guardan directas con isle_id
+            if (!$cashClose) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'No hay caja abierta para esta isla. Debe abrir caja primero.',
+                    'calculated_cash_amount' => 0,
+                    'initial_cash_amount' => 0,
+                    'cash_sales' => 0,
+                    'cash_expenses' => 0,
+                    'total_adicional' => 0,
+                    'cash_close' => null
+                ]); 
+            }
+
+            $startDate = $cashClose->created_at;
             $expensesToday = Transaction::where('isle_id', $id)
-                ->whereDate('date', $date)
+                ->where('created_at', '>=', $startDate) 
                 ->where('type', 'scc') 
                 ->sum('amount');
 
-            // 4. CALCULAR VENTAS EN EFECTIVO (Logica Relacional Surtidor -> Isla)
-            // Buscamos pagos (Efectivo ID=1) donde la Venta asociada tenga detalles 
-            // que pertenezcan a un Surtidor de esta Isla.
-            $cashSalesToday = Payment::where('payment_method_id', 1) // ID 1 = Efectivo
+            // 4. CALCULAR VENTAS EN EFECTIVO DESDE LA APERTURA
+            $cashSalesToday = Payment::where('payment_method_id', 1) // Efectivo
                 ->where('deleted', 0)
-                ->whereHas('sale', function ($querySale) use ($id, $date) {
-                    $querySale->whereDate('date', $date)
-                              ->where('deleted', 0)
-                              // Aquí está la magia: Filtramos si la venta tiene detalles en esta isla
-                              ->whereHas('saleDetails.pump', function ($queryPump) use ($id) {
-                                  $queryPump->where('isle_id', $id);
-                              });
+                ->whereHas('sale', function ($querySale) use ($id, $startDate) {
+                    $querySale->where('created_at', '>=', $startDate) // <--- CAMBIO CLAVE: Ya no es whereDate
+                            ->where('deleted', 0)
+                            ->whereHas('saleDetails.pump', function ($queryPump) use ($id) {
+                                $queryPump->where('isle_id', $id);
+                            });
                 })
                 ->sum('amount');
 
-            // 5. CALCULAR ADICIONAL/VUELTO (Logica Relacional Surtidor -> Isla)
-            $adicionalToday = Sale::whereDate('date', $date)
+            // 5. CALCULAR ADICIONAL/VUELTO DESDE LA APERTURA
+            $adicionalToday = Sale::where('created_at', '>=', $startDate) // <--- CAMBIO CLAVE
                 ->where('deleted', 0)
                 ->whereHas('saleDetails.pump', function ($queryPump) use ($id) {
                     $queryPump->where('isle_id', $id);
                 })
                 ->sum('adicional');
 
-            // 6. Saldo Final Real (Directo de la Billetera de la Isla en BD)
+            // 6. Saldo Actual de la Isla (Billetera acumulada en BD)
             $saldoActualIsla = floatval($isle->cash_amount);
 
             return response()->json([
@@ -202,14 +208,14 @@ class CashCloseController extends Controller
                 
                 // Datos Totales
                 'calculated_cash_amount' => $saldoActualIsla, 
-                'initial_cash_amount'    => $cashClose ? floatval($cashClose->initial_cash_amount) : 0,
+                'initial_cash_amount'    => floatval($cashClose->initial_cash_amount),
                 
-                // Datos Desglosados "Informativos"
+                // Datos Desglosados de ESTA sesión
                 'cash_sales'      => floatval($cashSalesToday),
                 'cash_expenses'   => floatval($expensesToday),
                 'total_adicional' => floatval($adicionalToday),
                 
-                // Objeto de cierre (para el ID)
+                // Objeto de cierre
                 'cash_close' => $cashClose, 
             ]);
 
@@ -269,5 +275,19 @@ class CashCloseController extends Controller
     public function destroy($id)
     {
         //
+    }
+
+    public function checkStatus($isleId)
+    {
+        $lastClose = CashClose::where('isle_id', $isleId)
+                        ->latest('id') // Equivalente a ORDER BY id DESC
+                        ->first();
+
+        $isOpen = $lastClose && is_null($lastClose->real_cash_amount);
+
+        return response()->json([
+            'status' => true,
+            'isOpen' => $isOpen
+        ]);
     }
 }

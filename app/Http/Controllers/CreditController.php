@@ -50,9 +50,10 @@ class CreditController extends Controller
             ->when($location_id, function($q) use ($location_id) {
                 $q->where(function($query) use ($location_id) {
                     $query->whereHas('sale.location', fn($q) => $q->where('id', $location_id))
-                          ->orWhereHas('agreement.location', fn($q) => $q->where('id', $location_id));
+                        ->orWhereHas('agreement.location', fn($q) => $q->where('id', $location_id));
                 });
             })
+            ->orderBy('date', 'desc')
             ->paginate(10);
         
         // Calcular total de créditos pagados con los mismos filtros
@@ -67,7 +68,8 @@ class CreditController extends Controller
                     $query->whereHas('sale.location', fn($q) => $q->where('id', $location_id))
                           ->orWhereHas('agreement.location', fn($q) => $q->where('id', $location_id));
                 });
-            });
+            })
+            ->orderBy('date', 'desc');
         
         $totalCreditosPagados = $totalQuery->sum('amount');
         

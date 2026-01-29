@@ -325,7 +325,7 @@
                 <tr data-product-id="${productId}" data-unit="${selectedProduct.measurement_unit}">
                     <td>${selectedProduct.name}</td>
                     <td>${selectedProduct.measurement_unit}</td>
-                    <td><input type="number" class="form-control text-end unit_price" disabled></td>
+                    <td><input type="number" class="form-control text-end unit_price" step="0.01" min="0" disabled></td>
                     <td><input type="number" class="form-control text-end quantity" min="0.001" step="0.001"></td>
                     <td><input type="number" class="form-control text-end subtotal" min="0.001" step="0.001"></td>
                     <td><input type="number" class="form-control text-end waste" step="0.001" value="0"></td>
@@ -705,7 +705,7 @@
                     <tr data-product-id="${productId}" data-tank-id="${tankId}" data-unit="${selectedProduct.measurement_unit}">
                         <td>${selectedProduct.name}</td>
                         <td>${selectedProduct.measurement_unit}</td>
-                        <td><input type="number" class="form-control text-end unit_price"></td>
+                        <td><input type="number" class="form-control text-end unit_price" step="0.01" min="0"></td>
                         <td>
                             <div class="d-flex align-items-center">
                                 <span class="me-2">${tankName}:</span>

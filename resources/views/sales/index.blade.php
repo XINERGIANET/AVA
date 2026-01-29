@@ -1057,21 +1057,60 @@
         }
 
         function loadProductsBySede() {
+            // 1. Determinar isla seleccionada
+            const selectedIsle = assignedIsle || $('#select-isle').val();
+            
+            // Referencias al botón y mensajes
+            const btnProcesar = $('#btn-open-voucher');
+            const containerBtn = btnProcesar.parent(); // El div contenedor
+            
+            // Limpiar alertas de bloqueo previas
+            containerBtn.find('.alert-caja-cerrada').remove();
+
+            if (!selectedIsle) {
+                $('#tbl-products').html('<div class="alert alert-info text-center">Seleccione una isla...</div>');
+                btnProcesar.prop('disabled', true); // Bloquear si no hay isla
+                return;
+            }
+
+            // --- NUEVA LÓGICA: VERIFICAR ESTADO DE CAJA (AJAX) ---
+            // Bloqueamos temporalmente mientras consulta
+            btnProcesar.prop('disabled', true); 
+
+            // Construimos la URL dinámicamente. 
+            // Nota: Asegúrate de tener una variable base o usar replace si estás en un archivo .js externo
+            let urlCheck = "{{ route('cash_closes.check_status', ':id') }}";
+            urlCheck = urlCheck.replace(':id', selectedIsle);
+
+            $.ajax({
+                url: urlCheck,
+                method: 'GET',
+                success: function(response) {
+                    if (response.isOpen) {
+                        // CAJA ABIERTA: Habilitar botón
+                        btnProcesar.prop('disabled', false);
+                    } else {
+                        // CAJA CERRADA: Mantener bloqueado y mostrar mensaje
+                        btnProcesar.prop('disabled', true);
+                        containerBtn.append(`
+                            <small class="text-danger d-block mt-1 alert-caja-cerrada">
+                                <i class="bi bi-lock-fill"></i> Caja cerrada o no iniciada para esta isla.
+                            </small>
+                        `);
+                    }
+                },
+                error: function() {
+                    console.error('Error verificando estado de caja');
+                }
+            });
+            // -----------------------------------------------------
+
+            // TU CÓDIGO ORIGINAL PARA CARGAR PRODUCTOS CONTINÚA AQUÍ...
             $.ajax({
                 url: "{{ route('products.prices') }}",
                 method: 'GET',
                 success: function(data) {
-                    $('#tbl-products').empty(); // Limpiar productos previos
-
-                    // Determinar isla seleccionada: si el usuario tiene una asignada, usarla, sino el select
-                    const selectedIsle = assignedIsle || $('#select-isle').val();
-
-                    if (!selectedIsle) {
-                        $('#tbl-products').append(
-                            '<div class="alert alert-info text-center">Seleccione una isla para ver los surtidores y productos</div>'
-                        );
-                        return;
-                    }
+                    $('#tbl-products').empty(); 
 
                     // Filtrar bombas para la isla seleccionada
                     const pumpsForIsle = Array.isArray(pumps) ? pumps.filter(p => parseInt(p.isle_id) ===
@@ -1084,25 +1123,18 @@
                         return;
                     }
 
+                    // ... (RESTO DE TU CÓDIGO DE CREACIÓN DE TARJETAS, COLORES, ETC. SE MANTIENE IGUAL) ...
+                    
                     // Crear estructura de dos columnas: LADO 1 y LADO 2
                     const mainContainer = $('<div class="row">');
-
-                    // Columna LADO 1
-                    const lado1Container = $(
-                        '<div class="col-md-6"><h5 class="text-center mb-3 text-primary">LADO 1</h5><div class="pumps-column"></div></div>'
-                    );
-
-                    // Columna LADO 2
-                    const lado2Container = $(
-                        '<div class="col-md-6"><h5 class="text-center mb-3 text-primary">LADO 2</h5><div class="pumps-column"></div></div>'
-                    );
-
-                    // Dividir surtidores por el campo 'side' de la BD
+                    // ... (Copiar todo tu código de renderizado visual aquí) ...
+                    const lado1Container = $('<div class="col-md-6"><h5 class="text-center mb-3 text-primary">LADO 1</h5><div class="pumps-column"></div></div>');
+                    const lado2Container = $('<div class="col-md-6"><h5 class="text-center mb-3 text-primary">LADO 2</h5><div class="pumps-column"></div></div>');
+                    
                     const lado1Pumps = pumpsForIsle.filter(p => parseInt(p.side) === 1);
                     const lado2Pumps = pumpsForIsle.filter(p => parseInt(p.side) === 2);
 
-                    // Función para obtener color según el nombre del producto
-                    function getProductColor(productName) {
+                                        function getProductColor(productName) {
                         const name = productName.toLowerCase();
                         if (name.includes('diesel') || name.includes('diésel') || name.includes('db5')) {
                             return {
@@ -1276,35 +1308,17 @@
                         return pumpCard;
                     }
 
-                    // Agregar surtidores al LADO 1
-                    lado1Pumps.forEach(function(pump) {
-                        const tarjeta = crearTarjetaSurtidor(pump, data);
-                        lado1Container.find('.pumps-column').append(tarjeta);
-                    });
+                    lado1Pumps.forEach(p => lado1Container.find('.pumps-column').append(crearTarjetaSurtidor(p, data)));
+                    lado2Pumps.forEach(p => lado2Container.find('.pumps-column').append(crearTarjetaSurtidor(p, data)));
 
-                    // Agregar surtidores al LADO 2
-                    lado2Pumps.forEach(function(pump) {
-                        const tarjeta = crearTarjetaSurtidor(pump, data);
-                        lado2Container.find('.pumps-column').append(tarjeta);
-                    });
-
-                    // Agregar ambas columnas al contenedor principal
-                    mainContainer.append(lado1Container);
-                    mainContainer.append(lado2Container);
-
-                    // Agregar al DOM
+                    mainContainer.append(lado1Container).append(lado2Container);
                     $('#tbl-products').append(mainContainer);
 
-                    ToastMessage.fire({
-                        text: `${pumpsForIsle.length} surtidores cargados`
-                    });
+                    ToastMessage.fire({ text: `${pumpsForIsle.length} surtidores cargados` });
                 },
                 error: function(err) {
-                    console.error('Error al cargar productos (por tanques):', err);
-                    ToastError.fire({
-                        title: 'Error',
-                        text: 'No se pudieron cargar los productos'
-                    });
+                    console.error('Error al cargar productos:', err);
+                    ToastError.fire({ title: 'Error', text: 'No se pudieron cargar los productos' });
                 }
             });
         }
