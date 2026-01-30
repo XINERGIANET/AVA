@@ -154,7 +154,7 @@
                                 </thead>
                                 <tbody>
                                     @foreach ($sales as $sale)
-                                        <tr>
+                                        <tr data-sale-id="{{ $sale->id }}" data-sale-date="{{ $sale->date->format('Y-m-d') }}">
                                             <td>{{ $sale->payments->pluck('number')->first() ?? 'N/A' }}</td>
                                             <td>
                                                 @if($sale->type_sale === 0)
@@ -206,6 +206,13 @@
                                                     data-bs-venta_id="{{ $sale->id }}"
                                                     style="--bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
                                                     <i class="bi bi-list-task"></i>
+                                                </button>
+                                                <button type="button"
+                                                    class="btn btn-info btn-sm btn-edit-date"
+                                                    data-sale-id="{{ $sale->id }}"
+                                                    title="Editar fecha"
+                                                    style="--bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
+                                                    <i class="bi bi-calendar-event"></i>
                                                 </button>
                                                 <button type="button"
                                                     class="btn btn-danger btn-sm btn-icon btn-anular-venta"
@@ -291,6 +298,32 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Eliminar Venta</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para editar fecha de venta -->
+    <div class="modal fade" id="editSaleDateModal" tabindex="-1" aria-labelledby="editSaleDateModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editSaleDateModalLabel">Editar fecha de venta</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>N° Comprobante:</strong> <span id="edit-sale-number"></span></p>
+                    <input type="hidden" id="edit-sale-id" value="">
+                    <div class="mb-3">
+                        <label for="edit-sale-date" class="form-label">Fecha</label>
+                        <input type="date" class="form-control" id="edit-sale-date">
+                    </div>
+                    <div class="alert alert-danger d-none" id="edit-sale-date-error"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="confirmEditDateBtn">Guardar</button>
                 </div>
             </div>
         </div>
@@ -563,5 +596,89 @@
                 }
             });
         });
+
+        // Abrir modal para editar fecha
+        $(document).on('click', '.btn-edit-date', function() {
+            const saleId = $(this).data('sale-id');
+            const row = $(this).closest('tr');
+            const saleNumber = row.find('td:first-child').text().trim();
+            const saleDate = row.data('sale-date');
+
+            $('#edit-sale-id').val(saleId);
+            $('#edit-sale-number').text(saleNumber);
+            $('#edit-sale-date').val(saleDate);
+            $('#edit-sale-date-error').addClass('d-none').text('');
+            $('#editSaleDateModal').modal('show');
+        });
+
+        // Guardar fecha editada
+        $('#confirmEditDateBtn').on('click', function() {
+            const saleId = $('#edit-sale-id').val();
+            const newDate = $('#edit-sale-date').val();
+
+            $('#edit-sale-date-error').addClass('d-none').text('');
+            $(this).prop('disabled', true).text('Guardando...');
+
+            $.ajax({
+                url: '{{ route('sales.updateDate', ['sale' => ':id']) }}'.replace(':id', saleId),
+                method: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    _method: 'PUT',
+                    date: newDate
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const row = $('tr[data-sale-id="' + saleId + '"]');
+                        row.data('sale-date', response.date);
+                        row.find('td:nth-child(5)').text(formatDateToDisplay(response.date));
+                        reorderSalesTable();
+                        $('#editSaleDateModal').modal('hide');
+                    } else {
+                        $('#edit-sale-date-error').removeClass('d-none').text(response.message || 'Error al actualizar la fecha.');
+                    }
+                },
+                error: function(xhr) {
+                    let errorMsg = 'Error al actualizar la fecha.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    } else if (xhr.responseJSON && xhr.responseJSON.errors && xhr.responseJSON.errors.date) {
+                        errorMsg = xhr.responseJSON.errors.date[0];
+                    }
+                    $('#edit-sale-date-error').removeClass('d-none').text(errorMsg);
+                },
+                complete: function() {
+                    $('#confirmEditDateBtn').prop('disabled', false).text('Guardar');
+                }
+            });
+        });
+
+        function formatDateToDisplay(dateString) {
+            if (!dateString) return '';
+            const parts = dateString.split('-');
+            if (parts.length !== 3) return dateString;
+            return parts[2] + '/' + parts[1] + '/' + parts[0];
+        }
+
+        function reorderSalesTable() {
+            const tbody = $('.table tbody');
+            const rows = tbody.find('tr').get();
+
+            rows.sort(function(a, b) {
+                const dateA = $(a).data('sale-date') || '';
+                const dateB = $(b).data('sale-date') || '';
+
+                if (dateA < dateB) return 1;
+                if (dateA > dateB) return -1;
+
+                const idA = parseInt($(a).data('sale-id'), 10) || 0;
+                const idB = parseInt($(b).data('sale-id'), 10) || 0;
+                return idB - idA;
+            });
+
+            $.each(rows, function(_, row) {
+                tbody.append(row);
+            });
+        }
     </script>
 @endsection

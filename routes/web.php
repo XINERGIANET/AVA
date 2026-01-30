@@ -131,6 +131,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('sales/excel', [SaleController::class, 'excel'])->name('sales.excel');
     Route::get('sales/pdf_report', [SaleController::class, 'pdf'])->name('sales.pdf');
     Route::post('sales/credit-payment', [SaleController::class, 'registerCreditPayment'])->name('sales.creditPayment');
+    Route::put('sales/{sale}/date', [SaleController::class, 'updateDate'])->name('sales.updateDate');
     Route::resource('sales', SaleController::class);
     Route::get('/sunat/consultar', [SaleController::class, 'consultarSunat']);
     Route::get('/cash-closes/check-status/{isle_id}', [CashCloseController::class, 'checkStatus'])->name('cash_closes.check_status');
