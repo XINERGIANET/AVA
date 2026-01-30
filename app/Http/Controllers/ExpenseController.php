@@ -141,13 +141,6 @@ class ExpenseController extends Controller
             $user = Auth::user();
 
             $isle = Isle::lockForUpdate()->find($request->input('isle_id'));
-            if ($isle->cash_amount < $request->input('amount')) {
-                DB::rollBack();
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Saldo insuficiente en la isla. Disponible: ' . number_format($isle->cash_amount, 2)
-                ], 400);
-            }
 
             $expense = Transaction::create([
                 'user_id' => $user->id,
@@ -269,14 +262,6 @@ class ExpenseController extends Controller
             } else {
                 // Misma isla, solo ajustar la diferencia
                 if ($amountDifference > 0) {
-                    // Aumentó el monto, verificar saldo suficiente
-                    if ($newIsle->cash_amount < $amountDifference) {
-                        DB::rollBack();
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'Saldo insuficiente en la isla. Disponible: ' . number_format($newIsle->cash_amount, 2)
-                        ], 400);
-                    }
                     $newIsle->decrement('cash_amount', $amountDifference);
                 } elseif ($amountDifference < 0) {
                     // Disminuyó el monto, devolver la diferencia
