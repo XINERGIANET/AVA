@@ -3419,16 +3419,6 @@
                 return;
             }
 
-            if (amount <= 0) {
-                ToastError.fire({ title: 'Error', text: 'El monto debe ser mayor a cero.' });
-                return;
-            }
-
-            if (amount > amount_vault) {
-                ToastError.fire({ title: 'Error', text: 'El monto debe ser menor o igual al saldo en caja.' });
-                return;
-            }
-
             $btn.prop('disabled', true);
 
             $.ajax({
@@ -3472,7 +3462,7 @@
                 });
                 return;
             }
-            
+
             // Deshabilitar el botón para evitar dobles envíos
             $btn.prop('disabled', true);
 
