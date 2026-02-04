@@ -3465,56 +3465,6 @@
 
             // Deshabilitar el botón para evitar dobles envíos
             $btn.prop('disabled', true);
-
-            $.ajax({
-                url: "{{ route('vault.from_cash_close') }}",
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                },
-                data: {
-                    amount: amount
-                },
-                success: function(resp) {
-                    if (resp && resp.success) {
-                        ToastMessage.fire({
-                            text: resp.message || 'Monto enviado a la bóveda correctamente.'
-                        });
-
-                        // Actualizar UI localmente restando el monto enviado
-                        const newCash = (amount_vault - amount);
-                        $('#cash_amount_acumulated').val(parseFloat(newCash || 0).toFixed(2));
-                        // También actualizar el campo del modal de egreso si está presente
-                        if ($('#cash_amount').length) {
-                            const currentCash = parseFloat($('#cash_amount').val()) || 0;
-                            $('#cash_amount').val(parseFloat(Math.max(0, currentCash - amount)).toFixed(
-                                2));
-                        }
-
-                        $('#vault_amount').val('');
-                        $('#vaultModal').modal('hide');
-                    } else {
-                        ToastError.fire({
-                            title: 'Error',
-                            text: resp.message || 'No se pudo enviar el monto a la bóveda.'
-                        });
-                    }
-                },
-                error: function(xhr) {
-                    let msg = 'Error al procesar la solicitud';
-                    if (xhr && xhr.responseJSON && xhr.responseJSON.message) {
-                        msg = xhr.responseJSON.message;
-                    }
-                    ToastError.fire({
-                        title: 'Error',
-                        text: msg
-                    });
-                    console.error('Error vault from cash close:', xhr);
-                },
-                complete: function() {
-                    $btn.prop('disabled', false);
-                }
-            });
         });
 
         // ==================== FUNCIONALIDAD DE MEDICIONES DE CONTÓMETRO ====================

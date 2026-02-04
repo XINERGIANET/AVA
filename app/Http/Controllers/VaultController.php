@@ -200,28 +200,11 @@ class VaultController extends Controller
                 ], 404);
             }
 
-            // 3. Verificar que la ISLA tenga suficiente efectivo (cash_amount)
             $currentCash = floatval($isle->cash_amount ?? 0);
-
-            if ($currentCash < $amount) {
-                DB::rollBack();
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Saldo insuficiente en la isla. Disponible: ' . number_format($currentCash, 2)
-                ], 400);
-            }
-
-            // 4. RESTAR el dinero de la ISLA (cash_amount)
             $isle->decrement('cash_amount', $amount);
-
-            // Obtenemos la ubicación padre para la bóveda central
             $location = Location::find($isle->location_id);
 
-            // Lógica de roles (Trabajador vs Admin)
             if (auth()->user()->role->nombre === 'worker') {
-                
-                // El trabajador solo crea la solicitud (pendiente)
-                // El dinero sale de la isla pero queda "en tránsito" hasta que se apruebe
                 $expense = Transaction::create([
                     'user_id' => $user->id,
                     'location_id' => $location->id,
