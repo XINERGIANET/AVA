@@ -3472,15 +3472,7 @@
                 });
                 return;
             }
-
-            if (amount > amount_vault) {
-                ToastError.fire({
-                    title: 'Error',
-                    text: 'El monto debe ser menor o igual al monto acumulado en caja.'
-                });
-                return;
-            }
-
+            
             // Deshabilitar el botón para evitar dobles envíos
             $btn.prop('disabled', true);
 
