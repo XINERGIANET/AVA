@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Carbon;
 
 class VaultController extends Controller
 {
@@ -72,22 +73,53 @@ class VaultController extends Controller
         return view('vault.index', compact('transactions', 'locations', 'users', 'isles'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $user = auth()->user();
-        $transactions = Transaction::with(['user', 'location'])
+        $transactionsBaseQuery = Transaction::with(['user', 'location', 'isle'])
             ->whereIn('type', ['eb', 'sb'])
             ->when($user->role->nombre != 'master' || $user->location_id, function ($query) use ($user) {
                 return $query->where('location_id', $user->location_id);
-            })->orderByDesc('id')
+            });
+
+        $latestTransactionDate = (clone $transactionsBaseQuery)
+            ->orderByDesc('date')
+            ->value('date');
+
+        $defaultDate = $latestTransactionDate
+            ? Carbon::parse($latestTransactionDate)->toDateString()
+            : now()->toDateString();
+
+        $fromDate = $request->input('from_date') ?: $defaultDate;
+        $toDate = $request->input('to_date') ?: $defaultDate;
+
+        $transactions = (clone $transactionsBaseQuery)
+            ->whereDate('date', '>=', $fromDate)
+            ->whereDate('date', '<=', $toDate)
+            ->orderByDesc('date')
+            ->orderByDesc('id')
             ->paginate(10);
+        $transactions->appends($request->query());
+
+        $filteredTotal = (clone $transactionsBaseQuery)
+            ->whereDate('date', '>=', $fromDate)
+            ->whereDate('date', '<=', $toDate)
+            ->sum('amount');
 
         $location = Location::find($user->location_id);
         $isles = Isle::where('location_id', $user->location_id)
                     ->where('deleted', 0) 
                     ->get();
 
-        return view('vault.create', compact('transactions', 'location', 'isles'));
+        return view('vault.create', compact(
+            'transactions',
+            'location',
+            'isles',
+            'filteredTotal',
+            'fromDate',
+            'toDate',
+            'defaultDate'
+        ));
     }
 
     public function store(Request $request)
@@ -373,9 +405,109 @@ class VaultController extends Controller
 
     public function destroy($id)
     {
-        // $tanque = Tank::findOrFail($id);
-        // $tanque->update(['deleted' => 1]); // Cambiar estado a 1 (eliminado)
-        // return redirect()->route('tanques.index')
-        //     ->with('success', 'Tanque eliminado correctamente.');
+        $user = Auth::user();
+        $transaction = Transaction::findOrFail($id);
+        $role = $user->role->nombre ?? '';
+
+        if ($role !== 'admin' && $role !== 'master') {
+            return redirect()->back()->with('error', 'Solo administradores o master pueden eliminar movimientos.');
+        }
+
+        if ($role !== 'master' && $user->location_id != $transaction->location_id) {
+            return redirect()->back()->with('error', 'No puedes eliminar movimientos de otra sede.');
+        }
+
+        if (!in_array($transaction->type, ['eb', 'sb'], true)) {
+            return redirect()->back()->with('error', 'Solo se pueden eliminar movimientos de bóveda.');
+        }
+
+        DB::beginTransaction();
+        try {
+            $transaction = Transaction::lockForUpdate()->findOrFail($id);
+            $isle = $transaction->isle_id ? Isle::lockForUpdate()->find($transaction->isle_id) : null;
+            $location = $transaction->location_id ? Location::lockForUpdate()->find($transaction->location_id) : null;
+
+            $amount = floatval($transaction->amount);
+            $isApproved = intval($transaction->status) === 1;
+            $description = (string) ($transaction->description ?? '');
+            $isCashCloseTransfer = $transaction->type === 'eb'
+                && stripos($description, 'Transferencia a bóveda desde cierre de caja') !== false;
+
+            if ($transaction->type === 'sb') {
+                if (!$isle) {
+                    DB::rollBack();
+                    return redirect()->back()->with('error', 'No se encontró la isla asociada al movimiento.');
+                }
+
+                $currentCash = floatval($isle->cash_amount ?? 0);
+                if ($currentCash < $amount) {
+                    DB::rollBack();
+                    return redirect()->back()->with(
+                        'error',
+                        'No se puede eliminar: la caja chica de la isla no tiene saldo suficiente para revertir la salida.'
+                    );
+                }
+
+                $isle->increment('vault', $amount);
+                $isle->decrement('cash_amount', $amount);
+            }
+
+            if ($transaction->type === 'eb') {
+                if ($isCashCloseTransfer) {
+                    if (!$isle) {
+                        DB::rollBack();
+                        return redirect()->back()->with('error', 'No se encontró la isla asociada al movimiento.');
+                    }
+
+                    if ($isApproved) {
+                        if (!$location) {
+                            DB::rollBack();
+                            return redirect()->back()->with('error', 'No se encontró la sede asociada al movimiento.');
+                        }
+
+                        $currentLocationVault = floatval($location->vault ?? 0);
+                        if ($currentLocationVault < $amount) {
+                            DB::rollBack();
+                            return redirect()->back()->with(
+                                'error',
+                                'No se puede eliminar: la bóveda de la sede no tiene saldo suficiente para revertir la transferencia.'
+                            );
+                        }
+
+                        $location->decrement('vault', $amount);
+                    }
+
+                    $isle->increment('cash_amount', $amount);
+                } else {
+                    if ($isApproved) {
+                        if (!$isle) {
+                            DB::rollBack();
+                            return redirect()->back()->with('error', 'No se encontró la isla asociada al movimiento.');
+                        }
+
+                        $currentIsleVault = floatval($isle->vault ?? 0);
+                        if ($currentIsleVault < $amount) {
+                            DB::rollBack();
+                            return redirect()->back()->with(
+                                'error',
+                                'No se puede eliminar: la bóveda de la isla no tiene saldo suficiente para revertir la entrada.'
+                            );
+                        }
+
+                        $isle->decrement('vault', $amount);
+                    }
+                }
+            }
+
+            $transaction->delete();
+
+            DB::commit();
+
+            return redirect()->route('vault.create')
+                ->with('success', 'Movimiento eliminado y saldos revertidos correctamente.');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Error al eliminar el movimiento: ' . $e->getMessage());
+        }
     }
 }

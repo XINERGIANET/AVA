@@ -100,13 +100,33 @@
                     </div>
                 </form>
 
-                <div class="mb-3">
-                    <strong>
-                        Bóveda {{ auth()->user()->location->name ?? 'Sede' }} =
-                        S/ {{ number_format(optional(auth()->user()->location)->vault ?? 0, 2) }}
-                    </strong>
-                </div>
+                <form id="vaultFilterForm" class="row g-3 mb-3" method="GET" action="{{ route('vault.create') }}">
+                    <div class="col-md-3">
+                        <label for="from_date" class="form-label">Desde</label>
+                        <input type="date" class="form-control" id="from_date" name="from_date"
+                            value="{{ $fromDate }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="to_date" class="form-label">Hasta</label>
+                        <input type="date" class="form-control" id="to_date" name="to_date"
+                            value="{{ $toDate }}">
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">Filtrar</button>
+                        <a href="{{ route('vault.create') }}" class="btn btn-warning">Limpiar</a>
+                    </div>
+                </form>
 
+                <div class="mb-3 d-flex flex-column">
+                    <strong>
+                        Total filtrado ({{ \Carbon\Carbon::parse($fromDate)->format('d/m/Y') }} -
+                        {{ \Carbon\Carbon::parse($toDate)->format('d/m/Y') }}):
+                        S/ {{ number_format($filteredTotal, 2) }}
+                    </strong>
+                    <small class="text-muted">
+                        Por defecto se muestra la última fecha registrada: {{ \Carbon\Carbon::parse($defaultDate)->format('d/m/Y') }}
+                    </small>
+                </div>
                 <!-- Tabla de Registros -->
                 <div class="table-responsive mt-4">
                     <table class="table table-bordered table-striped">
@@ -145,6 +165,10 @@
                                                 data-bs-target="#approveModal" data-id="{{ $trans->id }}">
                                                 <i class="bi bi-check"></i>
                                             </button>
+                                            <button class="btn btn-sm btn-danger" data-bs-toggle="modal"
+                                                data-bs-target="#deleteModal" data-id="{{ $trans->id }}">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
                                         </td>
                                     @endif
                                 </tr>
@@ -156,6 +180,28 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Eliminar transacción</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Seguro que deseas eliminar esta transacción?</p>
+                    <small class="text-danger">Esta acción revertirá saldos relacionados cuando corresponda.</small>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="btn-delete">Eliminar</button>
+                </div>
+                <form id="deleteForm" method="POST" action="">
+                    @csrf
+                    @method('DELETE')
+                </form>
             </div>
         </div>
     </div>
@@ -187,18 +233,28 @@
     <script type="text/javascript">
         $(document).ready(function() {
             $('#approveModal').on('show.bs.modal', function(event) {
-                const button = $(event.relatedTarget); // Botón que activó el modal
-                const id = button.data('id'); // Obtener el ID de la transacción
-
-                // Actualizar la acción del formulario con el ID correcto
+                const button = $(event.relatedTarget);
+                const id = button.data('id');
                 const actionUrl = "{{ route('vault.approve', ['id' => ':id']) }}".replace(':id', id);
                 $('#approveForm').attr('action', actionUrl);
             });
 
-            // Botón de Aprobar
+            $('#deleteModal').on('show.bs.modal', function(event) {
+                const button = $(event.relatedTarget);
+                const id = button.data('id');
+                const actionUrl = "{{ route('vault.destroy', ['vault' => ':id']) }}".replace(':id', id);
+                $('#deleteForm').attr('action', actionUrl);
+            });
+
             $('#btn-approve').on('click', function() {
                 $('#approveForm').submit();
+            });
+
+            $('#btn-delete').on('click', function() {
+                $('#deleteForm').submit();
             });
         });
     </script>
 @endsection
+
+

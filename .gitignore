@@ -32,7 +32,7 @@ composer.phar
 /build/
 /public/build/
 /public/hot
-
+/public
 # Vite / Mix
 /vite.config.*.timestamp-*
 /mix-manifest.json
