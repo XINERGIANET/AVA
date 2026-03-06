@@ -500,7 +500,7 @@ class SaleController extends Controller
             if ($documento && !$cliente_id) {
                 $clienteEncontrado = Client::where('document', $documento)->first();
                 if (!$clienteEncontrado) {
-                    $cliente_nombre = $request->client ?? null;
+                    $cliente_nombre = $request->client_name ?? $request->client ?? null;
                     $cliente_razon_social = (strlen($documento) === 11) ? $cliente_nombre : null;
                     if (strlen($documento) === 11) $cliente_nombre = null;
 
@@ -629,7 +629,7 @@ class SaleController extends Controller
                     'client_id' => $request->client_id,
                     'client_name' => $clientName,
                     'amount' => $total,
-                    'payment_method_id' => null,
+                    'payment_method_id' => $this->resolveCreditPendingPaymentMethodId(),
                     'voucher_type' => 'Ticket',
                     'number' => $request->credit_number ?? $numeroTicket,
                     'status' => 'pending',
@@ -651,6 +651,36 @@ class SaleController extends Controller
             Log::error('Error Store Sale: ' . $e->getMessage());
             return response()->json(['status' => false, 'error' => 'Error: ' . $e->getMessage()], 500);
         }
+    }
+
+    private function resolveCreditPendingPaymentMethodId(): int
+    {
+        $creditLikeNames = ['credito', 'crédito', 'pendiente', 'pending'];
+
+        $method = PaymentMethod::query()
+            ->where('deleted', 0)
+            ->where(function ($query) use ($creditLikeNames) {
+                foreach ($creditLikeNames as $name) {
+                    $query->orWhereRaw('LOWER(name) = ?', [mb_strtolower($name)]);
+                }
+            })
+            ->orderBy('id')
+            ->first();
+
+        if ($method) {
+            return (int) $method->id;
+        }
+
+        $fallbackMethod = PaymentMethod::query()
+            ->where('deleted', 0)
+            ->orderBy('id')
+            ->first();
+
+        if ($fallbackMethod) {
+            return (int) $fallbackMethod->id;
+        }
+
+        throw new \Exception('No existe ningun metodo de pago activo para registrar la venta a credito.');
     }
 
     private function generarNumeroTicket()
@@ -894,47 +924,63 @@ class SaleController extends Controller
     {
         $doc = $request->query('doc');
 
-        if (!$doc || (strlen($doc) !== 8 && strlen($doc) !== 11)) {
+        if (!$doc || !in_array(strlen($doc), [8, 11], true)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Documento inválido'
+                'message' => 'El documento debe tener 8 digitos para DNI o 11 digitos para RUC.'
             ], 422);
         }
 
-        $urlBase = config('apisunat.url');
-        $personaId = config('apisunat.id');
-        $personaToken = config('apisunat.token.prod');
+        $isDni = strlen($doc) === 8;
+        $apiUrl = $isDni
+            ? config('services.perudevs.dni_url')
+            : config('services.perudevs.ruc_url');
+        $apiToken = config('services.perudevs.token');
+
+        if (!$apiUrl || !$apiToken) {
+            return response()->json([
+                'success' => false,
+                'message' => 'La API de PeruDevs no esta configurada.'
+            ], 500);
+        }
 
         try {
-            if (strlen($doc) === 8) {
-                $url = "$urlBase/personas/$personaId/getDNI?dni=$doc&personaToken=$personaToken";
-            } else {
-                $url = "$urlBase/personas/$personaId/getRUC?ruc=$doc&personaToken=$personaToken";
-            }
+            $response = Http::timeout(20)->get($apiUrl, [
+                'document' => $doc,
+                'key' => $apiToken,
+            ]);
 
-            $response = Http::get($url);
-
-            // ✅ LOG TEMPORAL
-            \Log::info('Consulta a API Sunat/Reniec', [
-                'url' => $url,
+            Log::info('Consulta a API PeruDevs', [
+                'document' => $doc,
                 'status' => $response->status(),
                 'response' => $response->body(),
             ]);
 
-            if ($response->successful()) {
+            if ($response->successful() && $response->json('estado')) {
+                $result = $response->json('resultado', []);
+                $fullName = $isDni
+                    ? trim($result['nombre_completo'] ?? trim(($result['nombres'] ?? '') . ' ' . ($result['apellido_paterno'] ?? '') . ' ' . ($result['apellido_materno'] ?? '')))
+                    : trim($result['razon_social'] ?? '');
+
                 return response()->json([
                     'success' => true,
-                    'data' => $response->json('data')
+                    'data' => [
+                        'document' => $result['id'] ?? $doc,
+                        'name' => $fullName,
+                        'business_name' => $fullName,
+                        'address' => trim($result['direccion'] ?? ''),
+                        'document_type' => $isDni ? 'dni' : 'ruc',
+                        'raw' => $result,
+                    ]
                 ]);
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No se pudo obtener información de SUNAT/RENIEC'
-                ], $response->status());
             }
+
+            return response()->json([
+                'success' => false,
+                'message' => $response->json('mensaje') ?: 'No se encontro informacion para el documento consultado.'
+            ], $response->status() >= 400 ? $response->status() : 404);
         } catch (\Exception $e) {
-            // ✅ LOG ERROR
-            \Log::error('Error al consultar Sunat', [
+            Log::error('Error al consultar documento en PeruDevs', [
                 'error' => $e->getMessage()
             ]);
 
@@ -944,7 +990,6 @@ class SaleController extends Controller
             ], 500);
         }
     }
-
     /**
      * Obtener islas de la sede del usuario autenticado
      */

@@ -327,10 +327,11 @@
                     <div class="mb-3">
                         <label class="form-label">Documento</label>
                         <div class="input-group">
-                            <input type="text" class="form-control" id="document" maxlength="11">
-                            <button type="button" class="btn btn-primary" style="display: none;"
-                                onclick="searchAPI('#document','#client','#address')">
+                            <input type="text" class="form-control" id="document" maxlength="11" placeholder="Ingrese DNI o RUC">
+                            <button type="button" class="btn btn-primary" id="btn-search-ruc"
+                                onclick="searchDocumentApi()">
                                 <i class="bi bi-search"></i>
+                                Buscar
                             </button>
                         </div>
                     </div>
@@ -2304,6 +2305,52 @@
                     Swal.close();
                     ToastError.fire({
                         text: 'Error al consultar SUNAT/RENIEC'
+                    });
+                }
+            });
+        }
+
+        function searchDocumentApi() {
+            const doc = $('#document').val().trim();
+
+            $('#client_name').val('');
+            $('#address').val('');
+            $('#client_id').val('');
+
+            if (!/^\d{8}$|^\d{11}$/.test(doc)) {
+                ToastError.fire({
+                    text: 'El documento debe tener 8 digitos para DNI o 11 digitos para RUC.'
+                });
+                return;
+            }
+
+            Swal.showLoading();
+
+            $.ajax({
+                url: "{{ url('sunat/consultar') }}",
+                method: 'GET',
+                data: {
+                    doc: doc
+                },
+                success: function(response) {
+                    Swal.close();
+
+                    if (response.success) {
+                        const data = response.data;
+
+                        $('#document').val(data.document || doc);
+                        $('#client_name').val(data.name || '');
+                        $('#address').val(data.address || '');
+                    } else {
+                        ToastError.fire({
+                            text: response.message || 'No se encontro informacion para ese documento.'
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    Swal.close();
+                    ToastError.fire({
+                        text: xhr.responseJSON?.message || 'Error al consultar el documento.'
                     });
                 }
             });
