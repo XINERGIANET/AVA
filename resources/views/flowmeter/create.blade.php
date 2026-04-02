@@ -72,7 +72,6 @@
                                 <th style="width: 12%">Producto</th>
                                 <th style="width: 15%">Valor Inicial</th>
                                 <th style="width: 15%">Valor Final</th>
-                                <th style="width: 10%">Valor Teórico</th>
                                 <th style="width: 13%">Diferencia</th>
                             </tr>
                         </thead>
@@ -112,14 +111,6 @@
 
                                 {{-- Input Oculto para enviar Galones calculados (Opcional, se calcula en backend también) --}}
                                 <input type="hidden" class="input-venta" name="lecturas[{{ $lado->id }}][galones]"> 
-
-                                <td>
-                                    <input type="number" step="0.001" 
-                                        class="form-control form-control-sm text-end bg-light input-teorico" 
-                                        name="lecturas[{{ $lado->id }}][teorico]" 
-                                        value="{{ $lado->venta_sistema_actual ?? 0 }}" 
-                                        readonly tabindex="-1">
-                                </td>
 
                                 <td>
                                     <input type="number" step="0.001" 
@@ -199,7 +190,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const inicial = parseFloat(row.querySelector('.input-inicial').value) || 0;
         const finalVal = this.value; // Valor crudo para saber si está vacío
         const final = parseFloat(finalVal) || 0;
-        const teorico = parseFloat(row.querySelector('.input-teorico').value) || 0;
         
         // Si está vacío, limpiamos y salimos (no mostramos error ni ceros)
         if (finalVal === '') {
@@ -216,14 +206,11 @@ document.addEventListener('DOMContentLoaded', function() {
             inputVenta.value = ventaFisica.toFixed(3);
         }
 
-        // 2. Diferencia: Física - Teórica
-        // (2 - 1 = +1 Sobra) o (2 - 6 = -4 Falta)
-        const diferencia = ventaFisica - teorico;        
+        const diferencia = inicial - final;        
         const inputDiferencia = row.querySelector('.input-diferencia');
         
         inputDiferencia.value = diferencia.toFixed(3);
 
-        // 3. Semáforo
         inputDiferencia.className = 'form-control form-control-sm text-end fw-bold input-diferencia'; 
         
         if (Math.abs(diferencia) <= 0.02) {

@@ -125,7 +125,6 @@
                                         <th>Usuario</th>
                                         <th>Inicial</th>
                                         <th>Final</th>
-                                        <th>Teorico</th>
                                         <th>Diferencia</th>
                                     </tr>
                                 </thead>
@@ -147,7 +146,6 @@
                                             <td>{{ $measurement->user->name ?? '-' }}</td>
                                             <td class="text-end">{{ number_format($measurement->amount_initial ?? 0, 3) }}</td>
                                             <td class="text-end">{{ number_format($measurement->amount_final ?? 0, 3) }}</td>
-                                            <td class="text-end">{{ number_format($measurement->amount_theorical ?? 0, 3) }}</td>
                                             <td class="text-end">
                                                 <span class="badge {{ $badgeClass }}">
                                                     {{ number_format($diff, 3) }}

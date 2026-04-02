@@ -64,16 +64,6 @@ class FlowMeterController extends Controller
                 } else {
                     $lado->ultima_lectura = 0;
                 }
-
-                $totalSold = SaleDetail::whereHas('sale', function ($q) use ($currentLocationId) {
-                    $q->where('location_id', $currentLocationId)
-                    ->where('deleted', 0)
-                    ->whereDate('date', now()); 
-                })
-                ->where('pump_id', $lado->id)
-                ->sum('quantity');
-
-                $lado->venta_sistema_actual = $totalSold;
             }
         }
 
@@ -108,9 +98,7 @@ class FlowMeterController extends Controller
 
                     $initial   = floatval($data['inicial'] ?? 0);
                     $final     = floatval($data['final']);
-                    $theorical = floatval($data['teorico'] ?? 0);
-                    $physicalSale = $final - $initial;
-                    $difference = $physicalSale - $theorical;
+                    $difference = $initial - $final;
 
                     Measurement::create([
                         'location_id'       => $locationId,
@@ -118,7 +106,7 @@ class FlowMeterController extends Controller
                         'pump_id'           => $sideId, 
                         'amount_initial'    => $initial,
                         'amount_final'      => $final,
-                        'amount_theorical'  => $theorical,
+                        'amount_theorical'  => 0,
                         'amount_difference' => $difference,
                         'date'              => $date,
                         'deleted'           => 0
