@@ -562,13 +562,10 @@ class SaleController extends Controller
                     if ($tank) {
                         $current = floatval($tank->stored_quantity ?? 0);
                         $restar = floatval($productData['quantity']);
-                        if ($current < $restar)
-                        return response()->json([
-                            'status' => false,
-                            'message' => 'Stock insuficiente en tanque ' . $tank->name
-                        ], 400);
                         
-                        $tank->stored_quantity = max(0, $current - $restar);
+                        // User requested to remove restriction on stock, allowing
+                        // sales even if stock is negative.
+                        $tank->stored_quantity = $current - $restar;
                         $tank->save();
                     }
                 }

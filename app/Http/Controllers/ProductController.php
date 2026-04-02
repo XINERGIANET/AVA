@@ -192,7 +192,6 @@ class ProductController extends Controller
             // Obtener todos los tanques de la ubicación con producto relacionado
             $tanks = Tank::where('location_id', $locationId)
                 ->where('deleted', '0')
-                ->where('stored_quantity', '>', 0)
                 ->whereNotNull('product_id')
                 ->with('product')
                 ->get();
@@ -346,7 +345,6 @@ class ProductController extends Controller
                 $tanks = Tank::where('location_id', $locationId)
                     ->where('product_id', $detail->product_id)
                     ->where('deleted', '0')
-                    ->where('stored_quantity', '>', 0)
                     ->get();
 
                 Log::info('Tanques encontrados para producto ' . $detail->product->name . ': ' . $tanks->count());
@@ -355,8 +353,9 @@ class ProductController extends Controller
                     // El stock real del tanque
                     $tankStock = $tank->stored_quantity ?? 0;
                     
-                    // El stock que se puede vender es el menor entre lo que hay en el tanque y lo que resta en el contrato
-                    $availableStock = min($tankStock, $contractStock);
+                    // El stock que se puede vender ya no está limitado por lo que hay en el tanque,
+                    // sino únicamente por lo que resta en el contrato.
+                    $availableStock = $contractStock;
                     
                     if ($availableStock <= 0) {
                         continue;
