@@ -118,6 +118,11 @@
                                         <button type="button" class="btn btn-success w-100" id="btnExcel">Excel</button>
                                     </div> --}}
                                     <div class=" w-50s me-2">
+                                        <button type="button" class="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#importSaleModal">
+                                            <i class="bi bi-file-earmark-excel"></i> Importar Excel
+                                        </button>
+                                    </div>
+                                    <div class=" w-50s me-2">
                                         <a href="{{ route('sales.historico') }}" class="btn btn-warning w-100"
                                             id="btnLimpiar">Limpiar</a>
                                     </div>
@@ -325,6 +330,41 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-primary" id="confirmEditDateBtn">Guardar</button>
                 </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal para importar Excel -->
+    <div class="modal fade" id="importSaleModal" tabindex="-1" aria-labelledby="importSaleModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="formImportExcel" action="{{ route('sales.importExcel') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="importSaleModalLabel">Importar Ventas de Excel</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Aquí puedes subir el archivo Excel para importar las ventas. Asegúrate de respetar el formato de la plantilla.</p>
+                        
+                        <div class="mb-4 text-center">
+                            <a href="{{ route('sales.template') }}" class="btn btn-outline-success">
+                                <i class="bi bi-download"></i> Descargar Plantilla Modelo
+                            </a>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="excelFile" class="form-label">Archivo Excel (.xlsx, .xls)</label>
+                            <input class="form-control" type="file" id="excelFile" name="file" accept=".xlsx, .xls" required>
+                        </div>
+                        <div class="alert alert-danger d-none" id="import-sale-error"></div>
+                        <div class="alert alert-success d-none" id="import-sale-success"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="btnProcesarImport">Importar</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -680,5 +720,68 @@
                 tbody.append(row);
             });
         }
+
+        $(document).ready(function() {
+            $('#formImportExcel').on('submit', function(e) {
+                e.preventDefault();
+                
+                let formData = new FormData(this);
+                let btn = $('#btnProcesarImport');
+                
+                $('#import-sale-error').addClass('d-none').html('');
+                $('#import-sale-success').addClass('d-none').html('');
+                btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Procesando...');
+                
+                $.ajax({
+                    url: $(this).attr('action'),
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        if(response.status) {
+                            $('#import-sale-success').removeClass('d-none').html(response.message);
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: '¡Éxito!',
+                                    text: response.message,
+                                    confirmButtonText: 'OK'
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                alert(response.message);
+                                location.reload();
+                            }
+                        } else {
+                            $('#import-sale-error').removeClass('d-none').html(response.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        let errorMsg = 'Error al procesar el archivo.';
+                        if (xhr.responseJSON) {
+                            if(xhr.responseJSON.message) errorMsg = xhr.responseJSON.message;
+                            if(xhr.responseJSON.errors) {
+                                if(Array.isArray(xhr.responseJSON.errors)) {
+                                    errorMsg += '<br><ul class="mb-0 text-start"><li>' + xhr.responseJSON.errors.slice(0, 5).join('</li><li>') + '</li></ul>';
+                                    if(xhr.responseJSON.errors.length > 5) errorMsg += '<small>y más errores...</small>';
+                                } else {
+                                    let errs = [];
+                                    for(let key in xhr.responseJSON.errors) {
+                                        errs.push(xhr.responseJSON.errors[key][0]);
+                                    }
+                                    errorMsg += '<br><ul class="mb-0 text-start"><li>' + errs.join('</li><li>') + '</li></ul>';
+                                }
+                            }
+                        }
+                        $('#import-sale-error').removeClass('d-none').html(errorMsg);
+                    },
+                    complete: function() {
+                        btn.prop('disabled', false).text('Importar');
+                    }
+                });
+            });
+        });
     </script>
 @endsection

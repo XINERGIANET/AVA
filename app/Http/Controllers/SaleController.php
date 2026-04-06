@@ -15,6 +15,7 @@ use App\Models\PaymentMethod;
 use App\Models\User;
 use App\Exports\SalesExport;
 use App\Exports\SalesByIsleExport;
+use App\Imports\SalesImport;
 use App\Models\Agreement;
 use App\Models\Isle;
 use App\Models\Pump;
@@ -1185,5 +1186,54 @@ class SaleController extends Controller
             ),
             $filename
         );
+    }
+
+    /**
+     * Importar ventas masivamente desde un archivo Excel (plantilla)
+     */
+    public function importExcel(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls|max:5120',
+        ], [
+            'file.required' => 'Debes seleccionar un archivo Excel.',
+            'file.mimes'    => 'El archivo debe ser de tipo Excel (.xlsx, .xls).',
+            'file.max'      => 'El archivo no puede superar los 5 MB.',
+        ]);
+
+        try {
+            $import = new SalesImport();
+            Excel::import($import, $request->file('file'));
+
+            return response()->json([
+                'status'   => true,
+                'imported' => $import->importedCount,
+                'errors'   => $import->errors,
+                'message'  => "Se importaron {$import->importedCount} venta(s) correctamente."
+                    . (count($import->errors) > 0 ? ' Con errores en algunas filas.' : ''),
+            ]);
+        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+            $failures = collect($e->failures())->map(fn($f) => "Fila {$f->row()}: " . implode(', ', $f->errors()));
+            return response()->json([
+                'status'  => false,
+                'errors'  => $failures->toArray(),
+                'message' => 'Error de validación en el archivo.',
+            ], 422);
+        } catch (\Throwable $e) {
+            Log::error('SalesImport error: ' . $e->getMessage());
+            return response()->json([
+                'status'  => false,
+                'errors'  => [$e->getMessage()],
+                'message' => 'Error al procesar el archivo.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Descargar plantilla de importación
+     */
+    public function downloadTemplate()
+    {
+        return Excel::download(new \App\Exports\VentasTemplateExport(), 'Plantilla_Ventas_Masivas.xlsx');
     }
 }

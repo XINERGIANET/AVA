@@ -130,7 +130,9 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('sales/excelByIsle', [SaleController::class, 'excelByIsle'])->name('sales.excelByIsle');
     Route::get('sales/excel', [SaleController::class, 'excel'])->name('sales.excel');
     Route::get('sales/pdf_report', [SaleController::class, 'pdf'])->name('sales.pdf');
+    Route::get('sales/template', [SaleController::class, 'downloadTemplate'])->name('sales.template');
     Route::post('sales/credit-payment', [SaleController::class, 'registerCreditPayment'])->name('sales.creditPayment');
+    Route::post('sales/import', [SaleController::class, 'importExcel'])->name('sales.importExcel');
     Route::put('sales/{sale}/date', [SaleController::class, 'updateDate'])->name('sales.updateDate');
     Route::resource('sales', SaleController::class);
     Route::get('/sunat/consultar', [SaleController::class, 'consultarSunat']);
