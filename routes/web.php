@@ -77,15 +77,9 @@ Route::group(['middleware' => 'auth'], function () {
     })->name('user.changeLocation');
 
     // Rutas protegidas
-    Route::get('/main', function () {
-        //return view('dashboard.index');
-        return view('reports.alternativo');
-    })->name('dashboard.index');
+    Route::get('/main', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard.index');
 
-    Route::get('/dashboard', function () {
-        //return view('dashboard.index');
-        return view('dashboard.index');
-    })->name('dashboard');
+    Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
     //CRUD CONTRATOS/CREDITOS
 
