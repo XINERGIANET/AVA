@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
-    /* Modern Palette */
+    /* Modern Palette */ 
     :root {
         --primary-blue: #1d4ed8;
         --soft-bg: #f8fafc;
