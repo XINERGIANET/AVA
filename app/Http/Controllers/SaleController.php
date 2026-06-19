@@ -591,23 +591,9 @@ class SaleController extends Controller
                     'deleted' => false
                 ]);
 
-<<<<<<< HEAD
-                if (isset($productData['tank_id']) && $productData['tank_id']) {
-                    $tank = Tank::find($productData['tank_id']);
-                    if ($tank) {
-                        $current = floatval($tank->stored_quantity ?? 0);
-                        $restar = floatval($productData['quantity']);
-                        
-                        // User requested to remove restriction on stock, allowing
-                        // sales even if stock is negative.
-                        $tank->stored_quantity = $current - $restar;
-                        $tank->save();
-                    }
-=======
                 if ($tank) {
                     $tank->stored_quantity = round(max(0, $currentTankStock - $requestedQuantity), 3);
                     $tank->save();
->>>>>>> f49ffdc715283b984385fa080c214a2149f2e79d
                 }
                 
                 if (isset($productData['order_detail_id']) && $productData['order_detail_id']) {
