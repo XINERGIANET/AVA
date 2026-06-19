@@ -229,9 +229,7 @@ Route::group(['middleware' => 'auth'], function () {
         return view('reports.index');
     })->name('reports.index');
 
-    Route::get('/reports_alternative', function () {
-        return view('reports.alternativo');
-    })->name('reports_alternative.index');
+    Route::get('/reports_alternative', [\App\Http\Controllers\DashboardController::class, 'index'])->name('reports_alternative.index');
 
     Route::resource('cash_closes', CashCloseController::class);
 });
