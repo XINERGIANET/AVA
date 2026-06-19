@@ -41,10 +41,13 @@
     <style>
         #notificaciones-body {
             max-height: 300px;
-            /* Ajusta la altura máxima según tus necesidades */
             overflow-y: auto;
-            /* Habilita el scroll vertical */
         }
+
+        .sidebar #sidebar-menu {
+            padding-bottom: 4rem;
+        }
+
         @media (max-width: 1199.98px) {
             .sidebar {
                 display: flex;
@@ -69,7 +72,7 @@
 
             .sidebar .sidebar-list,
             .sidebar #sidebar-menu {
-                padding-bottom: 8rem;
+                padding-bottom: 10rem;
             }
 
             .sidebar #sidebar-menu::after {
@@ -1100,36 +1103,37 @@
     <script>
         (function() {
             const mobileBreakpoint = 1199.98;
+            let prevIsMobile = null;
 
             function normalizeSidebarScroll() {
                 const sidebarBody = document.querySelector('.sidebar .sidebar-body');
-                if (!sidebarBody) {
-                    return;
-                }
+                if (!sidebarBody) return;
 
                 const isMobile = window.innerWidth <= mobileBreakpoint;
+                if (isMobile === prevIsMobile) return;
+                prevIsMobile = isMobile;
 
                 if (isMobile) {
                     if (window.Scrollbar && typeof window.Scrollbar.get === 'function') {
                         const instance = window.Scrollbar.get(sidebarBody);
-                        if (instance) {
-                            instance.destroy();
-                        }
+                        if (instance) instance.destroy();
                     }
-
                     sidebarBody.classList.remove('data-scrollbar');
                     sidebarBody.style.overflowY = 'auto';
                     sidebarBody.style.overflowX = 'hidden';
                     sidebarBody.style.webkitOverflowScrolling = 'touch';
+                } else {
+                    sidebarBody.style.overflowY = '';
+                    sidebarBody.style.overflowX = '';
+                    sidebarBody.style.webkitOverflowScrolling = '';
+                    sidebarBody.classList.add('data-scrollbar');
+                    if (window.Scrollbar && typeof window.Scrollbar.get === 'function' && !window.Scrollbar.get(sidebarBody)) {
+                        window.Scrollbar.init(sidebarBody, { damping: 0.1, thumbMinSize: 20 });
+                    }
                 }
             }
 
             document.addEventListener('DOMContentLoaded', normalizeSidebarScroll);
-            document.addEventListener('shown.bs.collapse', function(event) {
-                if (event.target && event.target.closest('.sidebar')) {
-                    normalizeSidebarScroll();
-                }
-            });
             window.addEventListener('load', normalizeSidebarScroll);
             window.addEventListener('resize', normalizeSidebarScroll);
         })();
