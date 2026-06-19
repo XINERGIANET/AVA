@@ -45,6 +45,32 @@
             overflow-y: auto;
             /* Habilita el scroll vertical */
         }
+        @media (max-width: 1199.98px) {
+            .sidebar {
+                height: 100vh;
+            }
+
+            .sidebar .sidebar-body {
+                max-height: calc(100vh - 88px);
+                overflow-y: auto;
+                overflow-x: hidden;
+                padding-bottom: 1rem;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .sidebar .data-scrollbar {
+                max-height: none;
+            }
+
+            .sidebar .sidebar-list,
+            .sidebar #sidebar-menu {
+                padding-bottom: 1rem;
+            }
+
+            .sidebar .sub-nav.collapse.show {
+                overflow: visible;
+            }
+        }
     </style>
 
     @yield('styles')
