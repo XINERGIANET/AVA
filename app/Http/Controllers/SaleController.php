@@ -26,6 +26,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Http;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -427,6 +428,7 @@ class SaleController extends Controller
             'vehicle_plate' => 'nullable|string|max:20',
             'pump_id' => 'nullable|exists:pumps,id',
             'type_sale' => 'nullable|integer|in:0,1,2',
+            'date' => 'nullable|date',
             'adicional' => 'nullable|numeric|min:0',
             'credit_number' => 'nullable|integer|min:0',
             'products' => 'required|array|min:1',
@@ -468,6 +470,10 @@ class SaleController extends Controller
 
         DB::beginTransaction();
         try {
+            $saleDate = $request->filled('date')
+                ? Carbon::parse($request->date . ' ' . now()->format('H:i:s'))
+                : now();
+
             $total = 0;
             foreach ($request->products as $index => $product) {
                 if (isset($product['subtotal']) && $product['subtotal'] > 0) {
@@ -492,7 +498,7 @@ class SaleController extends Controller
                 'total' => $total,
                 'adicional' => ($request->has('adicional') && $request->adicional > 0) ? $request->adicional : 0,
                 'vehicle_plate' => $request->vehicle_plate,
-                'date' => now(),
+                'date' => $saleDate,
                 'deleted' => false
             ]);
 
@@ -517,6 +523,33 @@ class SaleController extends Controller
             foreach ($request->products as $productData) {
                 $product = Product::find($productData['product_id']);
                 if (!$product) throw new \Exception("Producto {$productData['product_id']} no encontrado");
+
+                $tank = null;
+                $currentTankStock = null;
+                $requestedQuantity = null;
+                if (!empty($productData['tank_id'])) {
+                    $tank = Tank::whereKey($productData['tank_id'])->lockForUpdate()->first();
+
+                    if (!$tank) {
+                        throw ValidationException::withMessages([
+                            'products' => ["El tanque seleccionado (#{$productData['tank_id']}) no existe."]
+                        ]);
+                    }
+
+                    $currentTankStock = (float) ($tank->stored_quantity ?? 0);
+                    $requestedQuantity = (float) $productData['quantity'];
+
+                    if ($currentTankStock + 0.000001 < $requestedQuantity) {
+                        throw ValidationException::withMessages([
+                            'products' => [
+                                "Stock insuficiente en tanque {$tank->name}. Disponible: " .
+                                number_format($currentTankStock, 3, '.', '') .
+                                ", solicitado: " .
+                                number_format($requestedQuantity, 3, '.', '')
+                            ]
+                        ]);
+                    }
+                }
 
                 $unitPriceFromRequest = floatval($productData['unit_price'] ?? 0);
                 $discountedPriceFromRequest = floatval($productData['discounted_price'] ?? 0);
@@ -558,6 +591,7 @@ class SaleController extends Controller
                     'deleted' => false
                 ]);
 
+<<<<<<< HEAD
                 if (isset($productData['tank_id']) && $productData['tank_id']) {
                     $tank = Tank::find($productData['tank_id']);
                     if ($tank) {
@@ -569,6 +603,11 @@ class SaleController extends Controller
                         $tank->stored_quantity = $current - $restar;
                         $tank->save();
                     }
+=======
+                if ($tank) {
+                    $tank->stored_quantity = round(max(0, $currentTankStock - $requestedQuantity), 3);
+                    $tank->save();
+>>>>>>> f49ffdc715283b984385fa080c214a2149f2e79d
                 }
                 
                 if (isset($productData['order_detail_id']) && $productData['order_detail_id']) {
@@ -600,7 +639,7 @@ class SaleController extends Controller
                         'voucher_id' => $paymentData['voucher_id'] ?? null,
                         'number' => $numeroTicket,
                         'status' => 'paid',
-                        'date' => now(),
+                        'date' => $saleDate,
                         'deleted' => false
                     ]);
 
@@ -631,7 +670,7 @@ class SaleController extends Controller
                     'voucher_type' => 'Ticket',
                     'number' => $request->credit_number ?? $numeroTicket,
                     'status' => 'pending',
-                    'date' => now(),
+                    'date' => $saleDate,
                     'deleted' => false
                 ]);
             }
@@ -644,6 +683,12 @@ class SaleController extends Controller
                 'data' => ['sale_id' => $sale->id, 'total' => $sale->total]
             ], 201);
 
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => false,
+                'error' => $e->validator->errors()->first()
+            ], 422);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error Store Sale: ' . $e->getMessage());

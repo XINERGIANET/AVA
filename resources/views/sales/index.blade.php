@@ -335,6 +335,10 @@
                             </button>
                         </div>
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label">Fecha</label>
+                        <input type="date" class="form-control" id="sale_date" value="{{ now()->format('Y-m-d') }}">
+                    </div>
                     <!--Numero de credito solo para venta a credito-->
                     <div class="mb-3" id="credit-number-section" style="display: none;">
                         <label class="form-label">N° de Crédito</label>
@@ -2216,6 +2220,7 @@
         $('#voucherModal').on('show.bs.modal', function() {
             const tipoVenta = $('#tipo-venta').val();
             const isCreditSale = $('#is-credit-sale').is(':checked');
+            setCurrentSaleDate();
             if (tipoVenta === 'directa' && !isCreditSale) {
                 $('#payment-methods-section').show();
                 $('#paga-con-section').show();
@@ -2308,6 +2313,15 @@
                     });
                 }
             });
+        }
+
+        function setCurrentSaleDate() {
+            const today = new Date();
+            const localDate = new Date(today.getTime() - today.getTimezoneOffset() * 60000)
+                .toISOString()
+                .split('T')[0];
+
+            $('#sale_date').val(localDate);
         }
 
         function searchDocumentApi() {
@@ -2837,6 +2851,7 @@
                 voucher_type: $('input[name="voucher_type"]:checked').val(),
                 voucher_number: $('#number').val(), // Número de comprobante para payments
                 credit_number: $('#credit_number').val() && $('#credit_number').val().trim() !== '' ? parseInt($('#credit_number').val()) : null, // Número de crédito (solo para ventas a crédito)
+                date: $('#sale_date').val(),
                 document: $('#document').val(),
                 address: $('#address').val(),
                 orden: $('#orden').val(),
@@ -2961,6 +2976,7 @@
             $('#orden').val('');
             $('#area').val('');
             $('#number').val('');
+            $('#sale_date').val('');
             $('#current-order-detail-id').val('');
             $('#current-agreement-id').val('');
             $('#current-order-id').val('');
@@ -2968,6 +2984,7 @@
             $('#client_id').val('');
             $('#vehicle_plate').val('');
             $('#credit_number').val('');
+            setCurrentSaleDate();
 
             // Limpiar formulario rápido
             $('#product_id').val('');

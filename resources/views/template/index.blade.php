@@ -45,6 +45,48 @@
             overflow-y: auto;
             /* Habilita el scroll vertical */
         }
+        @media (max-width: 1199.98px) {
+            .sidebar {
+                display: flex;
+                flex-direction: column;
+                height: 100dvh;
+                min-height: 100vh;
+            }
+
+            .sidebar .sidebar-body {
+                flex: 1 1 auto;
+                min-height: 0;
+                overflow-y: auto;
+                overflow-x: hidden;
+                padding-bottom: 1rem;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .sidebar .data-scrollbar {
+                height: auto;
+                max-height: none;
+            }
+
+            .sidebar .sidebar-list,
+            .sidebar #sidebar-menu {
+                padding-bottom: 8rem;
+            }
+
+            .sidebar #sidebar-menu::after {
+                content: "";
+                display: block;
+                height: 6rem;
+                width: 100%;
+            }
+
+            .sidebar .sub-nav.collapse.show {
+                overflow: visible;
+            }
+
+            .sidebar .sidebar-footer {
+                flex: 0 0 auto;
+            }
+        }
     </style>
 
     @yield('styles')
@@ -1054,6 +1096,44 @@
 
     <!-- External Library Bundle Script -->
     <script src="{{ asset('assets/js/core/external.min.js') }}"></script>
+
+    <script>
+        (function() {
+            const mobileBreakpoint = 1199.98;
+
+            function normalizeSidebarScroll() {
+                const sidebarBody = document.querySelector('.sidebar .sidebar-body');
+                if (!sidebarBody) {
+                    return;
+                }
+
+                const isMobile = window.innerWidth <= mobileBreakpoint;
+
+                if (isMobile) {
+                    if (window.Scrollbar && typeof window.Scrollbar.get === 'function') {
+                        const instance = window.Scrollbar.get(sidebarBody);
+                        if (instance) {
+                            instance.destroy();
+                        }
+                    }
+
+                    sidebarBody.classList.remove('data-scrollbar');
+                    sidebarBody.style.overflowY = 'auto';
+                    sidebarBody.style.overflowX = 'hidden';
+                    sidebarBody.style.webkitOverflowScrolling = 'touch';
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', normalizeSidebarScroll);
+            document.addEventListener('shown.bs.collapse', function(event) {
+                if (event.target && event.target.closest('.sidebar')) {
+                    normalizeSidebarScroll();
+                }
+            });
+            window.addEventListener('load', normalizeSidebarScroll);
+            window.addEventListener('resize', normalizeSidebarScroll);
+        })();
+    </script>
 
     <!-- Widgetchart Script -->
     <script src="{{ asset('assets/js/charts/widgetcharts.js') }}"></script>
