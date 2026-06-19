@@ -1097,6 +1097,44 @@
     <!-- External Library Bundle Script -->
     <script src="{{ asset('assets/js/core/external.min.js') }}"></script>
 
+    <script>
+        (function() {
+            const mobileBreakpoint = 1199.98;
+
+            function normalizeSidebarScroll() {
+                const sidebarBody = document.querySelector('.sidebar .sidebar-body');
+                if (!sidebarBody) {
+                    return;
+                }
+
+                const isMobile = window.innerWidth <= mobileBreakpoint;
+
+                if (isMobile) {
+                    if (window.Scrollbar && typeof window.Scrollbar.get === 'function') {
+                        const instance = window.Scrollbar.get(sidebarBody);
+                        if (instance) {
+                            instance.destroy();
+                        }
+                    }
+
+                    sidebarBody.classList.remove('data-scrollbar');
+                    sidebarBody.style.overflowY = 'auto';
+                    sidebarBody.style.overflowX = 'hidden';
+                    sidebarBody.style.webkitOverflowScrolling = 'touch';
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', normalizeSidebarScroll);
+            document.addEventListener('shown.bs.collapse', function(event) {
+                if (event.target && event.target.closest('.sidebar')) {
+                    normalizeSidebarScroll();
+                }
+            });
+            window.addEventListener('load', normalizeSidebarScroll);
+            window.addEventListener('resize', normalizeSidebarScroll);
+        })();
+    </script>
+
     <!-- Widgetchart Script -->
     <script src="{{ asset('assets/js/charts/widgetcharts.js') }}"></script>
 
