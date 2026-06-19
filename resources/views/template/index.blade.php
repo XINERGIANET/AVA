@@ -69,7 +69,14 @@
 
             .sidebar .sidebar-list,
             .sidebar #sidebar-menu {
-                padding-bottom: 1rem;
+                padding-bottom: 8rem;
+            }
+
+            .sidebar #sidebar-menu::after {
+                content: "";
+                display: block;
+                height: 6rem;
+                width: 100%;
             }
 
             .sidebar .sub-nav.collapse.show {
