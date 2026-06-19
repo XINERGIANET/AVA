@@ -47,11 +47,15 @@
         }
         @media (max-width: 1199.98px) {
             .sidebar {
-                height: 100vh;
+                display: flex;
+                flex-direction: column;
+                height: 100dvh;
+                min-height: 100vh;
             }
 
             .sidebar .sidebar-body {
-                max-height: calc(100vh - 88px);
+                flex: 1 1 auto;
+                min-height: 0;
                 overflow-y: auto;
                 overflow-x: hidden;
                 padding-bottom: 1rem;
@@ -59,6 +63,7 @@
             }
 
             .sidebar .data-scrollbar {
+                height: auto;
                 max-height: none;
             }
 
@@ -69,6 +74,10 @@
 
             .sidebar .sub-nav.collapse.show {
                 overflow: visible;
+            }
+
+            .sidebar .sidebar-footer {
+                flex: 0 0 auto;
             }
         }
     </style>
