@@ -16,44 +16,42 @@
                         <div class="header-title w-100">
                             <form id="purchaseForm">
                                 @csrf
-                                <p><strong>Movimientos</strong></p>
-                                <div class="mb-2 row">
-                                    <label class="col-sm-3 col-form-label text-start">Proveedor:</label>
-                                    <div class="col-sm-5">
-                                        <div class="d-flex gap-3">
-                                            <input type="text" id="search-supplier" class="form-control"
-                                                placeholder="Buscar proveedor...">
+                                
+                                <!-- SECCIÓN: DATOS GENERALES -->
+                                <h5 class="mb-3 text-primary" style="font-weight: 600; font-size: 1.1rem; color: #465fff !important;">
+                                    <i class="bi bi-truck me-2"></i>Datos Generales
+                                </h5>
+                                
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">
+                                            <i class="bi bi-building me-1 text-secondary"></i>Proveedor:
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="text" id="search-supplier" class="form-control" placeholder="Buscar proveedor por RUC o Razón Social...">
                                             <input type="hidden" id="supplier_id" name="supplier_id">
-                                            <button type="button" class="btn btn-lg btn-success" id="openProviderModal"
-                                                data-bs-toggle="modal" data-bs-target="#providerModal">
-                                                <i class="bi bi-plus"></i>
+                                            <button type="button" class="btn btn-success text-white" id="openProviderModal" data-bs-toggle="modal" data-bs-target="#providerModal" data-bs-toggle="tooltip" title="Agregar nuevo proveedor">
+                                                <i class="bi bi-plus-lg"></i>
                                             </button>
                                         </div>
                                     </div>
+                                    
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">
+                                            <i class="bi bi-calendar3 me-1 text-secondary"></i>Fecha de Compra
+                                        </label>
+                                        <input type="date" class="form-control" id="purchaseDate" name="date" required>
+                                    </div>
                                 </div>
 
-                                <!-- <div class="row">
-                                    <label class="col-sm-3 col-form-label text-start">Buscar Producto:</label>
-                                    <div class="col-sm-4 position-relative">
-                                        <input type="text" style="display: block;" class="form-control border-dark" id="search-product" name="search-product" placeholder="Buscar producto...">
-                                    </div>
-                                    <div class="col-sm-1 d-flex align-items-center ps-0">
-                                        <i class="bi bi-info-circle"
-                                        data-bs-toggle="tooltip"
-                                        data-bs-placement="right"
-                                        data-bs-title="Esto agregará un producto a la tabla de detalles."></i>
-                                    </div>
-                           
-                                </div> -->
+                                <!-- SECCIÓN: DETALLE DE COMPRA -->
+                                <h5 class="mb-3 mt-4 text-primary border-top pt-4" style="font-weight: 600; font-size: 1.1rem; color: #465fff !important;">
+                                    <i class="bi bi-receipt-cutoff me-2"></i>Detalle del Comprobante y Almacenamiento
+                                </h5>
 
-
-                                <hr style="border: none; border-top: 2px solid #888; margin: 20px 0;">
-
-                                <p><strong>Detalle Compra</strong></p>
-
-                                <div class="mb-4 row">
-                                    <label class="col-sm-3 col-form-label text-start">Tipo de Comprobante</label>
-                                    <div class="col-sm-3">
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">Tipo de Comprobante</label>
                                         <select class="form-select" id="voucherType" name="voucher_type" required>
                                             <option value="">Seleccione</option>
                                             <option value="1">Factura</option>
@@ -62,48 +60,41 @@
                                             <option value="4">Otro</option>
                                         </select>
                                     </div>
-                                    <label class="col-sm-3 col-form-label text-start">N° Comprobante (*)</label>
-                                    <div class="col-sm-3">
-                                        <input type="text" class="form-control border-dark" id="invoiceNumber"
-                                            name="invoice_number">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">N° Comprobante (*)</label>
+                                        <input type="text" class="form-control" id="invoiceNumber" name="invoice_number" placeholder="Ej. F001-000123">
                                     </div>
-                                </div>
-
-                                <div class="mb-4 row">
-                                    <label class="col-sm-3 col-form-label text-start">Método de Pago</label>
-                                    <div class="col-sm-3">
-                                        <select class="form-control border-dark" id="paymentMethod" name="payment_method_id"
-                                            required>
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">Método de Pago</label>
+                                        <select class="form-select" id="paymentMethod" name="payment_method_id" required>
                                             <option value="">Seleccione un método</option>
                                             @foreach ($paymentMethods as $method)
                                                 <option value="{{ $method->id }}">{{ $method->name }}</option>
                                             @endforeach
                                         </select>
                                     </div>
-                                    <label class="col-sm-3 col-form-label text-start">Fecha de Compra</label>
-                                    <div class="col-sm-3">
-                                        <input type="date" class="form-control border-dark" id="purchaseDate"
-                                            name="date" required>
-                                    </div>
                                 </div>
 
-                                <div class="mb-4 row">
-                                    <label class="col-sm-3 col-form-label text-start">T° de compra</label>
-                                    <div class="col-sm-3">
-                                        <input type="number" step="0.01" class="form-control border-dark"
-                                            id="purchase_temp" name="purchase_temp">
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">T° de Compra</label>
+                                        <div class="input-group">
+                                            <input type="number" step="0.01" class="form-control" id="purchase_temp" name="purchase_temp" placeholder="0.00">
+                                            <span class="input-group-text">°C</span>
+                                        </div>
                                     </div>
-                                    <label class="col-sm-3 col-form-label text-start">T° de llegada</label>
-                                    <div class="col-sm-3">
-                                        <input type="number" step="0.01" class="form-control border-dark" id="real_temp"
-                                            name="real_temp">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">T° de Llegada</label>
+                                        <div class="input-group">
+                                            <input type="number" step="0.01" class="form-control" id="real_temp" name="real_temp" placeholder="0.00">
+                                            <span class="input-group-text">°C</span>
+                                        </div>
                                     </div>
-                                </div>
-
-                                <div class="mb-4 row">
-                                    <label class="col-sm-3 col-form-label text-start">Sede</label>
-                                    <div class="col-sm-3">
-                                        <select class="form-control border-dark" id="location_id" name="location_id" {{ auth()->user()->role->nombre != 'master' ? 'disabled' : '' }}>
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">
+                                            <i class="bi bi-geo-alt me-1 text-secondary"></i>Sede
+                                        </label>
+                                        <select class="form-select" id="location_id" name="location_id" {{ auth()->user()->role->nombre != 'master' ? 'disabled' : '' }}>
                                             @if (auth()->user()->role->nombre == 'master')
                                                 <option value="" disabled selected>Seleccione una sede</option>
                                                 @foreach ($locations as $location)
@@ -115,77 +106,58 @@
                                             @endif
                                         </select>
                                     </div>
-
-                                    <label class="col-sm-3 col-form-label text-start">Tanque(s)</label>
-                                    <div class="col-sm-3">
-                                        <!-- ahora permite seleccionar varios tanques (ctrl/shift) -->
-                                        <select class="form-control border-dark" id="tank_id" name="tank_id[]" multiple
-                                            size="5" required>
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">
+                                            <i class="bi bi-database me-1 text-secondary"></i>Tanque(s)
+                                        </label>
+                                        <select class="form-select" id="tank_id" name="tank_id[]" multiple size="4" required>
                                             @foreach ($tanks as $tank)
                                                 <option data-location_id="{{ $tank->location_id }}"
                                                     data-product_id="{{ $tank->product_id }}" value="{{ $tank->id }}">
                                                     {{ $tank->name }}</option>
                                             @endforeach
                                         </select>
-                                        <div class="form-text small">Puede seleccionar varios tanques del mismo producto.
-                                            Tecla Ctrl + click para seleccionar varios o deseleccionar</div>
+                                        <div class="form-text small text-muted">Use Ctrl/Shift + click para seleccionar varios</div>
                                     </div>
                                 </div>
 
-
-                                <hr style="border: none; border-top: 2px solid #888; margin: 20px 0;">
-
-                                <div class="col-12 mb-3">
-                                    <p><strong>Filtro Búsqueda</strong></p>
-
-                                    <div class="row align-items-end">
-                                        <!-- Búsqueda al inicio -->
+                                <!-- SECCIÓN: PRODUCTOS -->
+                                <div class="p-3 mt-4 mb-4" style="background-color: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                                    <div class="row align-items-end g-3">
                                         <div class="col-md-4">
-                                            <label class="form-label">Producto</label>
+                                            <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">Filtro de Productos en Tabla</label>
                                             <div class="input-group">
-                                                <input type="text" class="form-control" id="busquedaProducto"
-                                                    placeholder="Buscar producto...">
+                                                <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                                                <input type="text" class="form-control" id="busquedaProducto" placeholder="Buscar producto en la lista...">
                                             </div>
                                         </div>
-                                        <div class="col-md-1 d-flex align-items-center ps-0" style="height: 38px;">
-                                            <i class="bi bi-info-circle" data-bs-toggle="tooltip"
-                                                data-bs-placement="right"
-                                                data-bs-title="Esto filtrará los productos de la tabla para su búsqueda."></i>
-                                        </div>
-
-                                        <!-- Espacio en el medio -->
-                                        <div class="col-md-3">
-                                        </div>
-
-                                        <!-- Total y botón al final -->
-                                        <div class="col-md-4 text-end">
-                                            <div class="mb-2">
-                                                <strong>Total: S/ <span id="totalAmount">0.00</span></strong>
+                                        <div class="col-md-8 text-end">
+                                            <div class="d-inline-block me-4">
+                                                <span class="text-muted" style="font-size: 1.1rem;">Total:</span>
+                                                <strong class="text-primary ms-1" style="font-size: 1.5rem; color: #465fff !important;">S/ <span id="totalAmount">0.00</span></strong>
                                             </div>
-                                            <button type="submit" class="btn btn-primary" id="savePurchase">
-                                                Guardar Compra
+                                            <button type="submit" class="btn btn-primary px-4 py-2" id="savePurchase" style="background-color: #465fff; border-color: #465fff;">
+                                                <i class="bi bi-save me-2"></i>Guardar Compra
                                             </button>
                                         </div>
                                     </div>
                                 </div>
-                                <!-- Tabla de productos agregados -->
 
-
-
-                                <div class="table-responsive">
-                                    <table class="table table-bordered table-striped" id="purchaseTable">
-                                        <thead class="table">
+                                <!-- Tabla de productos -->
+                                <div class="table-responsive rounded shadow-sm border mb-3">
+                                    <table class="table table-hover mb-0" id="purchaseTable">
+                                        <thead class="text-white">
                                             <tr>
-                                                <th>Producto</th>
-                                                <th>Unidad</th>
-                                                <th>Precio Unitario</th>
-                                                <th>Cantidad</th>
-                                                <th>Subtotal</th>
-                                                <th>Merma</th>
-                                                <th>Accion</th>
+                                                <th class="border-0" style="background-color: #465fff !important; color: white !important; font-weight: 600; padding: 12px 15px;">Producto</th>
+                                                <th class="border-0" style="background-color: #465fff !important; color: white !important; font-weight: 600; padding: 12px 15px;">Unidad</th>
+                                                <th class="border-0" style="background-color: #465fff !important; color: white !important; font-weight: 600; padding: 12px 15px;">Precio Unitario</th>
+                                                <th class="border-0" style="background-color: #465fff !important; color: white !important; font-weight: 600; padding: 12px 15px;">Cantidad</th>
+                                                <th class="border-0" style="background-color: #465fff !important; color: white !important; font-weight: 600; padding: 12px 15px;">Subtotal</th>
+                                                <th class="border-0" style="background-color: #465fff !important; color: white !important; font-weight: 600; padding: 12px 15px;">Merma</th>
+                                                <th class="border-0 text-center" style="background-color: #465fff !important; color: white !important; font-weight: 600; padding: 12px 15px;">Acción</th>
                                             </tr>
                                         </thead>
-                                        <tbody></tbody>
+                                        <tbody class="align-middle"></tbody>
                                     </table>
                                 </div>
                             </form>
@@ -210,7 +182,12 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="document" class="form-label">RUC/DNI</label>
-                                    <input type="number" class="form-control" id="document" name="document" required>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="document" name="document" placeholder="Ingrese RUC o DNI" required>
+                                        <button class="btn btn-outline-primary" type="button" onclick="searchDocumentApi()">
+                                            <i class="bi bi-search"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -632,7 +609,7 @@
                 }
                 allTankOptions.each(function() {
                     const $opt = $(this);
-                    const optLoc = String($opt.data('location_id') || '');
+                    const optLoc = String($opt.attr('data-location_id') || '');
                     if (optLoc === String(locId)) {
                         tankSelect.append($opt.clone());
                     }
@@ -659,9 +636,9 @@
                 }
 
                 // validar mismo product_id entre seleccionados
-                let firstProductId = selectedOptions.first().data('product_id');
+                let firstProductId = selectedOptions.first().attr('data-product_id');
                 const mismatch = selectedOptions.filter(function() {
-                    return String($(this).data('product_id')) !== String(firstProductId);
+                    return String($(this).attr('data-product_id')) !== String(firstProductId);
                 });
 
                 if (mismatch.length > 0) {
@@ -685,13 +662,17 @@
                     }
 
                     // actualizar el product_id de referencia (podría cambiar si el primer fue deseleccionado)
-                    firstProductId = selectedOptions.first().data('product_id');
+                    firstProductId = selectedOptions.first().attr('data-product_id');
                 }
 
                 // obtener datos del producto (asegurar comparación numérica)
                 const productId = firstProductId;
                 const selectedProduct = newproducts.find(p => Number(p.id) === Number(productId));
                 if (!selectedProduct) {
+                    ToastError.fire({
+                        icon: 'error',
+                        text: 'El producto asociado a este tanque no está disponible o ha sido eliminado.'
+                    });
                     updateTotal();
                     return;
                 }
@@ -733,5 +714,74 @@
                 $('#location_id').trigger('change');
             }
         });
+
+        // Búsqueda de documento (DNI/RUC) mediante API
+        function searchDocumentApi() {
+            const doc = $('#document').val().trim();
+
+            $('#company_name').val('');
+
+            if (!/^\d{8}$|^\d{11}$/.test(doc)) {
+                if (typeof ToastError !== 'undefined') {
+                    ToastError.fire({ text: 'El documento debe tener 8 dígitos para DNI o 11 dígitos para RUC.' });
+                } else if (typeof Swal !== 'undefined') {
+                    Swal.fire('Error', 'El documento debe tener 8 dígitos para DNI o 11 dígitos para RUC.', 'error');
+                } else {
+                    alert('El documento debe tener 8 dígitos para DNI o 11 dígitos para RUC.');
+                }
+                return;
+            }
+
+            if (typeof Swal !== 'undefined' && false) { // Removed Swal in favor of global spinner
+                Swal.fire({
+                    title: 'Buscando...',
+                    text: 'Por favor espere',
+                    allowOutsideClick: false,
+                    didOpen: () => { Swal.showLoading() }
+                });
+            }
+
+            const globalSpinner = document.getElementById('spinner');
+            if (globalSpinner) {
+                globalSpinner.classList.remove('spinner-hidden');
+                globalSpinner.classList.add('spinner-visible');
+            }
+
+            $.ajax({
+                url: "{{ url('sunat/consultar') }}",
+                method: 'GET',
+                data: { doc: doc },
+                success: function(response) {
+                    if (globalSpinner) {
+                        globalSpinner.classList.add('spinner-hidden');
+                        globalSpinner.classList.remove('spinner-visible');
+                    }
+
+                    if (response.success) {
+                        const data = response.data;
+                        $('#document').val(data.document || doc);
+                        $('#company_name').val(data.name || '');
+                    } else {
+                        if (typeof ToastError !== 'undefined') {
+                            ToastError.fire({ text: response.message || 'No se encontró información para ese documento.' });
+                        } else {
+                            alert(response.message || 'No se encontró información para ese documento.');
+                        }
+                    }
+                },
+                error: function(xhr) {
+                    if (globalSpinner) {
+                        globalSpinner.classList.add('spinner-hidden');
+                        globalSpinner.classList.remove('spinner-visible');
+                    }
+                    const msg = xhr.responseJSON?.message || 'Error al consultar el documento.';
+                    if (typeof ToastError !== 'undefined') {
+                        ToastError.fire({ text: msg });
+                    } else {
+                        alert(msg);
+                    }
+                }
+            });
+        }
     </script>
 @endsection
