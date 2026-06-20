@@ -12,10 +12,26 @@ class ClientController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Obtener solo los productos activos (estado = 0)
-        $clients = Client::where('deleted', 0)->paginate(15);
+        $search = $request->input('search');
+        $query = Client::where('deleted', 0);
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('business_name', 'LIKE', "%{$search}%")
+                  ->orWhere('document', 'LIKE', "%{$search}%")
+                  ->orWhere('phone', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $clients = $query->paginate(15);
+        
+        // Mantener el término de búsqueda en los enlaces de paginación
+        if ($search) {
+            $clients->appends(['search' => $search]);
+        }
+
         return view('clients.index', compact('clients'));
     }
 

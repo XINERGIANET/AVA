@@ -6,7 +6,7 @@
 @endsection
 
 @section('content')
-<div class="container-fluid content-inner mt-n5 py-0">
+<div class="container-fluid content-inner mt-0">
     <div class="card shadow">
         <div class="card-body">
             <form id="formRegistro" action="{{ route('users.store') }}" method="POST" autocomplete="off">

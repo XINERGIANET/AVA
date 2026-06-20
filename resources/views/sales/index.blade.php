@@ -114,16 +114,50 @@
         .payment-method-item input[type="text"] {
             flex: 1;
         }
+
+        /* Nuevos estilos para la UI de Ventas */
+        .card-custom {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .btn-square-action {
+            border-radius: 10px;
+            padding: 12px 5px;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+        .btn-square-action:hover {
+            transform: translateY(-2px);
+        }
+        
+        /* Utility classes for soft backgrounds */
+        .btn-soft-primary { background-color: rgba(13, 110, 253, 0.1) !important; color: #0d6efd !important; }
+        .btn-soft-success { background-color: rgba(25, 135, 84, 0.1) !important; color: #198754 !important; }
+        .btn-soft-danger { background-color: rgba(220, 53, 69, 0.1) !important; color: #dc3545 !important; }
+        .btn-soft-info { background-color: rgba(13, 202, 240, 0.1) !important; color: #0abad9 !important; }
+        .btn-soft-secondary { background-color: rgba(108, 117, 125, 0.1) !important; color: #6c757d !important; }
+
+        .empty-cart-icon { font-size: 5rem; opacity: 0.2; }
+        #tbl-order-items:empty ~ #empty-cart-state { display: block; }
+        #tbl-order-items:not(:empty) ~ #empty-cart-state { display: none; }
     </style>
 @endsection
 
 @section('header')
-    <h1>Modulo de Ventas</h1>
-    <p>Modulo de gestión de ventas</p>
+<div class="d-flex align-items-center mt-2 mb-4">
+    <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 64px; height: 64px;">
+        <i class="bi bi-cart3 fs-1 text-white"></i>
+    </div>
+    <div>
+        <h2 class="mb-1 fw-bold text-white">Módulo de Ventas</h2>
+        <p class="mb-0 text-white-50 fs-6">Gestión de ventas rápida y eficiente</p>
+    </div>
+</div>
 @endsection
 
 @section('content')
-    <div class="container-fluid content-inner mt-n5 py-0">
+    <div class="container-fluid content-inner mt-0 py-0">
         <div id="chargeSection" class="bg-light text-dark fw-semibold p-3 rounded">
             <div class="row g-3">
                 <!-- Columna IZQUIERDA: Productos, Contratos y Creditos -->
@@ -143,62 +177,77 @@
                     </div> --}}
 
                     <!-- Card 1: Tipo de venta -->
-                    <div class="bg-white p-3 rounded shadow-sm mb-3">
+                    <div class="bg-white p-4 card-custom mb-3">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="bi bi-file-earmark-text text-primary me-2 fs-5"></i>
+                            <h6 class="mb-0 fw-bold">Datos de la venta</h6>
+                        </div>
+                        
                         <div class="mb-3">
-                            <label for="tipo-venta" class="form-label small">Tipo de venta</label>
-                            <select id="tipo-venta" class="form-select form-select-sm">
+                            <label for="tipo-venta" class="form-label text-muted small fw-semibold">Tipo de venta</label>
+                            <select id="tipo-venta" class="form-select form-select-sm border-1 bg-white py-2">
                                 <option value="directa">Venta Directa</option>
                                 <option value="contrato">Contrato</option>
                             </select>
                             <input type="hidden" id="type_sale">
                         </div>
                         <div id="credit-checkbox-container" class="mb-3">
-                            <label>
-                                <input type="checkbox" id="is-credit-sale" class="form-check-input"> Venta a Crédito
-                            </label>
+                            <div class="form-check">
+                                <input type="checkbox" id="is-credit-sale" class="form-check-input"> 
+                                <label class="form-check-label text-muted small" for="is-credit-sale">Venta a Crédito</label>
+                            </div>
                         </div>
-                        <div class="mb-3 align-items-center d-flex justify-content-between">
-                            <button type="button"
-                                class="btn btn-sm btn-primary 
-                            @if (auth()->user()->role->nombre === 'worker') d-none @endif
-                            "
-                                data-bs-toggle="modal" data-bs-target="#initialCashModal" title="Abrir Caja">
-                                <i class="bi bi-cash"></i>
-                            </button>
-                            <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal"
-                                data-bs-target="#expenseModal" title="Egreso de Caja">
-                                <i class="bi bi-pen"></i>
-                            </button>
 
+                        <!-- Action buttons styled as square options -->
+                        <div class="d-flex justify-content-between gap-2 mt-4 flex-wrap">
+                            <button type="button" class="btn bg-white border border-1 rounded-3 d-flex flex-column align-items-center justify-content-center flex-fill py-3 @if (auth()->user()->role->nombre === 'worker') d-none @endif" data-bs-toggle="modal" data-bs-target="#initialCashModal" title="Abrir Caja" style="box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s;">
+                                <div class="rounded-3 d-flex align-items-center justify-content-center mb-2 btn-soft-primary" style="width: 45px; height: 45px;">
+                                    <i class="bi bi-cash fs-5"></i>
+                                </div>
+                                <span class="text-dark fw-bold" style="font-size: 0.75rem;">Abrir Caja</span>
+                            </button>
+                            
+                            <button type="button" class="btn bg-white border border-1 rounded-3 d-flex flex-column align-items-center justify-content-center flex-fill py-3" data-bs-toggle="modal" data-bs-target="#expenseModal" title="Egreso de Caja" style="box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s;">
+                                <div class="rounded-3 d-flex align-items-center justify-content-center mb-2 btn-soft-success" style="width: 45px; height: 45px;">
+                                    <i class="bi bi-box-arrow-right fs-5"></i>
+                                </div>
+                                <span class="text-dark fw-bold" style="font-size: 0.75rem;">Egreso</span>
+                            </button>
+                            
                             @if (auth()->user()->role_id != 3)
-                            <button type="button" class="btn btn-sm btn-secondary" data-bs-toggle="modal"
-                                data-bs-target="#finalCashModal" title="Cerrar Caja">
-                                <i class="bi bi-arrow-down-circle"></i>
+                            <button type="button" class="btn bg-white border border-1 rounded-3 d-flex flex-column align-items-center justify-content-center flex-fill py-3" data-bs-toggle="modal" data-bs-target="#finalCashModal" title="Cerrar Caja" style="box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s;">
+                                <div class="rounded-3 d-flex align-items-center justify-content-center mb-2 btn-soft-danger" style="width: 45px; height: 45px;">
+                                    <i class="bi bi-box-arrow-in-down fs-5"></i>
+                                </div>
+                                <span class="text-dark fw-bold" style="font-size: 0.75rem;">Cerrar Caja</span>
                             </button>
                             @endif
-
-                            <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal"
-                                data-bs-target="#vaultModal" title="Enviar Bóveda">
-                                <i class="bi bi-box"></i>
+                            
+                            <button type="button" class="btn bg-white border border-1 rounded-3 d-flex flex-column align-items-center justify-content-center flex-fill py-3" data-bs-toggle="modal" data-bs-target="#vaultModal" title="Enviar Bóveda" style="box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s;">
+                                <div class="rounded-3 d-flex align-items-center justify-content-center mb-2 btn-soft-info" style="width: 45px; height: 45px;">
+                                    <i class="bi bi-safe fs-5"></i>
+                                </div>
+                                <span class="text-dark fw-bold" style="font-size: 0.75rem;">Bóveda</span>
                             </button>
-
-                            <button type="button"
-                                class="btn btn-sm btn-success 
-                                @if (auth()->user()->role->nombre === 'worker') d-none @endif
-                            "
-                                title="Exportar ventas por isla"
-                                onclick="window.location.href='{{ route('sales.excelByIsle') }}'">
-                                <i class="bi bi-file-earmark-spreadsheet-fill"></i>
+                            
+                            <button type="button" class="btn bg-white border border-1 rounded-3 d-flex flex-column align-items-center justify-content-center flex-fill py-3 @if (auth()->user()->role->nombre === 'worker') d-none @endif" title="Exportar ventas" onclick="window.location.href='{{ route('sales.excelByIsle') }}'" style="box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s;">
+                                <div class="rounded-3 d-flex align-items-center justify-content-center mb-2 btn-soft-secondary" style="width: 45px; height: 45px;">
+                                    <i class="bi bi-file-excel fs-5"></i>
+                                </div>
+                                <span class="text-dark fw-bold" style="font-size: 0.75rem;">Exportar</span>
                             </button>
                         </div>
                     </div>
 
                     <!-- Card de búsqueda de cliente -->
-                    <div id="cliente-search-card" class="bg-white p-3 rounded shadow-sm mb-3" style="display: none;">
-                        <h6 class="mb-3 text-center">Buscar Cliente</h6>
-                        <div class="mb-3">
-                            <label class="form-label small">Cliente:</label>
-                            <input type="text" id="search-client" class="form-control" placeholder="Buscar cliente...">
+                    <div id="cliente-search-card" class="bg-white p-4 card-custom mb-3" style="display: none;">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="bi bi-search text-primary me-2 fs-5"></i>
+                            <h6 class="mb-0 fw-bold">Buscar Cliente</h6>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label text-muted small fw-semibold">Cliente:</label>
+                            <input type="text" id="search-client" class="form-control bg-white border-1 py-2" placeholder="Buscar cliente...">
                             <input type="hidden" id="client_id" name="client_id">
                             <input type="hidden" id="current-agreement-id">
                             <input type="hidden" id="current-order-detail-id">
@@ -206,20 +255,26 @@
                     </div>
 
                     <!-- Card de productos para contrato/crédito -->
-                    <div id="products-contract-credit" class="bg-white p-3 rounded shadow-sm mb-3" style="display: none;">
-                        <h6 class="mb-3 text-center">Contratos del Cliente</h6>
+                    <div id="products-contract-credit" class="bg-white p-4 card-custom mb-3" style="display: none;">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="bi bi-journal-text text-primary me-2 fs-5"></i>
+                            <h6 class="mb-0 fw-bold">Contratos del Cliente</h6>
+                        </div>
                         <div style="max-height: 350px; overflow-y: auto;">
-                            <table class="table table-sm table-hover small">
+                            <table class="table table-hover small">
                                 <tbody id="tbl-products-contract"></tbody>
                             </table>
                         </div>
                     </div>
 
                     <!-- Selector de Isla -->
-                    <div id="isle-select-card" class="bg-white p-3 rounded shadow-sm mb-3" style="display: none;">
-                        <h6 class="mb-3 text-center">Seleccione Isla</h6>
+                    <div id="isle-select-card" class="bg-white p-4 card-custom mb-3" style="display: none;">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="bi bi-geo-alt text-primary me-2 fs-5"></i>
+                            <h6 class="mb-0 fw-bold">Seleccione Isla</h6>
+                        </div>
                         <div class="mb-2">
-                            <select id="select-isle" class="form-select form-select-sm">
+                            <select id="select-isle" class="form-select border-1 bg-white py-2">
                                 <option value="">-- Seleccione --</option>
                                 @foreach ($isles ?? [] as $isle)
                                     <option value="{{ $isle->id }}">{{ $isle->name }}</option>
@@ -229,10 +284,28 @@
                     </div>
 
                     <!-- Card 2: Productos para venta directa -->
-                    <div id="products-direct-card" class="bg-white p-3 rounded shadow-sm mb-3">
-                        <h6 class="mb-3 text-center">Productos Disponibles</h6>
+                    <div id="products-direct-card" class="bg-white p-4 card-custom mb-3">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-box-seam text-primary me-2 fs-5"></i>
+                                <h6 class="mb-0 fw-bold">Productos Disponibles</h6>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-2 mb-3">
+                            <div class="input-group flex-grow-1">
+                                <span class="input-group-text bg-white border border-end-0 text-muted ps-3 pe-2 rounded-start-3"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control bg-white border border-start-0 py-2 rounded-end-3 shadow-none" placeholder="Buscar producto...">
+                            </div>
+                            <select class="form-select bg-white border border-1 w-auto text-dark rounded-3 shadow-none">
+                                <option>Categorías</option>
+                            </select>
+                            <button class="btn btn-primary rounded-3 px-3"><i class="bi bi-grid-fill"></i></button>
+                            <button class="btn btn-light border border-1 text-muted rounded-3 px-3 bg-white"><i class="bi bi-list-ul"></i></button>
+                        </div>
+
                         <div style="max-height: 300px; overflow-y: auto;">
-                            <table class="table table-sm table-hover small">
+                            <table class="table table-hover small border-top">
                                 <tbody id="tbl-products"></tbody>
                             </table>
                         </div>
@@ -240,36 +313,49 @@
                 </div>
 
                 <div class="col-md-7">
-                    <div class="bg-white p-3 rounded shadow-sm" style="min-height: 500px;">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h6 class="mb-0">Productos Agregados</h6>
-                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                    <div class="bg-white p-4 card-custom d-flex flex-column h-100" style="min-height: 600px;">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-cart3 text-primary me-2 fs-5"></i>
+                                <h6 class="mb-0 fw-bold">Productos Agregados</h6>
+                            </div>
+                            <button type="button" class="btn btn-primary px-4 py-2 fw-semibold" data-bs-toggle="modal"
                                 data-bs-target="#voucherModal" id="btn-open-voucher">
-                                <i class="bi bi-receipt"></i> Procesar Venta
+                                Procesar Venta <i class="bi bi-box-arrow-right ms-2"></i>
                             </button>
                         </div>
 
-                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                            <table class="table table-bordered table-sm table-hover small">
-                                <thead class="table-light sticky-top">
+                        <div class="flex-grow-1" style="overflow-y: auto; overflow-x: hidden; min-height: 0;">
+                            <table class="table table-borderless table-hover small mb-0">
+                                <thead class="bg-light text-muted">
                                     <tr>
-                                        <th>Producto</th>
+                                        <th class="rounded-start">Producto</th>
                                         <th>Precio</th>
                                         <th>Cantidad</th>
                                         <th>Subtotal</th>
                                         <th>Hora</th>
-                                        <th width="50"></th>
+                                        <th width="50" class="rounded-end text-center">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tbl-order-items"></tbody>
                             </table>
+                            
+                            <!-- Empty State -->
+                            <div id="empty-cart-state" class="text-center py-5 mt-4">
+                                <i class="bi bi-cart-plus text-primary empty-cart-icon"></i>
+                                <h5 class="text-muted mt-4 fw-bold">Aún no hay productos agregados</h5>
+                                <p class="text-muted small">Agrega productos desde la lista para comenzar</p>
+                            </div>
                         </div>
 
                         <!-- Total flotante -->
-                        <div class="total-display">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0">TOTAL:</h5>
-                                <h4 class="mb-0 text-primary">S/ <span id="total">0.00</span></h4>
+                        <div class="total-display mt-auto pt-4 border-top">
+                            <div class="d-flex justify-content-between align-items-end">
+                                <div>
+                                    <h5 class="mb-1 fw-bold text-uppercase">TOTAL</h5>
+                                    <span class="text-muted small"><span id="items-count">0</span> productos</span>
+                                </div>
+                                <h2 class="mb-0 fw-bold text-primary">S/ <span id="total">0.00</span></h2>
                             </div>
                         </div>
                     </div>
@@ -1174,16 +1260,15 @@
                         }
                     }
 
-                    // Función para crear tarjeta de surtidor
                     function crearTarjetaSurtidor(pump, data) {
                         const pumpCard = $(`
                             <div class="mb-4">
-                                <div class="text-center mb-2">
-                                    <span class="badge bg-secondary" style="font-size: 16px; padding: 8px 12px;">
-                                        <i class="bi bi-fuel-pump"></i> ${pump.name || 'Surtidor ' + pump.id}
+                                <div class="text-center mb-3">
+                                    <span class="badge" style="background-color: #0b2240; font-size: 14px; padding: 8px 16px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                        <i class="bi bi-fuel-pump-fill me-1"></i> ${pump.name || 'Surtidor ' + pump.id}
                                     </span>
                                 </div>
-                                <div class="products-buttons d-grid gap-2">
+                                <div class="products-buttons row g-3 justify-content-center">
                                 </div>
                             </div>
                         `);
@@ -1199,9 +1284,9 @@
 
                                             const colors = getProductColor(product.name);
 
+                                            // Tarjeta estilo mockup
                                             const productBtn = $(`
-                                                <button type="button" class="btn btn-lg shadow" 
-                                                    style="background: ${colors.bg}; color: ${colors.text}; border: none; padding: 20px; font-size: 18px; font-weight: bold; transition: all 0.2s ease;"
+                                                <div class="col-10 col-sm-8 col-lg-7"
                                                     data-product-id="${product.id}" 
                                                     data-product-name="${product.name}"
                                                     data-price="${parseFloat(product.price).toFixed(2)}"
@@ -1209,25 +1294,31 @@
                                                     data-tank-id="${tank.id}" 
                                                     data-pump-id="${pump.id}" 
                                                     data-order-detail-id="${product.order_detail_id}">
-                                                    <div>${product.name}</div>
-                                                    <div style="font-size: 24px; margin-top: 5px;">S/ ${parseFloat(product.price || 0).toFixed(2)}</div>
-                                                </button>
+                                                    <div class="card border border-1 shadow-sm h-100 bg-white" style="cursor: pointer; border-radius: 12px; transition: all 0.2s;">
+                                                        <div class="card-body text-center p-3 d-flex flex-column justify-content-between">
+                                                            <div class="mb-2 d-flex justify-content-center align-items-center" style="height: 60px;">
+                                                                <img src="{{ asset('assets/images/nozzle.png') }}" alt="Nozzle" style="height: 50px; object-fit: contain;" onerror="this.outerHTML='<i class=\\'bi bi-fuel-pump-fill fs-1\\' style=\\'color: ${colors.bg};\\'></i>'">
+                                                            </div>
+                                                            <h6 class="fw-bold mb-1 text-uppercase text-dark" style="font-size: 0.75rem;">${product.name}</h6>
+                                                            <h5 class="fw-bold mb-1" style="color: #0d6efd;">S/ ${parseFloat(product.price || 0).toFixed(2)}</h5>
+                                                            <small class="fw-semibold" style="color: #198754; font-size: 0.65rem;">Stock: 1,000.00</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             `);
 
                                             // Efectos hover
-                                            productBtn.hover(
+                                            productBtn.find('.card').hover(
                                                 function() {
                                                     $(this).css({
                                                         'transform': 'translateY(-3px)',
-                                                        'box-shadow': '0 6px 12px rgba(0,0,0,0.4)',
-                                                        'opacity': '0.9'
+                                                        'box-shadow': '0 8px 20px rgba(0,0,0,0.1)'
                                                     });
                                                 },
                                                 function() {
                                                     $(this).css({
                                                         'transform': 'translateY(0)',
-                                                        'box-shadow': '',
-                                                        'opacity': '1'
+                                                        'box-shadow': '0 4px 15px rgba(0,0,0,0.05)'
                                                     });
                                                 }
                                             );
@@ -2104,7 +2195,9 @@
         function recalculateTotal() {
             console.log('=== RECALCULANDO TOTAL ===');
             let total = 0;
+            let itemCount = 0;
             $('#tbl-order-items tr').each(function(index) {
+                itemCount++;
                 const $tds = $(this).find('td');
                 // Leer el subtotal de la columna 4 (índice 3)
                 const subtotalText = $tds.eq(3).text().replace('S/', '').replace(/\s/g, '').trim();
@@ -2139,6 +2232,16 @@
             $('#difference').val('0.00');
             $('#cash').val('');
             $('#change').val('');
+            
+            // Actualizar contador de items
+            $('#items-count').text(itemCount);
+            
+            // Mostrar u ocultar el estado vacío
+            if (itemCount > 0) {
+                $('#empty-cart-state').hide();
+            } else {
+                $('#empty-cart-state').show();
+            }
         }
 
 

@@ -8,9 +8,9 @@
 @section('content')
 @include('components.spinner')
 
-<div class="container-fluid content-inner mt-n5 py-0">
+<div class="container-fluid content-inner mt-0">
 	<!-- Card que contiene el formulario y la tabla -->
-	<div class="card shadow">
+	<div class="card shadow border-0" style="border-radius: 12px;">
 		<!-- Cuerpo del Card -->
 		<div class="card-body">
 			<!-- Formulario de Registro -->
@@ -35,8 +35,12 @@
 								<label for="document" class="form-label mb-0">DNI / RUC</label>
 							</div>
 							<div class="col-md-8">
-								<input type="number" class="form-control" placeholder="Ingrese DNI o RUC" id="document" name="document"
-									>
+								<div class="input-group">
+									<input type="number" class="form-control" placeholder="Ingrese DNI o RUC" id="document" name="document">
+									<button type="button" class="btn btn-primary" onclick="searchDocumentApi()">
+										<i class="bi bi-search"></i>
+									</button>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -156,6 +160,25 @@
 				<div class="row mb-3">
 					<div class="d-flex justify-content-end">
 						<button type="submit" class="btn btn-primary">Guardar</button>
+					</div>
+				</div>
+			</form>
+
+			<!-- Buscador de Clientes -->
+			<form action="{{ route('clients.index') }}" method="GET" class="mt-4 mb-3">
+				<div class="row align-items-end justify-content-end">
+					<div class="col-md-5">
+						<div class="input-group">
+							<input type="text" class="form-control" name="search" id="search" placeholder="Buscar por Nombre, DNI, RUC o Teléfono..." value="{{ request('search') }}">
+							<button class="btn btn-outline-primary" type="submit">
+								<i class="bi bi-search"></i> Buscar
+							</button>
+							@if(request('search'))
+								<a href="{{ route('clients.index') }}" class="btn btn-outline-danger" title="Limpiar búsqueda">
+									<i class="bi bi-x-circle"></i>
+								</a>
+							@endif
+						</div>
 					</div>
 				</div>
 			</form>
@@ -991,5 +1014,65 @@
 		});
 
 	});
+</script>
+
+<script>
+function searchDocumentApi() {
+	const doc = $('#document').val().trim();
+
+	$('#business_name').val('');
+	$('#address').val('');
+
+	if (!/^\d{8}$|^\d{11}$/.test(doc)) {
+		if (typeof ToastError !== 'undefined') {
+			ToastError.fire({ text: 'El documento debe tener 8 digitos para DNI o 11 digitos para RUC.' });
+		} else if (typeof Swal !== 'undefined') {
+			Swal.fire('Error', 'El documento debe tener 8 digitos para DNI o 11 digitos para RUC.', 'error');
+		} else {
+			alert('El documento debe tener 8 digitos para DNI o 11 digitos para RUC.');
+		}
+		return;
+	}
+
+	if (typeof Swal !== 'undefined') {
+		Swal.fire({
+			title: 'Buscando...',
+			text: 'Por favor espere',
+			allowOutsideClick: false,
+			didOpen: () => { Swal.showLoading() }
+		});
+	}
+
+	$.ajax({
+		url: "{{ url('sunat/consultar') }}",
+		method: 'GET',
+		data: { doc: doc },
+		success: function(response) {
+			if (typeof Swal !== 'undefined') Swal.close();
+
+			if (response.success) {
+				const data = response.data;
+				$('#document').val(data.document || doc);
+				$('#business_name').val(data.name || '');
+				$('#address').val(data.address || '');
+			} else {
+				if (typeof ToastError !== 'undefined') {
+					ToastError.fire({ text: response.message || 'No se encontro informacion para ese documento.' });
+				} else {
+					alert(response.message || 'No se encontro informacion para ese documento.');
+				}
+			}
+		},
+		error: function(xhr) {
+			if (typeof Swal !== 'undefined') Swal.close();
+			const msg = xhr.responseJSON?.message || 'Error al consultar el documento.';
+			if (typeof ToastError !== 'undefined') {
+				ToastError.fire({ text: msg });
+			} else {
+				alert(msg);
+			}
+		}
+	});
+}
 </script>
 @endsection

@@ -8,7 +8,7 @@
 @section('content')
   @include('components.spinner')
 
-  <div class="container-fluid content-inner mt-n5 py-0">
+  <div class="container-fluid content-inner mt-0">
     <div class="card shadow">
       <div class="card-body">
 

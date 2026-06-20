@@ -117,17 +117,13 @@
                     <!--logo End-->
                     <h4 class="logo-title">Ava</h4>
                 </a>
-                <!-- <div class="sidebar-toggle" data-toggle="sidebar" data-active="true" display="none">
+                <div class="sidebar-toggle" data-toggle="sidebar" data-active="true" style="cursor: pointer; margin-left: auto;">
                     <i class="icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path d="M4.25 12.2744L19.25 12.2744" stroke="currentColor" stroke-width="1.5"
-                                stroke-linecap="round" stroke-linejoin="round"></path>
-                            <path d="M10.2998 18.2988L4.2498 12.2748L10.2998 6.24976" stroke="currentColor"
-                                stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </i>
-                </div> -->
+                </div>
             </div>
             <div class="sidebar-body pt-0 data-scrollbar">
                 <div class="sidebar-list">
@@ -740,11 +736,10 @@
                         <!--logo End-->
                         <h4 class="logo-title">Ava</h4>
                     </a>
-                    <div class="sidebar-toggle" data-toggle="sidebar" data-active="true">
+                    <div class="sidebar-toggle" data-toggle="sidebar" data-active="true" style="cursor: pointer;">
                         <i class="icon">
-                            <svg width="20px" class="icon-20" viewBox="0 0 24 24">
-                                <path fill="currentColor"
-                                    d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z" />
+                            <svg width="24px" class="icon-24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
                         </i>
                     </div>
@@ -758,6 +753,7 @@
                         </span>
                     </button>
                     <div class="collapse navbar-collapse" id="navbarSupportedContent">
+
                         <ul class="mb-2 navbar-nav ms-auto align-items-center navbar-list mb-lg-0">
                             {{-- <li class="nav-item dropdown">
                                 <a href="#" class="nav-link" id="notification-drop" data-bs-toggle="dropdown">
@@ -934,6 +930,23 @@
                                     </div>
                                 </div>
                             </li> --}}
+                            <!-- Botones de Atajo (Alineados a la derecha) -->
+                            <li class="nav-item d-none d-lg-flex me-2">
+                                <a href="{{ route('sales.index') }}" class="btn btn-primary btn-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; box-shadow: 0 2px 4px rgba(13, 110, 253, 0.2);" data-bs-toggle="tooltip" data-bs-placement="bottom" title="POS Ventas">
+                                    <i class="bi bi-cart3 fs-5"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item d-none d-lg-flex me-2">
+                                <a href="{{ route('clients.index') }}" class="btn btn-light btn-sm rounded-circle d-flex align-items-center justify-content-center border-0 text-primary" style="width: 38px; height: 38px; background-color: rgba(13, 110, 253, 0.08);" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Clientes">
+                                    <i class="bi bi-people fs-5"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item d-none d-lg-flex me-3">
+                                <a href="{{ route('products.index') }}" class="btn btn-light btn-sm rounded-circle d-flex align-items-center justify-content-center border-0 text-primary" style="width: 38px; height: 38px; background-color: rgba(13, 110, 253, 0.08);" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Productos">
+                                    <i class="bi bi-box-seam fs-5"></i>
+                                </a>
+                            </li>
+                            
                             @if (auth()->user()->role->nombre == 'master')
                                 <li class="nav-item dropdown">
                                     @php
@@ -1011,7 +1024,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="iq-header-img" style="height: 220px;">
+                <div class="iq-header-img" style="height: 220px; border-radius: 0 !important;">
                     <img src="{{ asset('assets/images/dashboard/top-header.png') }}" alt="header"
                         class="theme-color-default-img img-fluid w-100 h-100 animated-scaleX">
                     <img src="{{ asset('assets/images/dashboard/top-header1.png') }}" alt="header"

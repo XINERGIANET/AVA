@@ -19,7 +19,7 @@
 @endsection
 
 @section('content')
-    <div class="container-fluid content-inner mt-n5 py-0">
+    <div class="container-fluid content-inner mt-0">
         <!-- Card que contiene el formulario y la tabla -->
         <div class="card shadow">
             <!-- Cuerpo del Card -->

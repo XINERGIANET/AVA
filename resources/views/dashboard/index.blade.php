@@ -4,7 +4,7 @@
 <p>Reportes Variados</p>
 @endsection
 @section('content')
-<div class="conatiner-fluid content-inner mt-n5 py-0">
+<div class="conatiner-fluid content-inner mt-0">
     <div class="row">
         <div class="col-md-12 col-lg-12">
             <div class="row row-cols-1">
