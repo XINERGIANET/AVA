@@ -30,10 +30,10 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
-    'perudevs' => [
-        'dni_url' => env('PERUDEVS_DNI_URL', 'https://api.perudevs.com/api/v1/dni/simple'),
-        'ruc_url' => env('PERUDEVS_RUC_URL', 'https://api.perudevs.com/api/v1/ruc'),
-        'token' => env('PERUDEVS_TOKEN'),
+    'jsonpe' => [
+        'dni_url' => env('JSONPE_DNI_URL', 'https://api.json.pe/api/dni'),
+        'ruc_url' => env('JSONPE_RUC_URL', 'https://api.json.pe/api/ruc'),
+        'token' => env('JSONPE_TOKEN'),
     ],
 
 ];

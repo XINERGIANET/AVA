@@ -962,42 +962,43 @@ class SaleController extends Controller
 
         $isDni = strlen($doc) === 8;
         $apiUrl = $isDni
-            ? config('services.perudevs.dni_url')
-            : config('services.perudevs.ruc_url');
-        $apiToken = config('services.perudevs.token');
+            ? config('services.jsonpe.dni_url')
+            : config('services.jsonpe.ruc_url');
+        $apiToken = config('services.jsonpe.token');
 
         if (!$apiUrl || !$apiToken) {
             return response()->json([
                 'success' => false,
-                'message' => 'La API de PeruDevs no esta configurada.'
+                'message' => 'La API de json.pe no esta configurada.'
             ], 500);
         }
 
         try {
-            $response = Http::timeout(20)->get($apiUrl, [
-                'document' => $doc,
-                'key' => $apiToken,
-            ]);
+            $response = Http::withToken($apiToken)
+                ->timeout(20)
+                ->post($apiUrl, [
+                    $isDni ? 'dni' : 'ruc' => $doc,
+                ]);
 
-            Log::info('Consulta a API PeruDevs', [
+            Log::info('Consulta a API json.pe', [
                 'document' => $doc,
                 'status' => $response->status(),
                 'response' => $response->body(),
             ]);
 
-            if ($response->successful() && $response->json('estado')) {
-                $result = $response->json('resultado', []);
+            if ($response->successful() && $response->json('success')) {
+                $result = $response->json('data', []);
                 $fullName = $isDni
                     ? trim($result['nombre_completo'] ?? trim(($result['nombres'] ?? '') . ' ' . ($result['apellido_paterno'] ?? '') . ' ' . ($result['apellido_materno'] ?? '')))
-                    : trim($result['razon_social'] ?? '');
+                    : trim($result['nombre_o_razon_social'] ?? '');
 
                 return response()->json([
                     'success' => true,
                     'data' => [
-                        'document' => $result['id'] ?? $doc,
+                        'document' => ($isDni ? ($result['numero'] ?? null) : ($result['ruc'] ?? null)) ?? $doc,
                         'name' => $fullName,
                         'business_name' => $fullName,
-                        'address' => trim($result['direccion'] ?? ''),
+                        'address' => trim($result['direccion_completa'] ?? $result['direccion'] ?? ''),
                         'document_type' => $isDni ? 'dni' : 'ruc',
                         'raw' => $result,
                     ]
@@ -1006,10 +1007,10 @@ class SaleController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => $response->json('mensaje') ?: 'No se encontro informacion para el documento consultado.'
+                'message' => $response->json('message') ?: 'No se encontro informacion para el documento consultado.'
             ], $response->status() >= 400 ? $response->status() : 404);
         } catch (\Exception $e) {
-            Log::error('Error al consultar documento en PeruDevs', [
+            Log::error('Error al consultar documento en json.pe', [
                 'error' => $e->getMessage()
             ]);
 
