@@ -141,6 +141,8 @@
         .empty-cart-icon { font-size: 5rem; opacity: 0.2; }
         #tbl-order-items:empty ~ #empty-cart-state { display: block; }
         #tbl-order-items:not(:empty) ~ #empty-cart-state { display: none; }
+        .cash-status-row { border: 1px solid #e9ecef; border-radius: 10px; padding: .75rem; }
+        .cash-status-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
     </style>
 @endsection
 
@@ -176,6 +178,53 @@
                         </div>
                     </div> --}}
 
+                    <div class="bg-white p-4 card-custom mb-3" id="cash-control-card">
+                        <div class="d-flex align-items-start justify-content-between gap-2 mb-3">
+                            <div>
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-cash-stack text-primary me-2 fs-5"></i>
+                                    <h6 class="mb-0 fw-bold">Control de cajas</h6>
+                                </div>
+                                <small class="text-muted">Estado actual por isla</small>
+                            </div>
+                            @if (auth()->user()->role->nombre !== 'worker')
+                                <a href="{{ route('cashClose.index') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-clock-history me-1"></i>Historial</a>
+                            @endif
+                        </div>
+                        <div class="d-grid gap-2">
+                            @forelse ($isles ?? [] as $isle)
+                                @php($openCash = ($openCashCloses ?? collect())->get($isle->id))
+                                <div class="cash-status-row" data-cash-isle="{{ $isle->id }}">
+                                    <div class="d-flex justify-content-between align-items-start gap-2">
+                                        <div>
+                                            <div class="fw-bold">{{ $isle->name }}</div>
+                                            @if ($openCash)
+                                                <small class="text-muted d-block">Abierta por {{ $openCash->user->name ?? $openCash->user->email ?? 'Usuario' }} · {{ $openCash->created_at->format('d/m/Y H:i') }}</small>
+                                                <small class="text-muted">Base: S/ {{ number_format((float) $openCash->initial_cash_amount, 2) }}</small>
+                                            @else
+                                                <small class="text-muted">Sin turno de caja activo</small>
+                                            @endif
+                                        </div>
+                                        <span class="badge {{ $openCash ? 'bg-success' : 'bg-secondary' }}"><span class="cash-status-dot bg-white me-1"></span>{{ $openCash ? 'Abierta' : 'Cerrada' }}</span>
+                                    </div>
+                                    <div class="d-flex flex-wrap gap-2 mt-2">
+                                        @if (!$openCash && auth()->user()->role->nombre !== 'worker')
+                                            <button type="button" class="btn btn-sm btn-primary cash-action" data-isle-id="{{ $isle->id }}" data-bs-toggle="modal" data-bs-target="#initialCashModal"><i class="bi bi-unlock me-1"></i>Abrir caja</button>
+                                        @elseif ($openCash)
+                                            <button type="button" class="btn btn-sm btn-outline-danger cash-action" data-isle-id="{{ $isle->id }}" data-bs-toggle="modal" data-bs-target="#expenseModal"><i class="bi bi-box-arrow-right me-1"></i>Egreso</button>
+                                            <button type="button" class="btn btn-sm btn-outline-info cash-action" data-isle-id="{{ $isle->id }}" data-bs-toggle="modal" data-bs-target="#vaultModal"><i class="bi bi-safe me-1"></i>Enviar a bóveda</button>
+                                            @if (auth()->user()->role->nombre !== 'worker')
+                                                <button type="button" class="btn btn-sm btn-outline-secondary cash-action" data-isle-id="{{ $isle->id }}" data-bs-toggle="modal" data-bs-target="#finalCashModal"><i class="bi bi-lock me-1"></i>Cerrar caja</button>
+                                            @endif
+                                        @endif
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="alert alert-warning mb-0">No hay islas configuradas para esta sede.</div>
+                            @endforelse
+                        </div>
+                    </div>
+
                     <!-- Card 1: Tipo de venta -->
                     <div class="bg-white p-4 card-custom mb-3">
                         <div class="d-flex align-items-center mb-3">
@@ -198,45 +247,6 @@
                             </div>
                         </div>
 
-                        <!-- Action buttons styled as square options -->
-                        <div class="d-flex justify-content-between gap-2 mt-4 flex-wrap">
-                            <button type="button" class="btn bg-white border border-1 rounded-3 d-flex flex-column align-items-center justify-content-center flex-fill py-3 @if (auth()->user()->role->nombre === 'worker') d-none @endif" data-bs-toggle="modal" data-bs-target="#initialCashModal" title="Abrir Caja" style="box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s;">
-                                <div class="rounded-3 d-flex align-items-center justify-content-center mb-2 btn-soft-primary" style="width: 45px; height: 45px;">
-                                    <i class="bi bi-cash fs-5"></i>
-                                </div>
-                                <span class="text-dark fw-bold" style="font-size: 0.75rem;">Abrir Caja</span>
-                            </button>
-                            
-                            <button type="button" class="btn bg-white border border-1 rounded-3 d-flex flex-column align-items-center justify-content-center flex-fill py-3" data-bs-toggle="modal" data-bs-target="#expenseModal" title="Egreso de Caja" style="box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s;">
-                                <div class="rounded-3 d-flex align-items-center justify-content-center mb-2 btn-soft-success" style="width: 45px; height: 45px;">
-                                    <i class="bi bi-box-arrow-right fs-5"></i>
-                                </div>
-                                <span class="text-dark fw-bold" style="font-size: 0.75rem;">Egreso</span>
-                            </button>
-                            
-                            @if (auth()->user()->role_id != 3)
-                            <button type="button" class="btn bg-white border border-1 rounded-3 d-flex flex-column align-items-center justify-content-center flex-fill py-3" data-bs-toggle="modal" data-bs-target="#finalCashModal" title="Cerrar Caja" style="box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s;">
-                                <div class="rounded-3 d-flex align-items-center justify-content-center mb-2 btn-soft-danger" style="width: 45px; height: 45px;">
-                                    <i class="bi bi-box-arrow-in-down fs-5"></i>
-                                </div>
-                                <span class="text-dark fw-bold" style="font-size: 0.75rem;">Cerrar Caja</span>
-                            </button>
-                            @endif
-                            
-                            <button type="button" class="btn bg-white border border-1 rounded-3 d-flex flex-column align-items-center justify-content-center flex-fill py-3" data-bs-toggle="modal" data-bs-target="#vaultModal" title="Enviar Bóveda" style="box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s;">
-                                <div class="rounded-3 d-flex align-items-center justify-content-center mb-2 btn-soft-info" style="width: 45px; height: 45px;">
-                                    <i class="bi bi-safe fs-5"></i>
-                                </div>
-                                <span class="text-dark fw-bold" style="font-size: 0.75rem;">Bóveda</span>
-                            </button>
-                            
-                            <button type="button" class="btn bg-white border border-1 rounded-3 d-flex flex-column align-items-center justify-content-center flex-fill py-3 @if (auth()->user()->role->nombre === 'worker') d-none @endif" title="Exportar ventas" onclick="window.location.href='{{ route('sales.excelByIsle') }}'" style="box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s;">
-                                <div class="rounded-3 d-flex align-items-center justify-content-center mb-2 btn-soft-secondary" style="width: 45px; height: 45px;">
-                                    <i class="bi bi-file-excel fs-5"></i>
-                                </div>
-                                <span class="text-dark fw-bold" style="font-size: 0.75rem;">Exportar</span>
-                            </button>
-                        </div>
                     </div>
 
                     <!-- Card de búsqueda de cliente -->
@@ -860,6 +870,30 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.cash-action').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    var isleId = this.dataset.isleId;
+                    var modalTarget = this.getAttribute('data-bs-target');
+                    var selectByModal = {
+                        '#initialCashModal': '#select-isle-initial',
+                        '#finalCashModal': '#select-isle-final',
+                        '#expenseModal': '#select-isle-expense',
+                        '#vaultModal': '#select-isle-vault'
+                    };
+                    var modal = document.querySelector(modalTarget);
+                    if (!modal || !selectByModal[modalTarget]) return;
+
+                    modal.addEventListener('shown.bs.modal', function selectCashIsle() {
+                        var select = document.querySelector(selectByModal[modalTarget]);
+                        if (select) {
+                            select.value = isleId;
+                            select.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                        modal.removeEventListener('shown.bs.modal', selectCashIsle);
+                    });
+                });
+            });
+
             var expenseModal = document.getElementById('expenseModal');
             if (expenseModal) {
                 expenseModal.addEventListener('shown.bs.modal', function() {
@@ -3346,6 +3380,7 @@
                         $('#initialCashModal').modal('hide');
                         $('#initial_cash_amount').val('');
                         $('#select-isle-initial').val('');
+                        setTimeout(() => location.reload(), 1000);
                     } else {
                         ToastError.fire({
                             title: 'Error',

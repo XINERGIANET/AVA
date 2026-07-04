@@ -71,6 +71,10 @@ class CashCloseController extends Controller
 
     public function store(Request $request)
     {
+        if (Auth::user()->role->nombre === 'worker') {
+            return response()->json(['status' => false, 'message' => 'No tiene permiso para abrir cajas.'], 403);
+        }
+
         $request->validate([
             'initial_cash_amount' => 'required|numeric|min:0',
             'isle_id' => 'required|exists:isles,id',
@@ -92,6 +96,11 @@ class CashCloseController extends Controller
                     'status' => false,
                     'message' => 'Isla no encontrada'
                 ], 404);
+            }
+
+            if (!$this->canAccessIsle($isle)) {
+                DB::rollBack();
+                return response()->json(['status' => false, 'message' => 'No tiene acceso a esta isla.'], 403);
             }
 
             $lastCashClose = CashClose::where('isle_id', $isleId)
@@ -154,6 +163,9 @@ class CashCloseController extends Controller
             $isle = Isle::find($id);
             if (!$isle) {
                 return response()->json(['status' => false, 'message' => 'Isla no encontrada'], 404);
+            }
+            if (!$this->canAccessIsle($isle)) {
+                return response()->json(['status' => false, 'message' => 'No tiene acceso a esta isla.'], 403);
             }
 
             $cashClose = CashClose::where('isle_id', $id)
@@ -245,6 +257,10 @@ class CashCloseController extends Controller
     public function update(Request $request, $id)
     {
         //
+        if (Auth::user()->role->nombre === 'worker') {
+            return response()->json(['status' => false, 'message' => 'No tiene permiso para cerrar cajas.'], 403);
+        }
+
         $request->validate([
             'real_cash_amount' => 'required|numeric',
             'final_cash_amount' => 'required|numeric'
@@ -254,6 +270,9 @@ class CashCloseController extends Controller
             $cashClose = CashClose::find($id);
             if (!$cashClose) {
                 return response()->json(['status' => false, 'message' => 'Registro de cierre no encontrado'], 404);
+            }
+            if (!$cashClose->isle || !$this->canAccessIsle($cashClose->isle)) {
+                return response()->json(['status' => false, 'message' => 'No tiene acceso a esta caja.'], 403);
             }
 
             $cashClose->final_cash_amount = $request->input('final_cash_amount');
@@ -279,6 +298,11 @@ class CashCloseController extends Controller
 
     public function checkStatus($isleId)
     {
+        $isle = Isle::find($isleId);
+        if (!$isle || !$this->canAccessIsle($isle)) {
+            return response()->json(['status' => false, 'message' => 'No tiene acceso a esta isla.'], 403);
+        }
+
         $lastClose = CashClose::where('isle_id', $isleId)
                         ->latest('id') // Equivalente a ORDER BY id DESC
                         ->first();
@@ -289,5 +313,22 @@ class CashCloseController extends Controller
             'status' => true,
             'isOpen' => $isOpen
         ]);
+    }
+
+    private function canAccessIsle(Isle $isle): bool
+    {
+        $user = Auth::user();
+
+        if ($user->role->nombre === 'master') {
+            return true;
+        }
+
+        if ((int) $isle->location_id !== (int) $user->location_id) {
+            return false;
+        }
+
+        return $user->role->nombre !== 'worker'
+            || empty($user->isle_id)
+            || (int) $user->isle_id === (int) $isle->id;
     }
 }

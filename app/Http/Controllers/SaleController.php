@@ -21,6 +21,7 @@ use App\Models\Isle;
 use App\Models\Pump;
 use App\Models\Measurement;
 use App\Models\Truck;
+use App\Models\CashClose;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -90,7 +91,15 @@ class SaleController extends Controller
             $assignedIsle = null;
         }
 
-        return view('sales.index', compact('product_categories', 'clients', 'payment_methods', 'isles', 'pumps', 'assignedIsle'));
+        $openCashCloses = CashClose::with('user')
+            ->whereIn('isle_id', $isles->pluck('id'))
+            ->whereNull('real_cash_amount')
+            ->orderByDesc('id')
+            ->get()
+            ->unique('isle_id')
+            ->keyBy('isle_id');
+
+        return view('sales.index', compact('product_categories', 'clients', 'payment_methods', 'isles', 'pumps', 'assignedIsle', 'openCashCloses'));
     }
 
     public function historico(Request $request)
