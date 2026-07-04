@@ -365,6 +365,13 @@
                             </a>
                         </li>
 
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('petty_cash.*') ? 'active' : '' }}" href="{{ route('petty_cash.index') }}">
+                                <i class="bi bi-cash-stack"></i>
+                                <span class="item-name">Caja chica</span>
+                            </a>
+                        </li>
+
                         @if (auth()->user()->role->nombre != 'worker')
                             <li class="nav-item">
                                 <a class="nav-link " aria-current="page" href="{{ route('purchases.create') }}">
@@ -1271,6 +1278,51 @@
     </style>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+        window.AppError = {
+            message(xhr, fallback) {
+                const json = xhr && xhr.responseJSON ? xhr.responseJSON : {};
+                if (json.errors) {
+                    const validation = Object.values(json.errors).flat().filter(Boolean);
+                    if (validation.length) return validation.join('\n');
+                }
+                return json.message || json.error || fallback || 'No se pudo completar la operación.';
+            },
+            isExpired(xhr) {
+                return xhr && (xhr.status === 401 || xhr.status === 419 || ['SESSION_EXPIRED', 'CSRF_EXPIRED'].includes(xhr.responseJSON?.code));
+            },
+            handle(xhr, options = {}) {
+                if (xhr) xhr.appErrorHandled = true;
+                const context = options.context || 'completar la operación';
+                if (this.isExpired(xhr)) {
+                    const loginUrl = xhr.responseJSON?.login_url || @json(route('login'));
+                    return Swal.fire({
+                        icon: 'warning', title: 'Sesión expirada',
+                        text: xhr.responseJSON?.message || 'Tu sesión terminó por inactividad. Inicia sesión nuevamente para continuar.',
+                        confirmButtonText: 'Ir a iniciar sesión', allowOutsideClick: false, allowEscapeKey: false
+                    }).then(() => window.location.assign(loginUrl));
+                }
+                if (!xhr || xhr.status === 0) {
+                    return Swal.fire({icon: 'error', title: 'Sin conexión', text: 'No fue posible comunicarse con el servidor. Verifica tu conexión y vuelve a intentar.'});
+                }
+                const titles = {403:'Acceso denegado',404:'Información no encontrada',409:'Operación no permitida',422:'Revisa los datos',429:'Demasiados intentos'};
+                const fallback = xhr.status >= 500
+                    ? `Ocurrió un problema al ${context}. El equipo técnico puede consultar el registro del servidor.`
+                    : `No se pudo ${context}.`;
+                return Swal.fire({
+                    icon: xhr.status >= 500 ? 'error' : 'warning',
+                    title: titles[xhr.status] || 'No se completó la operación',
+                    text: xhr.status >= 500 && !xhr.responseJSON?.error_id ? fallback : this.message(xhr, fallback)
+                });
+            }
+        };
+
+        $.ajaxSetup({headers: {'Accept':'application/json','X-Requested-With':'XMLHttpRequest'}});
+        $(document).ajaxError(function (_event, xhr) {
+            if (!xhr.appErrorHandled && (AppError.isExpired(xhr) || xhr.status === 0)) AppError.handle(xhr);
+        });
+    </script>
 
     <script src="{{ asset('assets/js/jquery-ui.min.js') }}"></script>
 

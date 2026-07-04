@@ -198,45 +198,6 @@
                             </div>
                         </div>
 
-                        <!-- Action buttons styled as square options -->
-                        <div class="d-flex justify-content-between gap-2 mt-4 flex-wrap">
-                            <button type="button" class="btn bg-white border border-1 rounded-3 d-flex flex-column align-items-center justify-content-center flex-fill py-3 @if (auth()->user()->role->nombre === 'worker') d-none @endif" data-bs-toggle="modal" data-bs-target="#initialCashModal" title="Abrir Caja" style="box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s;">
-                                <div class="rounded-3 d-flex align-items-center justify-content-center mb-2 btn-soft-primary" style="width: 45px; height: 45px;">
-                                    <i class="bi bi-cash fs-5"></i>
-                                </div>
-                                <span class="text-dark fw-bold" style="font-size: 0.75rem;">Abrir Caja</span>
-                            </button>
-                            
-                            <button type="button" class="btn bg-white border border-1 rounded-3 d-flex flex-column align-items-center justify-content-center flex-fill py-3" data-bs-toggle="modal" data-bs-target="#expenseModal" title="Egreso de Caja" style="box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s;">
-                                <div class="rounded-3 d-flex align-items-center justify-content-center mb-2 btn-soft-success" style="width: 45px; height: 45px;">
-                                    <i class="bi bi-box-arrow-right fs-5"></i>
-                                </div>
-                                <span class="text-dark fw-bold" style="font-size: 0.75rem;">Egreso</span>
-                            </button>
-                            
-                            @if (auth()->user()->role_id != 3)
-                            <button type="button" class="btn bg-white border border-1 rounded-3 d-flex flex-column align-items-center justify-content-center flex-fill py-3" data-bs-toggle="modal" data-bs-target="#finalCashModal" title="Cerrar Caja" style="box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s;">
-                                <div class="rounded-3 d-flex align-items-center justify-content-center mb-2 btn-soft-danger" style="width: 45px; height: 45px;">
-                                    <i class="bi bi-box-arrow-in-down fs-5"></i>
-                                </div>
-                                <span class="text-dark fw-bold" style="font-size: 0.75rem;">Cerrar Caja</span>
-                            </button>
-                            @endif
-                            
-                            <button type="button" class="btn bg-white border border-1 rounded-3 d-flex flex-column align-items-center justify-content-center flex-fill py-3" data-bs-toggle="modal" data-bs-target="#vaultModal" title="Enviar Bóveda" style="box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s;">
-                                <div class="rounded-3 d-flex align-items-center justify-content-center mb-2 btn-soft-info" style="width: 45px; height: 45px;">
-                                    <i class="bi bi-safe fs-5"></i>
-                                </div>
-                                <span class="text-dark fw-bold" style="font-size: 0.75rem;">Bóveda</span>
-                            </button>
-                            
-                            <button type="button" class="btn bg-white border border-1 rounded-3 d-flex flex-column align-items-center justify-content-center flex-fill py-3 @if (auth()->user()->role->nombre === 'worker') d-none @endif" title="Exportar ventas" onclick="window.location.href='{{ route('sales.excelByIsle') }}'" style="box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s;">
-                                <div class="rounded-3 d-flex align-items-center justify-content-center mb-2 btn-soft-secondary" style="width: 45px; height: 45px;">
-                                    <i class="bi bi-file-excel fs-5"></i>
-                                </div>
-                                <span class="text-dark fw-bold" style="font-size: 0.75rem;">Exportar</span>
-                            </button>
-                        </div>
                     </div>
 
                     <!-- Card de búsqueda de cliente -->
@@ -319,10 +280,6 @@
                                 <i class="bi bi-cart3 text-primary me-2 fs-5"></i>
                                 <h6 class="mb-0 fw-bold">Productos Agregados</h6>
                             </div>
-                            <button type="button" class="btn btn-primary px-4 py-2 fw-semibold" data-bs-toggle="modal"
-                                data-bs-target="#voucherModal" id="btn-open-voucher">
-                                Procesar Venta <i class="bi bi-box-arrow-right ms-2"></i>
-                            </button>
                         </div>
 
                         <div class="flex-grow-1" style="overflow-y: auto; overflow-x: hidden; min-height: 0;">
@@ -358,6 +315,30 @@
                                 <h2 class="mb-0 fw-bold text-primary">S/ <span id="total">0.00</span></h2>
                             </div>
                         </div>
+
+                        <div class="mt-4 pt-4 border-top" id="inline-checkout">
+                            <div class="d-flex align-items-center mb-3"><i class="bi bi-receipt text-primary me-2 fs-5"></i><h6 class="mb-0 fw-bold">Datos y pago de la venta</h6></div>
+                            <input type="hidden" id="number"><input type="hidden" id="address"><input type="hidden" id="orden"><input type="hidden" id="area">
+                            <input type="radio" class="voucher_type d-none" name="voucher_type" id="voucher_type_1" value="Ticket" checked>
+                            <div class="row g-3">
+                                <div class="col-md-6"><label class="form-label small fw-semibold">Documento</label><div class="input-group"><input type="text" class="form-control" id="document" maxlength="11" placeholder="DNI o RUC"><button type="button" class="btn btn-outline-primary" id="btn-search-ruc" onclick="searchDocumentApi()"><i class="bi bi-search"></i></button></div></div>
+                                <div class="col-md-6"><label class="form-label small fw-semibold">Fecha</label><input type="date" class="form-control" id="sale_date" value="{{ now()->format('Y-m-d') }}"></div>
+                                <div class="col-md-7"><label class="form-label small fw-semibold">Cliente</label><div class="input-group"><button class="btn btn-outline-secondary" type="button" id="btn_c_varios" onclick="document.getElementById('client_name').value='CLIENTES VARIOS'">C. Varios</button><input type="text" class="form-control" id="client_name" placeholder="Nombre o razón social"></div></div>
+                                <div class="col-md-5"><label class="form-label small fw-semibold">Placa</label><input type="text" class="form-control" id="vehicle_plate" placeholder="Opcional"></div>
+                                <div class="col-md-6" id="credit-number-section" style="display:none"><label class="form-label small fw-semibold">N.º de crédito</label><input type="text" class="form-control" id="credit_number" placeholder="Número de crédito"></div>
+                            </div>
+                            <div class="mt-3" id="payment-methods-section"><label class="form-label small fw-bold">Formas de pago</label><div class="row g-2">
+                                @foreach ($payment_methods as $index => $payment_method)
+                                    <div class="col-md-6 payment-method-item"><div class="input-group"><div class="input-group-text bg-white"><input type="checkbox" class="form-check-input mt-0 me-2" onchange="togglePaymentMethod(event, '#amount_{{ $payment_method->id }}')" id="cbx_amount_{{ $payment_method->id }}" {{ $index == 0 ? 'checked' : '' }}><label for="cbx_amount_{{ $payment_method->id }}">{{ $payment_method->name }}</label></div><input type="number" step="0.01" min="0" class="form-control text-end" id="amount_{{ $payment_method->id }}" oninput="calculateDifference(event)" {{ $index == 0 ? '' : 'disabled' }} placeholder="0.00"></div></div>
+                                @endforeach
+                            </div></div>
+                            <div id="vuelto-adicional-container" class="mt-3" style="display:none"><label><input type="checkbox" id="is-vuelto-adicional" class="form-check-input me-1"> Vuelto adicional</label></div>
+                            <div id="vuelto-adicional-section" class="mt-2" style="display:none"><label class="form-label small fw-semibold">Vuelto adicional</label><input type="number" step="0.01" class="form-control" name="adicional" id="adicional" placeholder="0.00"></div>
+                            <div class="d-flex flex-wrap gap-3 justify-content-between align-items-center bg-light rounded-3 p-3 mt-4">
+                                <div><span class="text-muted small d-block">Total a cobrar</span><strong class="fs-4">S/ <span id="charge-total">0.00</span></strong></div>
+                                <button type="button" class="btn btn-success btn-lg px-4" id="btn-save"><i class="bi bi-check-circle me-1"></i>Guardar venta <span id="spinner-save" class="spinner-border spinner-border-sm ms-1" style="display:none"></span></button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -365,6 +346,7 @@
     </div>
 
     <!-- Botón flotante para móviles -->
+    @if (false)
     <button type="button" class="btn btn-primary btn-float d-md-none" data-bs-toggle="modal"
         data-bs-target="#voucherModal" id="btn-float-voucher">
         <i class="bi bi-receipt fs-4"></i>
@@ -394,11 +376,6 @@
 
                             <input type="radio" class="btn-check voucher_type" name="voucher_type" id="voucher_type_3" value="Factura" style="display: none;">
                             <label class="btn btn-outline-primary btn-sm" for="voucher_type_3" style="display: none;">Factura</label>
-
-                            <input type="checkbox" class="btn-check" id="venta_ficticia" name="venta_ficticia" value="1">
-                            <label class="btn btn-outline-danger btn-sm ms-auto" for="venta_ficticia">
-                                VENTA FICTICIA
-                            </label>
 
                         </div>
                     </div>
@@ -523,6 +500,8 @@
             </div>
         </div>
     </div>
+
+    @endif
 
     <!-- Modal Cerrar Contómetro -->
     <div class="modal fade" id="finalMeasurementModal" tabindex="-1">
@@ -1152,7 +1131,7 @@
             const selectedIsle = assignedIsle || $('#select-isle').val();
             
             // Referencias al botón y mensajes
-            const btnProcesar = $('#btn-open-voucher');
+            const btnProcesar = $('#btn-save');
             const containerBtn = btnProcesar.parent(); // El div contenedor
             
             // Limpiar alertas de bloqueo previas
@@ -3002,6 +2981,9 @@
             }); */
 
             // Enviar datos al servidor
+            const $saveButton = $('#btn-save');
+            $saveButton.prop('disabled', true);
+            $('#spinner-save').show();
             $.ajax({
                 url: "{{ route('sales.store') }}",
                 method: 'POST',
@@ -3031,31 +3013,17 @@
                             }
                         }
                     } else {
-                        ToastError.fire({
-                            title: 'Error',
-                            text: response.error || 'Error al guardar la venta'
-                        });
+                        AppError.handle({status: 422, responseJSON: response}, {context: 'registrar la venta'});
                     }
                 },
-                error: function(xhr, status, error) {
+                error: function(xhr) {
                     Swal.close();
 
-                    let errorMessage = 'Error al guardar la venta';
-
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                        errorMessage = xhr.responseJSON.message;
-                    } else if (xhr.responseJSON && xhr.responseJSON.errors) {
-                        // Mostrar errores de validación
-                        const errors = xhr.responseJSON.errors;
-                        errorMessage = Object.values(errors).flat().join(', ');
-                    }
-
-                    ToastError.fire({
-                        title: 'Error',
-                        text: errorMessage
-                    });
-
-                    console.error('Error:', xhr.responseJSON);
+                    AppError.handle(xhr, {context: 'registrar la venta'});
+                },
+                complete: function() {
+                    $saveButton.prop('disabled', false);
+                    $('#spinner-save').hide();
                 }
             });
         }
@@ -3079,7 +3047,7 @@
             $('#orden').val('');
             $('#area').val('');
             $('#number').val('');
-            $('#sale_date').val('');
+            setCurrentSaleDate();
             $('#current-order-detail-id').val('');
             $('#current-agreement-id').val('');
             $('#current-order-id').val('');
@@ -3144,7 +3112,7 @@
 
             // Resetear comprobante
             $('input[name="voucher_type"]').prop('checked', false);
-            $('#voucher_type_3').prop('checked', true); // Factura por defecto
+            $('#voucher_type_1').prop('checked', true);
         }
     </script>
 
@@ -3346,6 +3314,7 @@
                         $('#initialCashModal').modal('hide');
                         $('#initial_cash_amount').val('');
                         $('#select-isle-initial').val('');
+                        setTimeout(() => location.reload(), 1000);
                     } else {
                         ToastError.fire({
                             title: 'Error',
