@@ -141,8 +141,6 @@
         .empty-cart-icon { font-size: 5rem; opacity: 0.2; }
         #tbl-order-items:empty ~ #empty-cart-state { display: block; }
         #tbl-order-items:not(:empty) ~ #empty-cart-state { display: none; }
-        .cash-status-row { border: 1px solid #e9ecef; border-radius: 10px; padding: .75rem; }
-        .cash-status-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
     </style>
 @endsection
 
@@ -177,53 +175,6 @@
                             </button>
                         </div>
                     </div> --}}
-
-                    <div class="bg-white p-4 card-custom mb-3" id="cash-control-card">
-                        <div class="d-flex align-items-start justify-content-between gap-2 mb-3">
-                            <div>
-                                <div class="d-flex align-items-center">
-                                    <i class="bi bi-cash-stack text-primary me-2 fs-5"></i>
-                                    <h6 class="mb-0 fw-bold">Control de cajas</h6>
-                                </div>
-                                <small class="text-muted">Estado actual por isla</small>
-                            </div>
-                            @if (auth()->user()->role->nombre !== 'worker')
-                                <a href="{{ route('cashClose.index') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-clock-history me-1"></i>Historial</a>
-                            @endif
-                        </div>
-                        <div class="d-grid gap-2">
-                            @forelse ($isles ?? [] as $isle)
-                                @php($openCash = ($openCashCloses ?? collect())->get($isle->id))
-                                <div class="cash-status-row" data-cash-isle="{{ $isle->id }}">
-                                    <div class="d-flex justify-content-between align-items-start gap-2">
-                                        <div>
-                                            <div class="fw-bold">{{ $isle->name }}</div>
-                                            @if ($openCash)
-                                                <small class="text-muted d-block">Abierta por {{ $openCash->user->name ?? $openCash->user->email ?? 'Usuario' }} · {{ $openCash->created_at->format('d/m/Y H:i') }}</small>
-                                                <small class="text-muted">Base: S/ {{ number_format((float) $openCash->initial_cash_amount, 2) }}</small>
-                                            @else
-                                                <small class="text-muted">Sin turno de caja activo</small>
-                                            @endif
-                                        </div>
-                                        <span class="badge {{ $openCash ? 'bg-success' : 'bg-secondary' }}"><span class="cash-status-dot bg-white me-1"></span>{{ $openCash ? 'Abierta' : 'Cerrada' }}</span>
-                                    </div>
-                                    <div class="d-flex flex-wrap gap-2 mt-2">
-                                        @if (!$openCash && auth()->user()->role->nombre !== 'worker')
-                                            <button type="button" class="btn btn-sm btn-primary cash-action" data-isle-id="{{ $isle->id }}" data-bs-toggle="modal" data-bs-target="#initialCashModal"><i class="bi bi-unlock me-1"></i>Abrir caja</button>
-                                        @elseif ($openCash)
-                                            <button type="button" class="btn btn-sm btn-outline-danger cash-action" data-isle-id="{{ $isle->id }}" data-bs-toggle="modal" data-bs-target="#expenseModal"><i class="bi bi-box-arrow-right me-1"></i>Egreso</button>
-                                            <button type="button" class="btn btn-sm btn-outline-info cash-action" data-isle-id="{{ $isle->id }}" data-bs-toggle="modal" data-bs-target="#vaultModal"><i class="bi bi-safe me-1"></i>Enviar a bóveda</button>
-                                            @if (auth()->user()->role->nombre !== 'worker')
-                                                <button type="button" class="btn btn-sm btn-outline-secondary cash-action" data-isle-id="{{ $isle->id }}" data-bs-toggle="modal" data-bs-target="#finalCashModal"><i class="bi bi-lock me-1"></i>Cerrar caja</button>
-                                            @endif
-                                        @endif
-                                    </div>
-                                </div>
-                            @empty
-                                <div class="alert alert-warning mb-0">No hay islas configuradas para esta sede.</div>
-                            @endforelse
-                        </div>
-                    </div>
 
                     <!-- Card 1: Tipo de venta -->
                     <div class="bg-white p-4 card-custom mb-3">
@@ -870,30 +821,6 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('.cash-action').forEach(function(button) {
-                button.addEventListener('click', function() {
-                    var isleId = this.dataset.isleId;
-                    var modalTarget = this.getAttribute('data-bs-target');
-                    var selectByModal = {
-                        '#initialCashModal': '#select-isle-initial',
-                        '#finalCashModal': '#select-isle-final',
-                        '#expenseModal': '#select-isle-expense',
-                        '#vaultModal': '#select-isle-vault'
-                    };
-                    var modal = document.querySelector(modalTarget);
-                    if (!modal || !selectByModal[modalTarget]) return;
-
-                    modal.addEventListener('shown.bs.modal', function selectCashIsle() {
-                        var select = document.querySelector(selectByModal[modalTarget]);
-                        if (select) {
-                            select.value = isleId;
-                            select.dispatchEvent(new Event('change', { bubbles: true }));
-                        }
-                        modal.removeEventListener('shown.bs.modal', selectCashIsle);
-                    });
-                });
-            });
-
             var expenseModal = document.getElementById('expenseModal');
             if (expenseModal) {
                 expenseModal.addEventListener('shown.bs.modal', function() {
@@ -3036,6 +2963,9 @@
             }); */
 
             // Enviar datos al servidor
+            const $saveButton = $('#btn-save');
+            $saveButton.prop('disabled', true);
+            $('#spinner-save').show();
             $.ajax({
                 url: "{{ route('sales.store') }}",
                 method: 'POST',
@@ -3065,31 +2995,17 @@
                             }
                         }
                     } else {
-                        ToastError.fire({
-                            title: 'Error',
-                            text: response.error || 'Error al guardar la venta'
-                        });
+                        AppError.handle({status: 422, responseJSON: response}, {context: 'registrar la venta'});
                     }
                 },
-                error: function(xhr, status, error) {
+                error: function(xhr) {
                     Swal.close();
 
-                    let errorMessage = 'Error al guardar la venta';
-
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                        errorMessage = xhr.responseJSON.message;
-                    } else if (xhr.responseJSON && xhr.responseJSON.errors) {
-                        // Mostrar errores de validación
-                        const errors = xhr.responseJSON.errors;
-                        errorMessage = Object.values(errors).flat().join(', ');
-                    }
-
-                    ToastError.fire({
-                        title: 'Error',
-                        text: errorMessage
-                    });
-
-                    console.error('Error:', xhr.responseJSON);
+                    AppError.handle(xhr, {context: 'registrar la venta'});
+                },
+                complete: function() {
+                    $saveButton.prop('disabled', false);
+                    $('#spinner-save').hide();
                 }
             });
         }

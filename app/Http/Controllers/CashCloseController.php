@@ -17,6 +17,25 @@ use Illuminate\Support\Facades\Log;
 
 class CashCloseController extends Controller
 {
+    public function operations()
+    {
+        $user = Auth::user();
+        $isles = Isle::where('deleted', 0)
+            ->when($user->role->nombre !== 'master', fn ($query) => $query->where('location_id', $user->location_id))
+            ->when($user->role->nombre === 'worker' && $user->isle_id, fn ($query) => $query->where('id', $user->isle_id))
+            ->orderBy('name')
+            ->get();
+
+        $openCashCloses = CashClose::with('user')
+            ->whereIn('isle_id', $isles->pluck('id'))
+            ->whereNull('real_cash_amount')
+            ->orderByDesc('id')
+            ->get()
+            ->unique('isle_id')
+            ->keyBy('isle_id');
+
+        return view('pettyCash.index', compact('isles', 'openCashCloses'));
+    }
 
     public function index(Request $request)
     {

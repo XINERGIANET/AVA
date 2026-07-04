@@ -91,15 +91,7 @@ class SaleController extends Controller
             $assignedIsle = null;
         }
 
-        $openCashCloses = CashClose::with('user')
-            ->whereIn('isle_id', $isles->pluck('id'))
-            ->whereNull('real_cash_amount')
-            ->orderByDesc('id')
-            ->get()
-            ->unique('isle_id')
-            ->keyBy('isle_id');
-
-        return view('sales.index', compact('product_categories', 'clients', 'payment_methods', 'isles', 'pumps', 'assignedIsle', 'openCashCloses'));
+        return view('sales.index', compact('product_categories', 'clients', 'payment_methods', 'isles', 'pumps', 'assignedIsle'));
     }
 
     public function historico(Request $request)
@@ -477,6 +469,30 @@ class SaleController extends Controller
 
         $request->validate($validationRules);
 
+        $isle = Isle::whereKey($request->isle_id)
+            ->where('deleted', 0)
+            ->where('location_id', $sede)
+            ->first();
+
+        if (!$isle) {
+            return response()->json([
+                'status' => false,
+                'message' => 'La isla seleccionada no pertenece a tu sede o ya no está disponible.'
+            ], 422);
+        }
+
+        $hasOpenCash = CashClose::where('isle_id', $isle->id)
+            ->whereNull('real_cash_amount')
+            ->exists();
+
+        if (!$hasOpenCash) {
+            return response()->json([
+                'status' => false,
+                'code' => 'CASH_CLOSED',
+                'message' => 'La caja de esta isla está cerrada. Abre la caja antes de registrar la venta.'
+            ], 409);
+        }
+
         DB::beginTransaction();
         try {
             $saleDate = $request->filled('date')
@@ -682,12 +698,23 @@ class SaleController extends Controller
             DB::rollBack();
             return response()->json([
                 'status' => false,
-                'error' => $e->validator->errors()->first()
+                'message' => $e->validator->errors()->first(),
+                'errors' => $e->validator->errors()
             ], 422);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error Store Sale: ' . $e->getMessage());
-            return response()->json(['status' => false, 'error' => 'Error: ' . $e->getMessage()], 500);
+            $errorId = 'SALE-' . now()->format('YmdHis') . '-' . strtoupper(substr(uniqid(), -6));
+            Log::error('Error al registrar venta', [
+                'error_id' => $errorId,
+                'user_id' => Auth::id(),
+                'isle_id' => $request->isle_id,
+                'exception' => $e,
+            ]);
+            return response()->json([
+                'status' => false,
+                'message' => "No se pudo registrar la venta. No se realizó ningún cargo. Código de soporte: {$errorId}",
+                'error_id' => $errorId,
+            ], 500);
         }
     }
 

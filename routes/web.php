@@ -131,6 +131,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::resource('sales', SaleController::class);
     Route::get('/sunat/consultar', [SaleController::class, 'consultarSunat']);
     Route::get('/cash-closes/check-status/{isle_id}', [CashCloseController::class, 'checkStatus'])->name('cash_closes.check_status');
+    Route::get('/caja-chica', [CashCloseController::class, 'operations'])->name('petty_cash.index');
     
     //CRUD RECALIBRACION
     Route::get('recalibration/index', [RecalibrationController::class, 'index'])->name('recalibration.index');
