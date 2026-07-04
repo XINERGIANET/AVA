@@ -21,7 +21,7 @@ class CashCloseController extends Controller
     {
         $user = Auth::user();
         $isles = Isle::where('deleted', 0)
-            ->when($user->role->nombre !== 'master', fn ($query) => $query->where('location_id', $user->location_id))
+            ->where('location_id', $user->location_id)
             ->when($user->role->nombre === 'worker' && $user->isle_id, fn ($query) => $query->where('id', $user->isle_id))
             ->orderBy('name')
             ->get();
