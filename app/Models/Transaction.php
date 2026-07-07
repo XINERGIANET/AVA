@@ -24,6 +24,9 @@ class Transaction extends Model
         'amount',
         'date',
         'status',
+        'category',
+        'payment_method',
+        'observation',
     ];
 
 	protected $dates = [

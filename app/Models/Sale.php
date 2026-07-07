@@ -49,6 +49,9 @@ class Sale extends Model
 		//Como un vuelto adicional que pide el cliente
 		'adicional',
 		'vehicle_plate',
+		'voucher_code',
+		'responsible_id',
+		'detail',
 		'date',
 		'deleted'
 
@@ -71,6 +74,11 @@ class Sale extends Model
 	public function user()
 	{
 		return $this->belongsTo(User::class);
+	}
+
+	public function responsible()
+	{
+		return $this->belongsTo(Employee::class, 'responsible_id');
 	}
 
 	public function payments()

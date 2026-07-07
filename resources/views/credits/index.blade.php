@@ -87,6 +87,9 @@
                                         <th>Documento</th>
                                         <th>Cliente</th>
                                         <th>Productos</th>
+                                        <th>Código Vale</th>
+                                        <th>Responsable</th>
+                                        <th>Detalle</th>
                                         <th>Fecha Generación</th>
                                         <th>Total</th>
                                         <th>Fecha Pago</th>
@@ -129,6 +132,15 @@
                                                 @else
                                                     <li>No hay productos</li>
                                                 @endif
+                                            </td>
+                                            <td>
+                                                {{ $credit->sale && $credit->sale->voucher_code ? $credit->sale->voucher_code : 'N/A' }}
+                                            </td>
+                                            <td>
+                                                {{ $credit->sale && $credit->sale->responsible ? $credit->sale->responsible->name . ' ' . $credit->sale->responsible->last_name : 'N/A' }}
+                                            </td>
+                                            <td>
+                                                {{ $credit->sale && $credit->sale->detail ? $credit->sale->detail : 'N/A' }}
                                             </td>
                                             <td>
                                                 @if ($credit->sale)

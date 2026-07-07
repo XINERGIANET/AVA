@@ -48,6 +48,12 @@
                                     <a href="{{ route('expenses.historico') }}" class="btn btn-warning w-100"
                                         id="btnLimpiar">Limpiar</a>
                                 </div>
+                                <div class="col-md-2 mb-2">
+                                    <button type="button" class="btn btn-success w-100" id="btnExcel"
+                                        onclick="exportExcel()">
+                                        <i class="bi bi-file-excel"></i> Excel
+                                    </button>
+                                </div>
                             </div>
                                                         <div class="row">
                                 <div class="col-12 mt-4">
@@ -144,6 +150,25 @@
                             <label for="edit_description" class="form-label">Descripción</label>
                             <input type="text" class="form-control" id="edit_description" name="description" maxlength="255">
                         </div>
+                        
+                        <div class="mb-3">
+                            <label for="edit_category" class="form-label">Categoría</label>
+                            <input type="text" class="form-control" id="edit_category" name="category" maxlength="255">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="edit_payment_method" class="form-label">Método de Pago</label>
+                            <select class="form-select" id="edit_payment_method" name="payment_method">
+                                <option value="Efectivo">Efectivo</option>
+                                <option value="Transferencia">Transferencia</option>
+                                <option value="Tarjeta">Tarjeta</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="edit_observation" class="form-label">Observaciones</label>
+                            <textarea class="form-control" id="edit_observation" name="observation" rows="2"></textarea>
+                        </div>
 
                         <div class="mb-3">
                             <label for="edit_date" class="form-label">Fecha <span class="text-danger">*</span></label>
@@ -203,6 +228,9 @@
                     $('#edit_isle_id').val(expense.isle_id);
                     $('#edit_amount').val(expense.amount);
                     $('#edit_description').val(expense.description || '');
+                    $('#edit_category').val(expense.category || '');
+                    $('#edit_payment_method').val(expense.payment_method || 'Efectivo');
+                    $('#edit_observation').val(expense.observation || '');
                     $('#edit_date').val(expense.date ? expense.date.split(' ')[0] : '');
                 } else {
                     ToastError.fire({
@@ -296,5 +324,10 @@
             }
         });
     });
+
+    function exportExcel() {
+        const formData = $('#fromFilter').serialize();
+        window.location.href = "{{ route('expenses.excel') }}?" + formData;
+    }
 </script>
 @endsection

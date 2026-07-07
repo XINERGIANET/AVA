@@ -953,6 +953,11 @@
                                     <i class="bi bi-box-seam fs-5"></i>
                                 </a>
                             </li>
+                            <li class="nav-item d-none d-lg-flex me-3">
+                                <a href="{{ route('petty_cash.index') }}" class="btn btn-light btn-sm rounded-circle d-flex align-items-center justify-content-center border-0 text-primary" style="width: 38px; height: 38px; background-color: rgba(13, 110, 253, 0.08);" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Caja">
+                                    <i class="bi bi-cash-stack fs-5"></i>
+                                </a>
+                            </li>
                             
                             @if (auth()->user()->role->nombre == 'master')
                                 <li class="nav-item dropdown">

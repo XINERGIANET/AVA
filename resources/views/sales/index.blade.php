@@ -321,11 +321,15 @@
                             <input type="hidden" id="number"><input type="hidden" id="address"><input type="hidden" id="orden"><input type="hidden" id="area">
                             <input type="radio" class="voucher_type d-none" name="voucher_type" id="voucher_type_1" value="Ticket" checked>
                             <div class="row g-3">
-                                <div class="col-md-6"><label class="form-label small fw-semibold">Documento</label><div class="input-group"><input type="text" class="form-control" id="document" maxlength="11" placeholder="DNI o RUC"><button type="button" class="btn btn-outline-primary" id="btn-search-ruc" onclick="searchDocumentApi()"><i class="bi bi-search"></i></button></div></div>
-                                <div class="col-md-6"><label class="form-label small fw-semibold">Fecha</label><input type="date" class="form-control" id="sale_date" value="{{ now()->format('Y-m-d') }}"></div>
+                                <div class="col-md-4"><label class="form-label small fw-semibold">Documento</label><div class="input-group"><input type="text" class="form-control" id="document" maxlength="11" placeholder="DNI o RUC"><button type="button" class="btn btn-outline-primary" id="btn-search-ruc" onclick="searchDocumentApi()"><i class="bi bi-search"></i></button></div></div>
+                                <div class="col-md-4"><label class="form-label small fw-semibold">Fecha</label><input type="date" class="form-control" id="sale_date" value="{{ now()->format('Y-m-d') }}"></div>
+                                <div class="col-md-4"><label class="form-label small fw-semibold">Responsable</label><select class="form-select" id="user_id"><option value="">-- Por defecto --</option>@foreach($users ?? [] as $u)<option value="{{ $u->id }}" {{ auth()->id() == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>@endforeach</select></div>
                                 <div class="col-md-7"><label class="form-label small fw-semibold">Cliente</label><div class="input-group"><button class="btn btn-outline-secondary" type="button" id="btn_c_varios" onclick="document.getElementById('client_name').value='CLIENTES VARIOS'">C. Varios</button><input type="text" class="form-control" id="client_name" placeholder="Nombre o razón social"></div></div>
                                 <div class="col-md-5"><label class="form-label small fw-semibold">Placa</label><input type="text" class="form-control" id="vehicle_plate" placeholder="Opcional"></div>
-                                <div class="col-md-6" id="credit-number-section" style="display:none"><label class="form-label small fw-semibold">N.º de crédito</label><input type="text" class="form-control" id="credit_number" placeholder="Número de crédito"></div>
+                                <div class="col-md-6 credit-extra-fields" style="display:none"><label class="form-label small fw-semibold">N.º de crédito</label><input type="text" class="form-control" id="credit_number" placeholder="Número de crédito"></div>
+                                <div class="col-md-6 credit-extra-fields" style="display:none"><label class="form-label small fw-semibold">Código de Vale</label><input type="text" class="form-control" id="voucher_code" placeholder="Código"></div>
+                                <div class="col-md-6 credit-extra-fields" style="display:none"><label class="form-label small fw-semibold">Responsable (Sede)</label><select class="form-select" id="responsible_id"><option value="">-- Seleccione --</option>@foreach($employees ?? [] as $emp)<option value="{{ $emp->id }}">{{ $emp->name }} {{ $emp->last_name }}</option>@endforeach</select></div>
+                                <div class="col-md-6 credit-extra-fields" style="display:none"><label class="form-label small fw-semibold">Detalle</label><input type="text" class="form-control" id="detail" placeholder="Observación"></div>
                             </div>
                             <div class="mt-3" id="payment-methods-section"><label class="form-label small fw-bold">Formas de pago</label><div class="row g-2">
                                 @foreach ($payment_methods as $index => $payment_method)
@@ -402,10 +406,27 @@
                         <label class="form-label">Fecha</label>
                         <input type="date" class="form-control" id="sale_date" value="{{ now()->format('Y-m-d') }}">
                     </div>
-                    <!--Numero de credito solo para venta a credito-->
-                    <div class="mb-3" id="credit-number-section" style="display: none;">
+                    <!--Campos de credito-->
+                    <div class="mb-3 credit-extra-fields" style="display: none;">
                         <label class="form-label">N° de Crédito</label>
                         <input type="text" class="form-control" id="credit_number" placeholder="-">
+                    </div>
+                    <div class="mb-3 credit-extra-fields" style="display: none;">
+                        <label class="form-label">Código de Vale</label>
+                        <input type="text" class="form-control" id="voucher_code" placeholder="-">
+                    </div>
+                    <div class="mb-3 credit-extra-fields" style="display: none;">
+                        <label class="form-label">Responsable (Sede)</label>
+                        <select class="form-select" id="responsible_id">
+                            <option value="">-- Seleccione --</option>
+                            @foreach($employees ?? [] as $emp)
+                            <option value="{{ $emp->id }}">{{ $emp->name }} {{ $emp->last_name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3 credit-extra-fields" style="display: none;">
+                        <label class="form-label">Detalle</label>
+                        <input type="text" class="form-control" id="detail" placeholder="-">
                     </div>
 
                     <!-- Cliente -->
@@ -668,6 +689,23 @@
                         <label class="form-label">Descripción:</label>
                         <input type="text" class="form-control" id="expense_description"
                             placeholder="Descripción del egreso">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Categoría:</label>
+                        <input type="text" class="form-control" id="expense_category"
+                            placeholder="Categoría del egreso">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Método de Pago:</label>
+                        <select class="form-select" id="expense_payment_method">
+                            <option value="Efectivo">Efectivo</option>
+                            <option value="Transferencia">Transferencia</option>
+                            <option value="Tarjeta">Tarjeta</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Observaciones:</label>
+                        <textarea class="form-control" id="expense_observation" placeholder="Observaciones adicionales"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -965,19 +1003,22 @@
         // Ocultar/mostrar métodos de pago cuando se marca el checkbox de crédito
         $('#is-credit-sale').on('change', function() {
             if ($(this).is(':checked')) {
-                // Ocultar sección de métodos de pago
                 $('#payment-methods-section').hide();
-                $('#paga-con-section').hide();
-                $('#credit-number-section').show();
+                $('#credit-checkbox-container').show();
+                $('.credit-extra-fields').show();
+                $('#type_sale').val('2');
+                resetPaymentMethods();
+                recalculateTotal();
+            } else {
+                $('#payment-methods-section').show();
+                $('.credit-extra-fields').hide();
+                $('#credit_number').val('');
+                $('#voucher_code').val('');
+                $('#responsible_id').val('');
+                $('#detail').val('');
+                $('#credit-number-section').hide();
                 $('#is-vuelto-adicional').prop('checked', false);
                 $('#vuelto-adicional-container').hide();
-            } else {
-                // Mostrar métodos de pago
-                $('#payment-methods-section').show();
-                $('#paga-con-section').show();
-                $('#credit-number-section').hide();
-                $('#credit_number').val('');
-                $('#vuelto-adicional-container').show();
             }
         });
             $('#is-vuelto-adicional').on('change', function() {
@@ -2933,11 +2974,15 @@
                 voucher_type: $('input[name="voucher_type"]:checked').val(),
                 voucher_number: $('#number').val(), // Número de comprobante para payments
                 credit_number: $('#credit_number').val() && $('#credit_number').val().trim() !== '' ? parseInt($('#credit_number').val()) : null, // Número de crédito (solo para ventas a crédito)
+                voucher_code: isCreditSale ? $('#voucher_code').val() : null,
+                responsible_id: isCreditSale ? $('#responsible_id').val() : null,
+                detail: isCreditSale ? $('#detail').val() : null,
                 date: $('#sale_date').val(),
                 document: $('#document').val(),
                 address: $('#address').val(),
                 orden: $('#orden').val(),
                 placa: $('#placa').val(),
+                user_id: $('#user_id').val(),
                 _token: $('meta[name="csrf-token"]').attr('content')
             };
 
@@ -3087,9 +3132,9 @@
             $('#addProductsModal').modal('hide');
 
             // Resetear tipo de venta a directa
-            $('#tipo-venta').val('directa').trigger('change');
-            $('#type_sale').val('0');
-            
+            $('#type-sale').val('directa');
+            $('.credit-extra-fields').hide();
+            $('#credit_number').val('');   
             // Ocultar sección de crédito y desmarcar checkbox
             $('#is-credit-sale').prop('checked', false);
             $('#credit-number-section').hide();
@@ -3395,6 +3440,9 @@
             $('#cash_amount').val('0.00');
             $('#expense_amount').val('');
             $('#expense_description').val('');
+            $('#expense_category').val('');
+            $('#expense_payment_method').val('Efectivo');
+            $('#expense_observation').val('');
         });
 
         $('#expenseModal').on('show.bs.modal', function() {
@@ -3403,11 +3451,17 @@
             $('#cash_amount').val('0.00');
             $('#expense_amount').val('');
             $('#expense_description').val('');
+            $('#expense_category').val('');
+            $('#expense_payment_method').val('Efectivo');
+            $('#expense_observation').val('');
         });
 
         $('#btn-save-expenses').on('click', function() {
             const isleId = $('#select-isle-expense').val();
             const description = $('#expense_description').val().trim();
+            const category = $('#expense_category').val().trim();
+            const payment_method = $('#expense_payment_method').val();
+            const observation = $('#expense_observation').val().trim();
             const amount = parseFloat($('#expense_amount').val()) || 0;
 
             // Validar que se haya seleccionado una isla
@@ -3437,6 +3491,9 @@
                 method: 'POST',
                 data: {
                     description: description || null, // Enviar null si está vacío
+                    category: category || null,
+                    payment_method: payment_method || null,
+                    observation: observation || null,
                     amount: amount,
                     isle_id: isleId,
                     _token: $('meta[name="csrf-token"]').attr('content')
@@ -3471,6 +3528,9 @@
                         }
 
                         $('#expense_description').val('');
+                        $('#expense_category').val('');
+                        $('#expense_payment_method').val('Efectivo');
+                        $('#expense_observation').val('');
                         $('#expense_amount').val('');
                         $('#expenseModal').modal('hide');
                     } else {

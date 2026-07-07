@@ -2,7 +2,7 @@
 
 namespace App\Exports;
 
-use App\Models\Agreement;
+use App\Models\Payment;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -38,67 +38,97 @@ class CreditsExport implements FromCollection, WithHeadings, WithMapping, WithSt
 
     public function collection()
     {
-        $credits = Agreement::with(['client', 'location'])
-            ->where('status', 'active')
-            ->where('type', 'credit');
+        $credits = Payment::with([
+            'sale.sale_details.product',
+            'sale.location',
+            'sale.responsible',
+            'agreement.agreement_details.product',
+            'agreement.location',
+            'client',
+            'payment_method'
+        ])
+            ->whereIn('status', ['paid', 'pending'])
+            ->where('deleted', 0);
 
-        if ($this->start_date && $this->end_date) {
-            $credits->whereBetween('date', [$this->start_date, $this->end_date]);
+        if ($this->start_date) {
+            $credits->whereDate('date', '>=', $this->start_date);
         }
-        if ($this->location_id) {
-            $credits->where('location_id', $this->location_id);
+        if ($this->end_date) {
+            $credits->whereDate('date', '<=', $this->end_date);
         }
         if ($this->client_id) {
             $credits->where('client_id', $this->client_id);
         }
-        if ($this->payment_day) {
-            $credits->where('days_credit', $this->payment_day);
-        }
-        if ($this->product_id) {
-            $credits->whereHas('agreement_details', function ($query) {
-                $query->where('product_id', $this->product_id);
+        if ($this->location_id) {
+            $credits->where(function($query) {
+                $query->whereHas('sale.location', fn($q) => $q->where('id', $this->location_id))
+                      ->orWhereHas('agreement.location', fn($q) => $q->where('id', $this->location_id));
             });
         }
-        return $credits->get();
+        
+        return $credits->orderBy('date', 'desc')->get();
     }
 
-    public function map($credit): array
+    public function map($payment): array
     {
-        $productos = $credit->agreement_details->map(function ($detail) {
-            return $detail->product->name . ' (' . $detail->quantity . ')';
-        })->join(', ');
+        $productos = '';
+        $voucher_code = 'N/A';
+        $responsible = 'N/A';
+        $detail = 'N/A';
+        $vehicle_plate = 'N/A';
+
+        if ($payment->sale && $payment->sale->sale_details) {
+            $productos = $payment->sale->sale_details->map(function ($detail) {
+                return ($detail->product->name ?? 'Producto') . ' (' . $detail->quantity . ')';
+            })->join(', ');
+            $voucher_code = $payment->sale->voucher_code ?? 'N/A';
+            $responsible = $payment->sale->responsible ? $payment->sale->responsible->name . ' ' . $payment->sale->responsible->last_name : 'N/A';
+            $detail = $payment->sale->detail ?? 'N/A';
+            $vehicle_plate = $payment->sale->vehicle_plate ?? 'N/A';
+        } elseif ($payment->agreement && $payment->agreement->agreement_details) {
+            $productos = $payment->agreement->agreement_details->map(function ($detail) {
+                return ($detail->product->name ?? 'Producto') . ' (' . $detail->quantity . ')';
+            })->join(', ');
+        }
+
+        $cliente_name = $payment->client_name ?? 'Sin cliente';
+        $document = $payment->client ? $payment->client->document : 'N/A';
+        $phone = $payment->client ? $payment->client->phone : 'N/A';
+        $metodo_pago = $payment->payment_method ? $payment->payment_method->name : 'N/A';
+        
         return [
-            //fecha
-            $credit->date->format('d/m/Y'),                             // Fecha
-            $credit->date->format('d'),                                 // Día
-            $credit->date->translatedFormat('F'),                       // Mes completo
-            $credit->date->format('Y'),                                 // Año
-            $credit->date->translatedFormat('l'),
-            //mas
-            $credit->client->business_name ? $credit->client->business_name : $credit->client->contact_name,
-            $credit->location->name,
-            number_format($credit->total, 2),
-            $productos,
-            ucfirst($credit->status== 1 ? "Pagado" : "No pagado"),
+            $payment->date ? $payment->date->format('d/m/Y') : 'N/A', // Fecha
+            $voucher_code, // Código de Vale
+            $cliente_name, // Cliente
+            $vehicle_plate, // Placa
+            $document, // DNI/RUC
+            $phone, // Celular
+            $responsible, // Responsable
+            $productos, // Descripción (Productos)
+            number_format($payment->amount, 2), // Monto
+            ucfirst($payment->status == 'paid' ? "Pagado" : "No pagado"), // Estado
+            $payment->status == 'paid' ? ($payment->updated_at ? $payment->updated_at->format('d/m/Y') : 'N/A') : 'N/A', // Fecha Pago
+            $metodo_pago, // Método de Pago
+            $detail // Detalle
         ];
     }
 
     public function headings(): array
     {
         return [
-
-            //fehca
-            'FECHA',
-            'DIA',
-            'MES',
-            'AÑO',
-            'DIA DE SEMANA',
-            //mas
-            'CLIENTE',
-            'UBICACIÓN',
-            'TOTAL',
-            'PRODUCTOS',
-            'ESTADO',
+            'Fecha',
+            'Código de Vale',
+            'Cliente',
+            'Placa',
+            'DNI/RUC',
+            'Celular',
+            'Responsable',
+            'Descripción',
+            'Monto',
+            'Estado',
+            'Fecha Pago',
+            'Método de Pago',
+            'Detalle',
         ];
     }
     public function styles(Worksheet $sheet)

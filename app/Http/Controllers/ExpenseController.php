@@ -10,6 +10,8 @@ use App\Models\Isle;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\ExpensesExport;
 
 class ExpenseController extends Controller
 {
@@ -132,6 +134,9 @@ class ExpenseController extends Controller
         $request->validate([
             'amount' => 'required|numeric|min:0.01',
             'description' => 'nullable|string|max:255',
+            'category' => 'nullable|string|max:255',
+            'payment_method' => 'nullable|string|max:255',
+            'observation' => 'nullable|string',
             'isle_id' => 'required|exists:isles,id',
         ]);
 
@@ -148,6 +153,9 @@ class ExpenseController extends Controller
                 'isle_id' => $isle->id,
                 'type' => 'scc',
                 'description' => $request->input('description'),
+                'category' => $request->input('category'),
+                'payment_method' => $request->input('payment_method') ?: 'Efectivo',
+                'observation' => $request->input('observation'),
                 'amount' => $request->input('amount'),
                 'date' => now(),
             ]);
@@ -222,6 +230,9 @@ class ExpenseController extends Controller
         $request->validate([
             'amount' => 'required|numeric|min:0.01',
             'description' => 'nullable|string|max:255',
+            'category' => 'nullable|string|max:255',
+            'payment_method' => 'nullable|string|max:255',
+            'observation' => 'nullable|string',
             'isle_id' => 'required|exists:isles,id',
             'date' => 'required|date',
         ]);
@@ -274,6 +285,9 @@ class ExpenseController extends Controller
                 'isle_id' => $request->isle_id,
                 'location_id' => $newIsle->location_id,
                 'description' => $request->description,
+                'category' => $request->category,
+                'payment_method' => $request->payment_method ?: 'Efectivo',
+                'observation' => $request->observation,
                 'amount' => $request->amount,
                 'date' => $request->date,
             ]);
@@ -349,5 +363,10 @@ class ExpenseController extends Controller
                 'message' => 'Error al eliminar el egreso: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    public function excel(Request $request)
+    {
+        return Excel::download(new ExpensesExport($request->start_date, $request->end_date, $request->location_id), 'detalles_de_gastos.xlsx');
     }
 }

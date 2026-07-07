@@ -224,6 +224,15 @@
                     @if ($clientDocument)
                         | Documento: {{ $clientDocument }}
                     @endif
+                    @if ($isSale && $credit->sale->voucher_code)
+                        | <strong>Vale:</strong> {{ $credit->sale->voucher_code }}
+                    @endif
+                    @if ($isSale && $credit->sale->responsible)
+                        | <strong>Responsable:</strong> {{ $credit->sale->responsible->name }} {{ $credit->sale->responsible->last_name }}
+                    @endif
+                    @if ($isSale && $credit->sale->detail)
+                        <br><strong>Detalle:</strong> {{ $credit->sale->detail }}
+                    @endif
                 </div>
 
                 <!-- Detalles del crédito -->

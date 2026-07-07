@@ -17,6 +17,7 @@ use App\Exports\SalesExport;
 use App\Exports\SalesByIsleExport;
 use App\Imports\SalesImport;
 use App\Models\Agreement;
+use App\Models\Employee;
 use App\Models\Isle;
 use App\Models\Pump;
 use App\Models\Measurement;
@@ -83,6 +84,18 @@ class SaleController extends Controller
                 ->get();
         }
 
+        // Obtener usuarios para el campo "Responsable"
+        if ($user->role->nombre === 'master') {
+            $users = User::where('deleted', false)->get();
+        } else {
+            $users = User::whereHas('role', function ($q) {
+                $q->whereIn('nombre', ['worker', 'admin']);
+            })
+                ->where('location_id', $user->location_id)
+                ->where('deleted', false)
+                ->get();
+        }
+
         // Si el usuario tiene asignada una isla, obtenerla
         $assignedIsle = $user->isle_id ?? null;
         try {
@@ -91,7 +104,14 @@ class SaleController extends Controller
             $assignedIsle = null;
         }
 
-        return view('sales.index', compact('product_categories', 'clients', 'payment_methods', 'isles', 'pumps', 'assignedIsle'));
+        // Obtener empleados de la sede (o todos si es master)
+        if ($user->role->nombre === 'master') {
+            $employees = Employee::where('deleted', false)->get();
+        } else {
+            $employees = Employee::where('location_id', $user->location_id)->where('deleted', false)->get();
+        }
+
+        return view('sales.index', compact('product_categories', 'clients', 'payment_methods', 'isles', 'pumps', 'assignedIsle', 'users', 'employees'));
     }
 
     public function historico(Request $request)
@@ -432,6 +452,9 @@ class SaleController extends Controller
             'date' => 'nullable|date',
             'adicional' => 'nullable|numeric|min:0',
             'credit_number' => 'nullable|integer|min:0',
+            'voucher_code' => 'nullable|string|max:50',
+            'responsible_id' => 'nullable|exists:employees,id',
+            'detail' => 'nullable|string',
             'products' => 'required|array|min:1',
             'products.*.product_id' => 'required|exists:products,id',
             'products.*.quantity' => 'required|numeric|min:0.01',
@@ -443,6 +466,7 @@ class SaleController extends Controller
             'products.*.pump_id' => 'nullable|exists:pumps,id',
             'products.*.vehicle_plate' => 'nullable|string|max:20',
             'isle_id' => 'required|exists:isles,id', 
+            'user_id' => 'nullable|exists:users,id',
         ];
 
         $sede = auth()->user()->location_id;
@@ -513,7 +537,7 @@ class SaleController extends Controller
             }
 
             $sale = Sale::create([
-                'user_id' => Auth::id(),
+                'user_id' => $request->user_id ?? Auth::id(),
                 'location_id' => $sede,
                 'isle_id' => $request->isle_id, 
                 'client_id' => $request->client_id,
@@ -523,6 +547,9 @@ class SaleController extends Controller
                 'total' => $total,
                 'adicional' => ($request->has('adicional') && $request->adicional > 0) ? $request->adicional : 0,
                 'vehicle_plate' => $request->vehicle_plate,
+                'voucher_code' => $request->voucher_code,
+                'responsible_id' => $request->responsible_id,
+                'detail' => $request->detail,
                 'date' => $saleDate,
                 'deleted' => false
             ]);
@@ -641,7 +668,7 @@ class SaleController extends Controller
                 foreach ($request->payment_methods as $paymentData) {
                     Payment::create([
                         'sale_id' => $sale->id,
-                        'user_id' => Auth::id(),
+                        'user_id' => $request->user_id ?? Auth::id(),
                         'client_id' => $request->client_id,
                         'client_name' => $clientName ?? null,
                         'amount' => $paymentData['amount'],
@@ -673,7 +700,7 @@ class SaleController extends Controller
             elseif (($request->type_sale ?? 0) == 2) {
                 Payment::create([
                     'sale_id' => $sale->id,
-                    'user_id' => Auth::id(),
+                    'user_id' => $request->user_id ?? Auth::id(),
                     'client_id' => $request->client_id,
                     'client_name' => $clientName,
                     'amount' => $total,

@@ -146,6 +146,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/sales/measurements/save', [SaleController::class, 'saveMeasurement'])->name('sales.measurements.save');
     
     Route::get('expenses/historico', [ExpenseController::class, 'index'])->name('expenses.historico');
+    Route::get('expenses/excel', [ExpenseController::class, 'excel'])->name('expenses.excel');
     Route::resource('expenses', ExpenseController::class);
 
     //CRUD CLIENTE
