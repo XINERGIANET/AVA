@@ -13,6 +13,9 @@ class AddDetailsToTransactionsTable extends Migration
      */
     public function up()
     {
+        // Temporalmente deshabilitar el modo estricto para evitar error "Invalid default value for 'date'"
+        \Illuminate\Support\Facades\DB::statement("SET SESSION sql_mode = ''");
+
         Schema::table('transactions', function (Blueprint $table) {
             $table->string('category')->nullable();
             $table->string('payment_method')->nullable();
@@ -27,6 +30,9 @@ class AddDetailsToTransactionsTable extends Migration
      */
     public function down()
     {
+        // Temporalmente deshabilitar el modo estricto para evitar error "Invalid default value for 'date'"
+        \Illuminate\Support\Facades\DB::statement("SET SESSION sql_mode = ''");
+
         Schema::table('transactions', function (Blueprint $table) {
             $table->dropColumn(['category', 'payment_method', 'observation']);
         });
