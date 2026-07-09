@@ -29,6 +29,7 @@ use App\Http\Controllers\RecalibrationController;
 use App\Http\Controllers\VaultController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\FlowMeterController;
+use App\Http\Controllers\MermaController;
 use Illuminate\Support\Facades\Artisan;
 
 /*
@@ -217,6 +218,12 @@ Route::group(['middleware' => 'auth'], function () {
 
     Route::resource('measurements', MeasurementController::class);
     // Route::get('/api/getMeasurements', [MeasurementController::class, 'getMeasurements'])->name('measurements.get');
+
+    //CRUD CONTROL DE MERMA
+    Route::get('merma/excel', [MermaController::class, 'excel'])->name('merma.excel');
+    Route::get('merma/create', [MermaController::class, 'create'])->name('merma.create');
+    Route::post('merma', [MermaController::class, 'store'])->name('merma.store');
+    Route::get('merma', [MermaController::class, 'index'])->name('merma.index');
 
     Route::get('/counts', function () {
         return view('counts.index');

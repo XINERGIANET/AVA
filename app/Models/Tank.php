@@ -61,4 +61,9 @@ class Tank extends Model
 	{
 		return $this->hasMany(Transfer::class, 'to_tank_id');
 	}
+
+	public function readings()
+	{
+		return $this->hasMany(TankReading::class);
+	}
 }
