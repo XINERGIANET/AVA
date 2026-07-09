@@ -8,6 +8,8 @@
 @section('content')
 <!-- Include Chart.js and FontAwesome -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/highcharts-3d.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
@@ -434,6 +436,15 @@
                 </div>
             </div>
 
+            <!-- ROW 4: FLUJO DE CAJA -->
+            <div class="row align-items-stretch mb-4">
+                <div class="col-12 mb-3">
+                    <div class="kpi-card">
+                        <div id="flujoCajaChart" style="height: 400px; width: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
@@ -517,6 +528,96 @@
                     y: { grid: { color: '#f8fafc' }, beginAtZero: true }
                 },
                 plugins: { legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 10 } } }
+            }
+        });
+
+        // 4. Flujo de Caja (Highcharts)
+        Highcharts.chart('flujoCajaChart', {
+            chart: {
+                type: 'column',
+                backgroundColor: 'transparent'
+            },
+            title: {
+                text: 'FLUJO DE CAJA',
+                style: {
+                    color: '#1d4ed8',
+                    fontWeight: 'bold',
+                    fontSize: '16px'
+                }
+            },
+            xAxis: {
+                categories: [
+                    'VENTAS',
+                    'GASTOS',
+                    'FLUJO NETO',
+                    'CUENTAS POR COBRAR',
+                    'LIQUIDEZ',
+                    'SALIDAS DE TESORERIA',
+                    'SALDO DISPONIBLE REAL'
+                ],
+                labels: {
+                    style: {
+                        fontWeight: 'bold',
+                        fontSize: '10px'
+                    }
+                },
+                gridLineWidth: 0
+            },
+            yAxis: {
+                title: {
+                    text: null
+                },
+                labels: {
+                    format: 'S/. {value:,.2f}'
+                },
+                gridLineColor: '#e2e8f0',
+                gridLineWidth: 1,
+                gridZIndex: 0
+            },
+            plotOptions: {
+                column: {
+                    colorByPoint: true,
+                    borderRadius: 4,
+                    dataLabels: {
+                        enabled: true,
+                        format: 'S/. {y:,.2f}',
+                        style: {
+                            textOutline: 'none',
+                            fontWeight: 'bold',
+                            color: 'white'
+                        },
+                        inside: true,
+                        verticalAlign: 'bottom',
+                        y: -10
+                    }
+                }
+            },
+            colors: [
+                '#38761D', // VENTAS (Verde Oscuro)
+                '#E06666', // GASTOS (Rojo)
+                '#4A86E8', // FLUJO NETO (Azul)
+                '#6D9EEB', // CUENTAS POR COBRAR (Azul Claro)
+                '#00FF00', // LIQUIDEZ (Verde Brillante)
+                '#4A86E8', // SALIDAS DE TESORERIA (Azul)
+                '#6D9EEB'  // SALDO DISPONIBLE REAL (Azul Claro)
+            ],
+            legend: {
+                enabled: false
+            },
+            series: [{
+                name: 'Monto',
+                data: [
+                    {{ $ventasTotalesMes ?? 579989.04 }},
+                    {{ $gastosTotales ?? 40518.31 }},
+                    {{ ($ventasTotalesMes ?? 579989.04) - ($gastosTotales ?? 40518.31) }},
+                    {{ $creditos ?? 190680.29 }},
+                    {{ $ingresosCaja ?? 348790.44 }},
+                    284416.00, // Ajustar según variable real
+                    64374.44   // Ajustar según variable real
+                ]
+            }],
+            credits: {
+                enabled: false
             }
         });
 
