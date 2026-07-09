@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Sale;
+use App\Models\Transaction;
 use App\Exports\SalesByIsleSheet;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Illuminate\Support\Facades\Log;
@@ -29,7 +30,9 @@ class SalesByIsleExport implements WithMultipleSheets
             'sale_details.pump.isle',
             'sale_details.product',
             'payments.payment_method',
-            'client'
+            'client',
+            'user',
+            'responsible',
         ])->where('deleted', 0);
 
         if ($normalizedDate) {
@@ -58,28 +61,53 @@ class SalesByIsleExport implements WithMultipleSheets
         // si se pasó location_id, filtrar sólo detalles cuya isla pertenece a esa ubicación
         if ($this->location_id !== null) {
             $details = $details->filter(function ($detail) {
-                $isle = optional(optional($detail->pump)->isle);
+                $isle = optional($detail->pump)->isle;
                 return $isle && ((string)$isle->location_id === (string)$this->location_id);
             })->values();
         }
 
         // agrupar por isla (detalles sin pump/isle van a "sin_isla")
         $groups = $details->groupBy(function ($detail) {
-            $isle = optional(optional($detail->pump)->isle);
+            $isle = optional($detail->pump)->isle;
             return $isle ? $isle->id : 'sin_isla';
         });
 
+        $expenseTitles = [];
+        $expenseQuery = Transaction::with('isle')->where('type', 'scc');
+        if ($normalizedDate) {
+            $expenseQuery->whereDate('date', $normalizedDate);
+        }
+        if ($this->location_id !== null) {
+            $expenseQuery->where('location_id', $this->location_id);
+        }
+
+        foreach ($expenseQuery->get()->groupBy('isle_id') as $expenseIsleId => $expenses) {
+            $groupKey = $expenseIsleId ?: 'sin_isla';
+            if (! $groups->has($groupKey)) {
+                $groups->put($groupKey, collect());
+            }
+
+            $isle = optional($expenses->first())->isle;
+            $expenseTitles[$groupKey] = $isle ? ($isle->name ?? 'Isla ' . $isle->id) : 'Sin Isla';
+        }
+
         $sheets = [];
         foreach ($groups as $groupKey => $groupDetails) {
-            $title = 'Sin Isla';
+            $title = $expenseTitles[$groupKey] ?? 'Sin Isla';
+            $isleId = null;
             if ($groupKey !== 'sin_isla') {
                 $first = $groupDetails->first();
-                $isle = optional(optional($first->pump)->isle);
+                $isle = $first ? optional($first->pump)->isle : null;
                 $title = $isle ? ($isle->name ?? 'Isla ' . $isle->id) : 'Sin Isla';
+                $isleId = $isle ? $isle->id : null;
+                if (! $isle && isset($expenseTitles[$groupKey])) {
+                    $title = $expenseTitles[$groupKey];
+                    $isleId = $groupKey;
+                }
             }
             $title = $this->sanitizeSheetName($title);
             // pasar colección de detalles a la hoja; SalesByIsleSheet procesará cada detalle y su ->sale
-            $sheets[] = new SalesByIsleSheet($title, $groupDetails);
+            $sheets[] = new SalesByIsleSheet($title, $groupDetails, $normalizedDate, $isleId);
         }
 
         return $sheets;
