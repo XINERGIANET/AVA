@@ -371,6 +371,12 @@
                                 <span class="item-name">Caja chica</span>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('loans.*') ? 'active' : '' }}" href="{{ route('loans.index') }}">
+                                <i class="bi bi-cash-coin"></i>
+                                <span class="item-name">Prestamos</span>
+                            </a>
+                        </li>
 
                         @if (auth()->user()->role->nombre != 'worker')
                             <li class="nav-item">

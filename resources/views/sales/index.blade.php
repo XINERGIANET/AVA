@@ -621,6 +621,14 @@
                         <input type="number" step="0.01" class="form-control" id="expenses_amount"
                             placeholder="0.00" disabled>
                     </div>
+                    <div class="@if (auth()->user()->role->nombre === 'worker') d-none @endif mb-3"> <label>- Prestamos Otorgados:</label>
+                        <input type="number" step="0.01" class="form-control" id="loans_granted_amount"
+                            placeholder="0.00" disabled>
+                    </div>
+                    <div class="@if (auth()->user()->role->nombre === 'worker') d-none @endif mb-3"> <label>+ Recuperacion de Prestamos:</label>
+                        <input type="number" step="0.01" class="form-control" id="loans_recovered_amount"
+                            placeholder="0.00" disabled>
+                    </div>
                     <div class="@if (auth()->user()->role->nombre === 'worker') d-none @endif mb-3"> <label>- Adicional (Vuelto):</label>
                         <input type="number" step="0.01" class="form-control" id="adicional_amount"
                             placeholder="0.00" disabled>
@@ -3173,6 +3181,8 @@
         $('#initial_cash_amount_final').val('0.00');
         $('#cash_sales_amount').val('0.00');
         $('#expenses_amount').val('0.00');
+        $('#loans_granted_amount').val('0.00');
+        $('#loans_recovered_amount').val('0.00');
         $('#adicional_amount').val('0.00');
         $('#real_cash_amount').val('0.00');
         $('#final_cash_amount').val(''); // Campo vacío para que escriban
@@ -3214,13 +3224,17 @@
                     // 3. Egresos (cash_expenses)
                     $('#expenses_amount').val(parseFloat(resp.cash_expenses || 0).toFixed(2));
 
-                    // 4. Adicional/Vuelto (total_adicional)
+                    // 4. Prestamos otorgados y recuperados en efectivo
+                    $('#loans_granted_amount').val(parseFloat(resp.cash_loans_granted || 0).toFixed(2));
+                    $('#loans_recovered_amount').val(parseFloat(resp.cash_loans_recovered || 0).toFixed(2));
+
+                    // 5. Adicional/Vuelto (total_adicional)
                     $('#adicional_amount').val(parseFloat(resp.total_adicional || 0).toFixed(2));
 
-                    // 5. Saldo Real del Sistema (calculated_cash_amount) -> Viene de tabla isles
+                    // 6. Saldo Real del Sistema (calculated_cash_amount) -> Viene de tabla isles
                     $('#real_cash_amount').val(parseFloat(resp.calculated_cash_amount || 0).toFixed(2));
 
-                    // 6. ID del Registro de Cierre (cash_close.id)
+                    // 7. ID del Registro de Cierre (cash_close.id)
                     // Necesario para hacer el UPDATE al guardar
                     if (resp.cash_close && resp.cash_close.id) {
                         $('#finalCashModal').data('cash-close-id', resp.cash_close.id);

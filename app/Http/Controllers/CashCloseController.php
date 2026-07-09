@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CashClose;
 use App\Models\Isle;
 use App\Models\Location;
+use App\Models\Loan;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\Sale;
@@ -201,6 +202,8 @@ class CashCloseController extends Controller
                     'cash_sales' => 0,
                     'cash_expenses' => 0,
                     'total_adicional' => 0,
+                    'cash_loans_granted' => 0,
+                    'cash_loans_recovered' => 0,
                     'cash_close' => null
                 ]); 
             }
@@ -231,6 +234,21 @@ class CashCloseController extends Controller
                 })
                 ->sum('adicional');
 
+            $cashLoansGranted = Loan::where('isle_id', $id)
+                ->where('deleted', false)
+                ->where('created_at', '>=', $startDate)
+                ->where(function ($queryLoan) {
+                    $queryLoan->whereNull('send_method')
+                        ->orWhere('send_method', 'like', '%Efectivo%');
+                })
+                ->sum('loan_amount');
+
+            $cashLoansRecovered = Loan::where('isle_id', $id)
+                ->where('deleted', false)
+                ->where('created_at', '>=', $startDate)
+                ->where('collection_method', 'like', '%Efectivo%')
+                ->sum('recovered_amount');
+
             // 6. Saldo Actual de la Isla (Billetera acumulada en BD)
             $saldoActualIsla = floatval($isle->cash_amount);
 
@@ -245,6 +263,8 @@ class CashCloseController extends Controller
                 'cash_sales'      => floatval($cashSalesToday),
                 'cash_expenses'   => floatval($expensesToday),
                 'total_adicional' => floatval($adicionalToday),
+                'cash_loans_granted' => floatval($cashLoansGranted),
+                'cash_loans_recovered' => floatval($cashLoansRecovered),
                 
                 // Objeto de cierre
                 'cash_close' => $cashClose, 

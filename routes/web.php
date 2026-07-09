@@ -29,6 +29,7 @@ use App\Http\Controllers\RecalibrationController;
 use App\Http\Controllers\VaultController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\FlowMeterController;
+use App\Http\Controllers\LoanController;
 use Illuminate\Support\Facades\Artisan;
 
 /*
@@ -148,6 +149,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('expenses/historico', [ExpenseController::class, 'index'])->name('expenses.historico');
     Route::get('expenses/excel', [ExpenseController::class, 'excel'])->name('expenses.excel');
     Route::resource('expenses', ExpenseController::class);
+    Route::resource('loans', LoanController::class)->except(['create', 'show', 'edit']);
 
     //CRUD CLIENTE
     Route::get('/api/search-client/', [ClientController::class, 'search'])->name('clients.search');
