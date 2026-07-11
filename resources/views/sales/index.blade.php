@@ -606,10 +606,7 @@
                     <!-- Card de búsqueda de cliente -->
                         </div>
                         </div>
-                        </div>
-                        </div>
-                        </div>
-                        </div>
+                    </div>
                     <div id="cliente-search-card" class="sales-panel card-custom" style="display: none;">
                         <div class="sales-panel-header">
                             <div class="sales-panel-title">
