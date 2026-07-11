@@ -244,7 +244,7 @@
         .sales-panel-title h6 {
             margin: 0;
             color: var(--sales-text);
-            font-size: 1.6rem;
+            font-size: 1.25rem;
             font-weight: 800;
         }
         .sales-panel-note {
@@ -555,10 +555,11 @@
 
 @section('content')
     <div class="container-fluid content-inner mt-0 py-0 px-0 sales-create-page">
-        <div id="chargeSection" class="bg-light text-dark fw-semibold rounded">
-            <div class="row g-0">
+        <div id="chargeSection" class="text-dark fw-semibold rounded sales-shell">
+            <div class="row g-3 sales-layout">
                 <!-- Columna IZQUIERDA: Productos, Contratos y Creditos -->
-                <div class="col-md-4 sales-left-column">
+                <div class="col-12 col-xl-4 sales-left-column">
+                    <div class="sales-stack">
                     {{-- <div
                         class="bg-white p-3 rounded shadow-sm mb-3 
                     @if (auth()->user()->role->nombre === 'worker') d-none @endif
@@ -574,13 +575,19 @@
                     </div> --}}
 
                     <!-- Card 1: Tipo de venta -->
-                    <div class="bg-white p-4 card-custom mb-3">
-                        <div class="d-flex align-items-center mb-3">
-                            <i class="bi bi-file-earmark-text text-primary me-2 fs-5"></i>
-                            <h6 class="mb-0 fw-bold">Datos de la venta</h6>
+                    <div class="sales-panel sales-config-card card-custom">
+                        <div class="sales-panel-header">
+                            <div>
+                                <div class="sales-panel-title">
+                                    <i class="bi bi-file-earmark-text"></i>
+                                    <h6>Datos de la venta</h6>
+                                </div>
+                                <p class="sales-panel-note">Configura el tipo de venta y el modo de cobro antes de registrar la operacion.</p>
+                            </div>
                         </div>
-                        
-                        <div class="mb-3">
+                        <div class="sales-panel-body">
+                        <div class="sales-config-grid">
+                        <div class="sales-field-block">
                             <label for="tipo-venta" class="form-label text-muted small fw-semibold">Tipo de venta</label>
                             <select id="tipo-venta" class="form-select form-select-sm border-1 bg-white py-2">
                                 <option value="directa">Venta Directa</option>
@@ -588,22 +595,29 @@
                             </select>
                             <input type="hidden" id="type_sale">
                         </div>
-                        <div id="credit-checkbox-container" class="mb-3">
+                        <div id="credit-checkbox-container" class="sales-credit-toggle">
                             <div class="form-check">
                                 <input type="checkbox" id="is-credit-sale" class="form-check-input"> 
                                 <label class="form-check-label text-muted small" for="is-credit-sale">Venta a Crédito</label>
                             </div>
                         </div>
-
                     </div>
 
                     <!-- Card de búsqueda de cliente -->
-                    <div id="cliente-search-card" class="bg-white p-4 card-custom mb-3" style="display: none;">
-                        <div class="d-flex align-items-center mb-3">
-                            <i class="bi bi-search text-primary me-2 fs-5"></i>
-                            <h6 class="mb-0 fw-bold">Buscar Cliente</h6>
                         </div>
-                        <div class="mb-2">
+                        </div>
+                        </div>
+                        </div>
+                        </div>
+                        </div>
+                    <div id="cliente-search-card" class="sales-panel card-custom" style="display: none;">
+                        <div class="sales-panel-header">
+                            <div class="sales-panel-title">
+                                <i class="bi bi-search"></i>
+                                <h6>Buscar Cliente</h6>
+                            </div>
+                        </div>
+                        <div class="sales-panel-body">
                             <label class="form-label text-muted small fw-semibold">Cliente:</label>
                             <input type="text" id="search-client" class="form-control bg-white border-1 py-2" placeholder="Buscar cliente...">
                             <input type="hidden" id="client_id" name="client_id">
@@ -613,12 +627,14 @@
                     </div>
 
                     <!-- Card de productos para contrato/crédito -->
-                    <div id="products-contract-credit" class="bg-white p-4 card-custom mb-3" style="display: none;">
-                        <div class="d-flex align-items-center mb-3">
-                            <i class="bi bi-journal-text text-primary me-2 fs-5"></i>
-                            <h6 class="mb-0 fw-bold">Contratos del Cliente</h6>
+                    <div id="products-contract-credit" class="sales-panel card-custom" style="display: none;">
+                        <div class="sales-panel-header">
+                            <div class="sales-panel-title">
+                                <i class="bi bi-journal-text"></i>
+                                <h6>Contratos del Cliente</h6>
+                            </div>
                         </div>
-                        <div style="max-height: 350px; overflow-y: auto;">
+                        <div class="sales-panel-body" style="max-height: 350px; overflow-y: auto;">
                             <table class="table table-hover small">
                                 <tbody id="tbl-products-contract"></tbody>
                             </table>
@@ -626,12 +642,14 @@
                     </div>
 
                     <!-- Selector de Isla -->
-                    <div id="isle-select-card" class="bg-white p-4 card-custom mb-3" style="display: none;">
-                        <div class="d-flex align-items-center mb-3">
-                            <i class="bi bi-geo-alt text-primary me-2 fs-5"></i>
-                            <h6 class="mb-0 fw-bold">Seleccione Isla</h6>
+                    <div id="isle-select-card" class="sales-panel card-custom" style="display: none;">
+                        <div class="sales-panel-header">
+                            <div class="sales-panel-title">
+                                <i class="bi bi-geo-alt"></i>
+                                <h6>Seleccione Isla</h6>
+                            </div>
                         </div>
-                        <div class="mb-2">
+                        <div class="sales-panel-body">
                             <select id="select-isle" class="form-select border-1 bg-white py-2">
                                 <option value="">-- Seleccione --</option>
                                 @foreach ($isles ?? [] as $isle)
@@ -670,54 +688,67 @@
                     </div>
                 </div>
 
-                <div class="col-md-8 sales-right-column">
-                    <div class="bg-white p-4 card-custom d-flex flex-column h-100" style="min-height: 600px;">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <div class="d-flex align-items-center">
-                                <i class="bi bi-cart3 text-primary me-2 fs-5"></i>
-                                <h6 class="mb-0 fw-bold">Productos Agregados</h6>
+                <div class="col-12 col-xl-8 sales-right-column">
+                    <div class="sales-panel sales-cart-panel card-custom d-flex flex-column h-100">
+                        <div class="sales-panel-header">
+                            <div>
+                                <div class="sales-panel-title">
+                                    <i class="bi bi-cart3"></i>
+                                    <h6>Productos Agregados</h6>
+                                </div>
+                                <p class="sales-panel-note">Edita producto, precio, cantidad o subtotal directamente en la tabla.</p>
                             </div>
                             <button type="button" class="btn btn-primary btn-sm" id="btn-add-editable-product-row" style="display: none;">
                                 <i class="bi bi-plus-circle me-1"></i>Agregar fila
                             </button>
                         </div>
 
+                        <div class="sales-cart-table-shell">
                         <div class="flex-grow-1 sales-table-wrap">
                             <table class="table table-borderless table-hover small mb-0 sales-order-table">
-                                <thead class="bg-light text-muted">
+                                <thead class="text-muted">
                                     <tr>
-                                        <th class="rounded-start">Producto</th>
+                                        <th>Producto</th>
                                         <th>Precio</th>
                                         <th>Cantidad</th>
                                         <th>Subtotal</th>
                                         <th>Hora</th>
-                                        <th width="50" class="rounded-end text-center">Acciones</th>
+                                        <th width="50" class="text-center">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tbl-order-items"></tbody>
                             </table>
                             
+                        </div>
+                        </div>
                             <!-- Empty State -->
-                            <div id="empty-cart-state" class="text-center py-5 mt-4">
+                            <div id="empty-cart-state" class="text-center sales-empty-state">
                                 <i class="bi bi-cart-plus text-primary empty-cart-icon"></i>
                                 <h5 class="text-muted mt-4 fw-bold">Aún no hay productos agregados</h5>
-                                <p class="text-muted small">Agrega productos desde la lista para comenzar</p>
+                                <p class="text-muted small">La primera fila se carga automaticamente y puedes agregar mas si lo necesitas.</p>
                             </div>
-                        </div>
 
                         <!-- Total flotante -->
-                        <div class="total-display mt-auto pt-4 border-top">
+                        <div class="total-display sales-totals-bar mt-auto">
                             <div class="d-flex justify-content-between align-items-end">
                                 <div>
-                                    <h5 class="mb-1 fw-bold text-uppercase">TOTAL</h5>
+                                    <h5 class="mb-1 fw-bold text-uppercase">Total</h5>
                                     <span class="text-muted small"><span id="items-count">0</span> productos</span>
                                 </div>
-                                <h2 class="mb-0 fw-bold text-primary">S/ <span id="total">0.00</span></h2>
+                                <h2 class="mb-0 fw-bold text-primary sales-total-amount">S/ <span id="total">0.00</span></h2>
                             </div>
                         </div>
 
-                        <div class="mt-4 pt-4 border-top" id="inline-checkout">
-                            <div class="d-flex align-items-center mb-3"><i class="bi bi-receipt text-primary me-2 fs-5"></i><h6 class="mb-0 fw-bold">Datos y pago de la venta</h6></div>
+                        <div class="sales-checkout" id="inline-checkout">
+                            <div class="sales-checkout-head">
+                                <div class="sales-panel-title">
+                                    <i class="bi bi-receipt"></i><h6>Datos y pago de la venta</h6>
+                                </div>
+                                <div class="sales-checkout-summary">
+                                    <span class="text-muted small d-block">Total a cobrar</span>
+                                    <strong>S/ <span id="charge-total">0.00</span></strong>
+                                </div>
+                            </div>
                             <input type="hidden" id="number"><input type="hidden" id="address"><input type="hidden" id="orden"><input type="hidden" id="area">
                             <input type="radio" class="voucher_type d-none" name="voucher_type" id="voucher_type_1" value="Ticket" checked>
                             <div class="row g-3">
@@ -731,15 +762,15 @@
                                 <div class="col-md-6 credit-extra-fields" style="display:none"><label class="form-label small fw-semibold">Responsable (Sede)</label><select class="form-select" id="responsible_id"><option value="">-- Seleccione --</option>@foreach($employees ?? [] as $emp)<option value="{{ $emp->id }}">{{ $emp->name }} {{ $emp->last_name }}</option>@endforeach</select></div>
                                 <div class="col-md-6 credit-extra-fields" style="display:none"><label class="form-label small fw-semibold">Detalle</label><input type="text" class="form-control" id="detail" placeholder="Observación"></div>
                             </div>
-                            <div class="mt-3" id="payment-methods-section"><label class="form-label small fw-bold">Formas de pago</label><div class="row g-2">
+                            <div class="mt-4" id="payment-methods-section"><label class="form-label small fw-bold mb-3">Formas de pago</label><div class="sales-payment-grid">
                                 @foreach ($payment_methods as $index => $payment_method)
-                                    <div class="col-md-6 payment-method-item"><div class="input-group"><div class="input-group-text bg-white"><input type="checkbox" class="form-check-input mt-0 me-2" onchange="togglePaymentMethod(event, '#amount_{{ $payment_method->id }}')" id="cbx_amount_{{ $payment_method->id }}" {{ $index == 0 ? 'checked' : '' }}><label for="cbx_amount_{{ $payment_method->id }}">{{ $payment_method->name }}</label></div><input type="number" step="0.01" min="0" class="form-control text-end" id="amount_{{ $payment_method->id }}" oninput="calculateDifference(event)" {{ $index == 0 ? '' : 'disabled' }} placeholder="0.00"></div></div>
+                                    <div class="payment-method-item"><div class="sales-payment-card"><div class="input-group-text bg-white"><input type="checkbox" class="form-check-input mt-0 me-2" onchange="togglePaymentMethod(event, '#amount_{{ $payment_method->id }}')" id="cbx_amount_{{ $payment_method->id }}" {{ $index == 0 ? 'checked' : '' }}><label for="cbx_amount_{{ $payment_method->id }}">{{ $payment_method->name }}</label></div><input type="number" step="0.01" min="0" class="form-control text-end" id="amount_{{ $payment_method->id }}" oninput="calculateDifference(event)" {{ $index == 0 ? '' : 'disabled' }} placeholder="0.00"></div></div>
                                 @endforeach
                             </div></div>
                             <div id="vuelto-adicional-container" class="mt-3" style="display:none"><label><input type="checkbox" id="is-vuelto-adicional" class="form-check-input me-1"> Vuelto adicional</label></div>
                             <div id="vuelto-adicional-section" class="mt-2" style="display:none"><label class="form-label small fw-semibold">Vuelto adicional</label><input type="number" step="0.01" class="form-control" name="adicional" id="adicional" placeholder="0.00"></div>
-                            <div class="d-flex flex-wrap gap-3 justify-content-between align-items-center bg-light rounded-3 p-3 mt-4">
-                                <div><span class="text-muted small d-block">Total a cobrar</span><strong class="fs-4">S/ <span id="charge-total">0.00</span></strong></div>
+                            <div class="sales-actions-bar">
+                                <div><span class="text-muted small d-block">Estado</span><strong class="fs-5">Lista para registrar</strong></div>
                                 <button type="button" class="btn btn-success btn-lg px-4" id="btn-save"><i class="bi bi-check-circle me-1"></i>Guardar venta <span id="spinner-save" class="spinner-border spinner-border-sm ms-1" style="display:none"></span></button>
                             </div>
                         </div>
