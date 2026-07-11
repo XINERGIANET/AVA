@@ -601,6 +601,31 @@
                                 <label class="form-check-label text-muted small" for="is-credit-sale">Venta a Crédito</label>
                             </div>
                         </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Documento</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="document" maxlength="11" placeholder="DNI o RUC">
+                                    <button type="button" class="btn btn-outline-primary" id="btn-search-ruc" onclick="searchDocumentApi()"><i class="bi bi-search"></i></button>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Fecha</label>
+                                <input type="date" class="form-control" id="sale_date" value="{{ now()->format('Y-m-d') }}">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-semibold">Responsable</label>
+                                <select class="form-select" id="user_id"><option value="">-- Por defecto --</option>@foreach($users ?? [] as $u)<option value="{{ $u->id }}" {{ auth()->id() == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>@endforeach</select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-semibold">Cliente</label>
+                                <div class="input-group"><button class="btn btn-outline-secondary" type="button" id="btn_c_varios" onclick="document.getElementById('client_name').value='CLIENTES VARIOS'">C. Varios</button><input type="text" class="form-control" id="client_name" placeholder="Nombre o razón social"></div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-semibold">Placa</label>
+                                <input type="text" class="form-control" id="vehicle_plate" placeholder="Opcional">
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Card de búsqueda de cliente -->
@@ -748,11 +773,6 @@
                             <input type="hidden" id="number"><input type="hidden" id="address"><input type="hidden" id="orden"><input type="hidden" id="area">
                             <input type="radio" class="voucher_type d-none" name="voucher_type" id="voucher_type_1" value="Ticket" checked>
                             <div class="row g-3">
-                                <div class="col-md-4"><label class="form-label small fw-semibold">Documento</label><div class="input-group"><input type="text" class="form-control" id="document" maxlength="11" placeholder="DNI o RUC"><button type="button" class="btn btn-outline-primary" id="btn-search-ruc" onclick="searchDocumentApi()"><i class="bi bi-search"></i></button></div></div>
-                                <div class="col-md-4"><label class="form-label small fw-semibold">Fecha</label><input type="date" class="form-control" id="sale_date" value="{{ now()->format('Y-m-d') }}"></div>
-                                <div class="col-md-4"><label class="form-label small fw-semibold">Responsable</label><select class="form-select" id="user_id"><option value="">-- Por defecto --</option>@foreach($users ?? [] as $u)<option value="{{ $u->id }}" {{ auth()->id() == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>@endforeach</select></div>
-                                <div class="col-md-7"><label class="form-label small fw-semibold">Cliente</label><div class="input-group"><button class="btn btn-outline-secondary" type="button" id="btn_c_varios" onclick="document.getElementById('client_name').value='CLIENTES VARIOS'">C. Varios</button><input type="text" class="form-control" id="client_name" placeholder="Nombre o razón social"></div></div>
-                                <div class="col-md-5"><label class="form-label small fw-semibold">Placa</label><input type="text" class="form-control" id="vehicle_plate" placeholder="Opcional"></div>
                                 <div class="col-md-6 credit-extra-fields" style="display:none"><label class="form-label small fw-semibold">N.º de crédito</label><input type="text" class="form-control" id="credit_number" placeholder="Número de crédito"></div>
                                 <div class="col-md-6 credit-extra-fields" style="display:none"><label class="form-label small fw-semibold">Código de Vale</label><input type="text" class="form-control" id="voucher_code" placeholder="Código"></div>
                                 <div class="col-md-6 credit-extra-fields" style="display:none"><label class="form-label small fw-semibold">Responsable (Sede)</label><select class="form-select" id="responsible_id"><option value="">-- Seleccione --</option>@foreach($employees ?? [] as $emp)<option value="{{ $emp->id }}">{{ $emp->name }} {{ $emp->last_name }}</option>@endforeach</select></div>
@@ -799,14 +819,14 @@
                         <label class="form-label">Comprobante</label>
                         <div class="d-flex gap-2 flex-wrap">
                             
-                            <input type="radio" class="btn-check voucher_type" name="voucher_type" id="voucher_type_1" value="Ticket" checked>
-                            <label class="btn btn-outline-primary btn-sm" for="voucher_type_1">Ticket de Venta</label>
+                            <input type="radio" class="btn-check voucher_type" name="voucher_type_modal" id="voucher_type_modal_1" value="Ticket" checked>
+                            <label class="btn btn-outline-primary btn-sm" for="voucher_type_modal_1">Ticket de Venta</label>
 
-                            <input type="radio" class="btn-check voucher_type" name="voucher_type" id="voucher_type_2" value="Boleta" style="display: none;">
-                            <label class="btn btn-outline-primary btn-sm" for="voucher_type_2" style="display: none;">Boleta</label>
+                            <input type="radio" class="btn-check voucher_type" name="voucher_type_modal" id="voucher_type_modal_2" value="Boleta" style="display: none;">
+                            <label class="btn btn-outline-primary btn-sm" for="voucher_type_modal_2" style="display: none;">Boleta</label>
 
-                            <input type="radio" class="btn-check voucher_type" name="voucher_type" id="voucher_type_3" value="Factura" style="display: none;">
-                            <label class="btn btn-outline-primary btn-sm" for="voucher_type_3" style="display: none;">Factura</label>
+                            <input type="radio" class="btn-check voucher_type" name="voucher_type_modal" id="voucher_type_modal_3" value="Factura" style="display: none;">
+                            <label class="btn btn-outline-primary btn-sm" for="voucher_type_modal_3" style="display: none;">Factura</label>
 
                         </div>
                     </div>
@@ -814,15 +834,15 @@
                     <!-- Número de Comprobante -->
                     <div class="mb-3" style="display: none;">
                         <label class="form-label">N° de Comprobante</label>
-                        <input type="text" class="form-control" id="number" placeholder="-">
+                        <input type="text" class="form-control" id="number_modal" placeholder="-">
                     </div>
 
                     <!-- Documento -->
                     <div class="mb-3">
                         <label class="form-label">Documento</label>
                         <div class="input-group">
-                            <input type="text" class="form-control" id="document" maxlength="11" placeholder="Ingrese DNI o RUC">
-                            <button type="button" class="btn btn-primary" id="btn-search-ruc"
+                            <input type="text" class="form-control" id="document_modal" maxlength="11" placeholder="Ingrese DNI o RUC">
+                            <button type="button" class="btn btn-primary" id="btn-search-ruc-modal"
                                 onclick="searchDocumentApi()">
                                 <i class="bi bi-search"></i>
                                 Buscar
@@ -831,20 +851,20 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Fecha</label>
-                        <input type="date" class="form-control" id="sale_date" value="{{ now()->format('Y-m-d') }}">
+                        <input type="date" class="form-control" id="sale_date_modal" value="{{ now()->format('Y-m-d') }}">
                     </div>
                     <!--Campos de credito-->
                     <div class="mb-3 credit-extra-fields" style="display: none;">
                         <label class="form-label">N° de Crédito</label>
-                        <input type="text" class="form-control" id="credit_number" placeholder="-">
+                        <input type="text" class="form-control" id="credit_number_modal" placeholder="-">
                     </div>
                     <div class="mb-3 credit-extra-fields" style="display: none;">
                         <label class="form-label">Código de Vale</label>
-                        <input type="text" class="form-control" id="voucher_code" placeholder="-">
+                        <input type="text" class="form-control" id="voucher_code_modal" placeholder="-">
                     </div>
                     <div class="mb-3 credit-extra-fields" style="display: none;">
                         <label class="form-label">Responsable (Sede)</label>
-                        <select class="form-select" id="responsible_id">
+                        <select class="form-select" id="responsible_id_modal">
                             <option value="">-- Seleccione --</option>
                             @foreach($employees ?? [] as $emp)
                             <option value="{{ $emp->id }}">{{ $emp->name }} {{ $emp->last_name }}</option>
@@ -853,7 +873,7 @@
                     </div>
                     <div class="mb-3 credit-extra-fields" style="display: none;">
                         <label class="form-label">Detalle</label>
-                        <input type="text" class="form-control" id="detail" placeholder="-">
+                        <input type="text" class="form-control" id="detail_modal" placeholder="-">
                     </div>
 
                     <!-- Cliente -->
@@ -862,13 +882,13 @@
                         <div class="input-group">
                             
                             <button class="btn btn-outline-secondary" type="button" 
-                                id="btn_c_varios" 
-                                onclick="document.getElementById('client_name').value = 'CLIENTES VARIOS'">
+                                id="btn_c_varios_modal" 
+                                onclick="document.getElementById('client_name_modal').value = 'CLIENTES VARIOS'">
                                 C. Varios
                             </button>
 
                             {{-- El input va DESPUÉS del botón para que quede a la derecha --}}
-                            <input type="text" class="form-control" id="client_name" placeholder="-">
+                            <input type="text" class="form-control" id="client_name_modal" placeholder="-">
                             
                         </div>
                     </div>
@@ -876,25 +896,25 @@
                     <!-- Placa de Vehículo -->
                     <div class="mb-3">
                         <label class="form-label">Placa de Vehículo</label>
-                        <input type="text" class="form-control" id="vehicle_plate" placeholder="-">
+                        <input type="text" class="form-control" id="vehicle_plate_modal" placeholder="-">
                     </div>
 
                     <!-- Dirección -->
                     <div class="mb-3" style="display: none;">
                         <label class="form-label">Dirección</label>
-                        <input type="text" class="form-control" id="address" placeholder="-">
+                        <input type="text" class="form-control" id="address_modal" placeholder="-">
                     </div>
 
                     <!-- Orden -->
                     <div class="mb-3" style="display: none;">
                         <label class="form-label">Orden</label>
-                        <input type="text" class="form-control" id="orden" placeholder="-">
+                        <input type="text" class="form-control" id="orden_modal" placeholder="-">
                     </div>
 
                     <!-- Área -->
                     <div class="mb-3" style="display: none;">
                         <label class="form-label">Área</label>
-                        <input type="text" class="form-control" id="area" placeholder="-">
+                        <input type="text" class="form-control" id="area_modal" placeholder="-">
                     </div>
 
                     <!-- Forma de pago (solo para venta directa) -->
