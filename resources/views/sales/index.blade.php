@@ -141,6 +141,16 @@
         .empty-cart-icon { font-size: 5rem; opacity: 0.2; }
         #tbl-order-items:empty ~ #empty-cart-state { display: block; }
         #tbl-order-items:not(:empty) ~ #empty-cart-state { display: none; }
+        .editable-sale-row td {
+            vertical-align: middle;
+        }
+        .editable-sale-row .form-control,
+        .editable-sale-row .form-select {
+            min-width: 95px;
+        }
+        .editable-sale-row .sale-product-select {
+            min-width: 180px;
+        }
     </style>
 @endsection
 
@@ -245,7 +255,7 @@
                     </div>
 
                     <!-- Card 2: Productos para venta directa -->
-                    <div id="products-direct-card" class="bg-white p-4 card-custom mb-3">
+                    <div id="products-direct-card" class="bg-white p-4 card-custom mb-3" style="display: none;">
                         <div class="d-flex align-items-center justify-content-between mb-3">
                             <div class="d-flex align-items-center">
                                 <i class="bi bi-box-seam text-primary me-2 fs-5"></i>
@@ -280,6 +290,9 @@
                                 <i class="bi bi-cart3 text-primary me-2 fs-5"></i>
                                 <h6 class="mb-0 fw-bold">Productos Agregados</h6>
                             </div>
+                            <button type="button" class="btn btn-primary btn-sm" id="btn-add-editable-product-row" style="display: none;">
+                                <i class="bi bi-plus-circle me-1"></i>Agregar fila
+                            </button>
                         </div>
 
                         <div class="flex-grow-1" style="overflow-y: auto; overflow-x: hidden; min-height: 0;">
@@ -972,22 +985,26 @@
         var isles = @json($isles ?? []);
         var pumps = @json($pumps ?? []);
         var assignedIsle = @json($assignedIsle ?? null);
+        var directSaleProducts = [];
 
         // Ocultar sidebar automáticamente al cargar la págin
 
         var clients = @json($clients);
         var paymentMethods = @json($payment_methods);
 
+        function setDefaultIsle() {
+            const defaultIsle = assignedIsle || (Array.isArray(isles) && isles.length > 0 ? isles[0].id : '');
+            $('#select-isle').val(defaultIsle || '');
+            return defaultIsle || '';
+        }
+
         $(document).ready(function() {
             if ($('#tipo-venta').val() === 'directa') {
-                // Si el usuario NO tiene isla asignada, mostrar selector para elegir isla
-                if (!assignedIsle) {
-                    $('#isle-select-card').show();
-                } else {
-                    // Ocultar selector si el usuario tiene isla asignada
-                    $('#isle-select-card').hide();
-                    $('#select-isle').val(assignedIsle);
-                }
+                $('#type_sale').val('0');
+                $('#isle-select-card').hide();
+                $('#products-direct-card').hide();
+                $('#btn-add-editable-product-row').show();
+                setDefaultIsle();
 
                 loadProductsBySede();
                 $('#credit-checkbox-container').show(); // Mostrar checkbox para venta directa
@@ -1019,6 +1036,7 @@
                 recalculateTotal();
             } else {
                 $('#payment-methods-section').show();
+                $('#type_sale').val('0');
                 $('.credit-extra-fields').hide();
                 $('#credit_number').val('');
                 $('#voucher_code').val('');
@@ -1056,6 +1074,7 @@
                 $('#products-direct-card').hide();
                 // Por defecto ocultar selector de islas; sólo mostrar para venta directa
                 $('#isle-select-card').hide();
+                $('#btn-add-editable-product-row').hide();
                 $('#quick-add-product-subtotal').hide();
                 $('#tbl-products').empty();
                 $('#tbl-products-contract').empty();
@@ -1065,22 +1084,20 @@
 
                 if (tipoVenta === 'directa') {
                     // Mostrar productos directos y selector de islas para venta directa
-                    $('#products-direct-card').show();
+                    $('#products-direct-card').hide();
+                    $('#btn-add-editable-product-row').show();
                     $('#credit-checkbox-container').show(); // Mostrar checkbox
                     $('#is-credit-sale').prop('checked', false); // Desmarcar por defecto
                     $('#payment-methods-section').show(); // Mostrar pagos por defecto
                     $('#paga-con-section').show();
-                    if (!assignedIsle) {
-                        $('#isle-select-card').show();
-                    } else {
-                        $('#isle-select-card').hide();
-                        $('#select-isle').val(assignedIsle);
-                    }
+                    $('#isle-select-card').hide();
+                    setDefaultIsle();
                     loadProductsBySede();
                 } else {
                     // Para contrato mostramos búsqueda de cliente
                     $('#cliente-search-card').show();
                     $('#isle-select-card').hide();
+                    $('#btn-add-editable-product-row').hide();
                     $('#credit-checkbox-container').hide(); // Ocultar checkbox
                     $('#is-credit-sale').prop('checked', false);
                     resetClientSearch();
@@ -1175,9 +1192,156 @@
             };
         }
 
+        function buildDirectSaleProducts(data) {
+            const selectedIsle = parseInt($('#select-isle').val());
+            const seen = {};
+            directSaleProducts = [];
+
+            (Array.isArray(data) ? data : []).forEach(function(tank) {
+                (tank.products || []).forEach(function(product) {
+                    const pump = Array.isArray(pumps) ? pumps.find(function(p) {
+                        return parseInt(p.product_id) === parseInt(product.id)
+                            && (!selectedIsle || parseInt(p.isle_id) === selectedIsle)
+                            && (p.deleted == 0 || p.deleted === false);
+                    }) : null;
+                    const key = product.id + '-' + (tank.id || '') + '-' + (pump ? pump.id : '');
+                    if (seen[key]) return;
+                    seen[key] = true;
+
+                    directSaleProducts.push({
+                        id: product.id,
+                        name: product.name,
+                        price: parseFloat(product.price || 0),
+                        tank_id: tank.id || '',
+                        pump_id: pump ? pump.id : '',
+                        order_detail_id: product.order_detail_id || '',
+                    });
+                });
+            });
+        }
+
+        function productOptionsHtml(selectedId) {
+            return directSaleProducts.map(function(product) {
+                const selected = String(product.id) === String(selectedId) ? 'selected' : '';
+                return `<option value="${product.id}"
+                    data-price="${product.price}"
+                    data-original-price="${product.price}"
+                    data-tank-id="${product.tank_id || ''}"
+                    data-pump-id="${product.pump_id || ''}"
+                    data-order-detail-id="${product.order_detail_id || ''}"
+                    ${selected}>${product.name}</option>`;
+            }).join('');
+        }
+
+        function appendEditableProductRow(selectedProductId) {
+            if (!directSaleProducts.length) return;
+
+            const product = directSaleProducts.find(p => String(p.id) === String(selectedProductId)) || directSaleProducts[0];
+            const price = parseFloat(product.price || 0);
+            const quantity = 1;
+            const subtotal = price * quantity;
+            const hora = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            const row = `
+                <tr class="editable-sale-row"
+                    data-product-id="${product.id}"
+                    data-tank-id="${product.tank_id || ''}"
+                    data-pump-id="${product.pump_id || ''}"
+                    data-original-price="${price}"
+                    data-current-price="${price}"
+                    data-subtotal="${subtotal.toFixed(2)}"
+                    data-calc-source="quantity">
+                    <td>
+                        <select class="form-select form-select-sm sale-product-select">
+                            ${productOptionsHtml(product.id)}
+                        </select>
+                    </td>
+                    <td>
+                        <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end sale-unit-price" value="${price.toFixed(2)}">
+                    </td>
+                    <td>
+                        <input type="number" step="0.001" min="0" class="form-control form-control-sm text-end sale-quantity" value="${quantity.toFixed(3)}">
+                    </td>
+                    <td>
+                        <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end sale-subtotal" value="${subtotal.toFixed(2)}">
+                    </td>
+                    <td>${hora}</td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-danger btn-xs" onclick="removeProduct(this)"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>
+            `;
+
+            $('#tbl-order-items').append(row);
+            recalculateEditableRow($('#tbl-order-items tr').last(), 'quantity');
+            recalculateTotal();
+        }
+
+        function recalculateEditableRow(row, source) {
+            const $row = $(row);
+            const price = parseFloat($row.find('.sale-unit-price').val()) || 0;
+            let quantity = parseFloat($row.find('.sale-quantity').val()) || 0;
+            let subtotal = parseFloat($row.find('.sale-subtotal').val()) || 0;
+
+            if (source === 'subtotal') {
+                quantity = price > 0 ? subtotal / price : 0;
+                $row.find('.sale-quantity').val(quantity.toFixed(3));
+            } else {
+                subtotal = price * quantity;
+                $row.find('.sale-subtotal').val(subtotal.toFixed(2));
+            }
+
+            const selected = $row.find('.sale-product-select option:selected');
+            $row.data('product-id', selected.val());
+            $row.data('tank-id', selected.data('tank-id') || '');
+            $row.data('pump-id', selected.data('pump-id') || '');
+            $row.data('original-price', parseFloat(selected.data('original-price')) || price);
+            $row.data('current-price', price);
+            $row.data('subtotal', Math.round(subtotal * 100) / 100);
+            $row.attr('data-product-id', selected.val());
+            $row.attr('data-tank-id', selected.data('tank-id') || '');
+            $row.attr('data-pump-id', selected.data('pump-id') || '');
+            $row.attr('data-original-price', parseFloat(selected.data('original-price')) || price);
+            $row.attr('data-current-price', price);
+            $row.attr('data-subtotal', (Math.round(subtotal * 100) / 100).toFixed(2));
+        }
+
+        $('#btn-add-editable-product-row').on('click', function() {
+            appendEditableProductRow();
+        });
+
+        $('#tbl-order-items').on('change', '.sale-product-select', function() {
+            const $row = $(this).closest('tr');
+            const selected = $(this).find('option:selected');
+            const price = parseFloat(selected.data('price')) || 0;
+            $row.find('.sale-unit-price').val(price.toFixed(2));
+            recalculateEditableRow($row, $row.data('calc-source') || 'quantity');
+            recalculateTotal();
+        });
+
+        $('#tbl-order-items').on('input', '.sale-quantity', function() {
+            const $row = $(this).closest('tr');
+            $row.data('calc-source', 'quantity');
+            recalculateEditableRow($row, 'quantity');
+            recalculateTotal();
+        });
+
+        $('#tbl-order-items').on('input', '.sale-subtotal', function() {
+            const $row = $(this).closest('tr');
+            $row.data('calc-source', 'subtotal');
+            recalculateEditableRow($row, 'subtotal');
+            recalculateTotal();
+        });
+
+        $('#tbl-order-items').on('input', '.sale-unit-price', function() {
+            const $row = $(this).closest('tr');
+            recalculateEditableRow($row, $row.data('calc-source') || 'quantity');
+            recalculateTotal();
+        });
+
         function loadProductsBySede() {
             // 1. Determinar isla seleccionada
-            const selectedIsle = assignedIsle || $('#select-isle').val();
+            const selectedIsle = setDefaultIsle();
             
             // Referencias al botón y mensajes
             const btnProcesar = $('#btn-save');
@@ -1230,6 +1394,23 @@
                 method: 'GET',
                 success: function(data) {
                     $('#tbl-products').empty(); 
+                    buildDirectSaleProducts(data);
+
+                    if ($('#tipo-venta').val() === 'directa') {
+                        $('#tbl-order-items').empty();
+                        if (directSaleProducts.length === 0) {
+                            ToastError.fire({
+                                title: 'Sin productos',
+                                text: 'No hay productos configurados para esta sede.'
+                            });
+                            recalculateTotal();
+                            return;
+                        }
+
+                        appendEditableProductRow();
+                        ToastMessage.fire({ text: 'Producto inicial cargado' });
+                        return;
+                    }
 
                     // Filtrar bombas para la isla seleccionada
                     const pumpsForIsle = Array.isArray(pumps) ? pumps.filter(p => parseInt(p.isle_id) ===
@@ -2226,10 +2407,13 @@
             let itemCount = 0;
             $('#tbl-order-items tr').each(function(index) {
                 itemCount++;
-                const $tds = $(this).find('td');
+                const $row = $(this);
+                const $tds = $row.find('td');
                 // Leer el subtotal de la columna 4 (índice 3)
                 const subtotalText = $tds.eq(3).text().replace('S/', '').replace(/\s/g, '').trim();
-                const subtotal = parseFloat(subtotalText);
+                const subtotal = $row.find('.sale-subtotal').length
+                    ? parseFloat($row.find('.sale-subtotal').val())
+                    : parseFloat(subtotalText);
 
                 console.log(`Producto ${index + 1}: Subtotal=${subtotalText} -> Parseado=${subtotal}`);
 
@@ -2634,7 +2818,7 @@
         function guardarVenta() {
             // Obtener el tipo de venta al inicio de la función
             const tipoVenta = $('#tipo-venta').val();
-            const selectedIsleId = $('#select-isle').val(); 
+            const selectedIsleId = $('#select-isle').val() || setDefaultIsle(); 
             const isCreditSale = $('#is-credit-sale').is(':checked');
             const isVueltoAdicional = $('#is-vuelto-adicional').is(':checked');
             let vehiclePlate = $('#vehicle_plate').val();
@@ -2730,14 +2914,15 @@
             let products = [];
             $('#tbl-order-items tr').each(function(index) {
                 const $row = $(this);
-                const productId = $row.data('product-id');
+                const isEditableRow = $row.find('.sale-product-select').length > 0;
+                const productId = isEditableRow ? $row.find('.sale-product-select').val() : $row.data('product-id');
                 const $tds = $row.find('td');
 
                 if (productId) {
                     const tankId = $row.data('tank-id') || null;
-                    const precioTexto = $tds.eq(1).text().replace('S/', '').trim();
-                    const cantidadTexto = $tds.eq(2).text().trim();
-                    const subtotalTexto = $tds.eq(3).text().replace('S/', '').trim();
+                    const precioTexto = isEditableRow ? $row.find('.sale-unit-price').val() : $tds.eq(1).text().replace('S/', '').trim();
+                    const cantidadTexto = isEditableRow ? $row.find('.sale-quantity').val() : $tds.eq(2).text().trim();
+                    const subtotalTexto = isEditableRow ? $row.find('.sale-subtotal').val() : $tds.eq(3).text().replace('S/', '').trim();
                     const clientName = $('#client_name').val();
                     const cantidad = parseFloat(cantidadTexto);
                     const precioMostrado = parseFloat(precioTexto);
@@ -3166,6 +3351,12 @@
             // Resetear comprobante
             $('input[name="voucher_type"]').prop('checked', false);
             $('#voucher_type_1').prop('checked', true);
+
+            if ($('#tipo-venta').val() === 'directa') {
+                $('#btn-add-editable-product-row').show();
+                setDefaultIsle();
+                loadProductsBySede();
+            }
         }
     </script>
 
