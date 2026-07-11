@@ -709,7 +709,6 @@
                                         <th>Precio</th>
                                         <th>Cantidad</th>
                                         <th>Subtotal</th>
-                                        <th>Hora</th>
                                         <th width="50" class="text-center">Acciones</th>
                                     </tr>
                                 </thead>
@@ -1655,8 +1654,6 @@
             const price = parseFloat(product.price || 0);
             const quantity = 1;
             const subtotal = price * quantity;
-            const hora = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
             const row = `
                 <tr class="editable-sale-row"
                     data-product-id="${product.id}"
@@ -1680,7 +1677,6 @@
                     <td>
                         <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end sale-subtotal" value="${subtotal.toFixed(2)}">
                     </td>
-                    <td>${hora}</td>
                     <td class="text-center">
                         <button type="button" class="btn btn-danger btn-xs" onclick="removeProduct(this)"><i class="bi bi-trash"></i></button>
                     </td>
@@ -2669,11 +2665,6 @@
             var nombre = $(modalPrefix + '#lbl-name').val();
             var precio = parseFloat($(modalPrefix + '#lbl-price').val()) || 0;
             var nota = $(modalPrefix + '#txt-note').val() || '';
-            var hora = new Date().toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-
             var subtotalInput = parseFloat($(modalPrefix + '#txt-subtotal').val()) || 0;
             var switchActivo = $(modalPrefix + '#toggleGalonesSubtotal').prop('checked');
             var cantidad, subtotal;
@@ -2764,7 +2755,6 @@
             <td>S/ ${precio.toFixed(2)}</td>
             <td>${cantidad.toFixed(3)}</td>
             <td>S/ ${subtotal.toFixed(2)}</td>
-            <td>${hora}</td>
             <td><button class="btn btn-danger btn-xs" onclick="removeProduct(this)"><i class="bi bi-trash"></i></button></td>
         </tr>
         `;
