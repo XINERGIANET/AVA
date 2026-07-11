@@ -151,6 +151,32 @@
         .editable-sale-row .sale-product-select {
             min-width: 180px;
         }
+        .sales-create-page {
+            padding: 0 !important;
+            margin-top: 0 !important;
+        }
+        #chargeSection {
+            padding: 0 !important;
+            border-radius: 0 !important;
+        }
+        #chargeSection > .row {
+            --bs-gutter-x: 0;
+            --bs-gutter-y: 0;
+        }
+        #chargeSection .sales-left-column,
+        #chargeSection .sales-right-column {
+            padding-top: 0 !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+        .sales-table-wrap {
+            overflow-x: auto !important;
+            overflow-y: auto;
+            min-height: 0;
+        }
+        .sales-order-table {
+            min-width: 760px;
+        }
     </style>
 @endsection
 
@@ -167,11 +193,11 @@
 @endsection
 
 @section('content')
-    <div class="container-fluid content-inner mt-0 py-0">
-        <div id="chargeSection" class="bg-light text-dark fw-semibold p-3 rounded">
-            <div class="row g-3">
+    <div class="container-fluid content-inner mt-0 py-0 px-0 sales-create-page">
+        <div id="chargeSection" class="bg-light text-dark fw-semibold rounded">
+            <div class="row g-0">
                 <!-- Columna IZQUIERDA: Productos, Contratos y Creditos -->
-                <div class="col-md-5">
+                <div class="col-md-4 sales-left-column">
                     {{-- <div
                         class="bg-white p-3 rounded shadow-sm mb-3 
                     @if (auth()->user()->role->nombre === 'worker') d-none @endif
@@ -283,7 +309,7 @@
                     </div>
                 </div>
 
-                <div class="col-md-7">
+                <div class="col-md-8 sales-right-column">
                     <div class="bg-white p-4 card-custom d-flex flex-column h-100" style="min-height: 600px;">
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <div class="d-flex align-items-center">
@@ -295,8 +321,8 @@
                             </button>
                         </div>
 
-                        <div class="flex-grow-1" style="overflow-y: auto; overflow-x: hidden; min-height: 0;">
-                            <table class="table table-borderless table-hover small mb-0">
+                        <div class="flex-grow-1 sales-table-wrap">
+                            <table class="table table-borderless table-hover small mb-0 sales-order-table">
                                 <thead class="bg-light text-muted">
                                     <tr>
                                         <th class="rounded-start">Producto</th>
