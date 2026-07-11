@@ -177,6 +177,367 @@
         .sales-order-table {
             min-width: 760px;
         }
+        .iq-navbar-header {
+            display: none !important;
+            height: 0 !important;
+            min-height: 0 !important;
+        }
+        :root {
+            --sales-bg: #eef3f8;
+            --sales-surface: #ffffff;
+            --sales-surface-alt: #f6f8fc;
+            --sales-border: #dbe4ef;
+            --sales-text: #172554;
+            --sales-muted: #64748b;
+            --sales-accent: #2563eb;
+            --sales-success: #15803d;
+            --sales-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+        }
+        body {
+            background: linear-gradient(180deg, #f8fbff 0%, #eef3f8 100%);
+        }
+        #chargeSection {
+            background: transparent !important;
+        }
+        .sales-shell {
+            padding: 18px;
+        }
+        .sales-layout {
+            align-items: stretch;
+        }
+        .sales-left-column,
+        .sales-right-column {
+            display: flex;
+            flex-direction: column;
+        }
+        .sales-stack {
+            display: grid;
+            gap: 16px;
+            height: 100%;
+        }
+        .sales-panel {
+            background: var(--sales-surface);
+            border: 1px solid var(--sales-border);
+            border-radius: 18px;
+            box-shadow: var(--sales-shadow);
+            overflow: hidden;
+        }
+        .sales-panel-body {
+            padding: 22px;
+        }
+        .sales-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 22px 22px 14px;
+        }
+        .sales-panel-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .sales-panel-title i {
+            color: var(--sales-accent);
+            font-size: 1.2rem;
+        }
+        .sales-panel-title h6 {
+            margin: 0;
+            color: var(--sales-text);
+            font-size: 1.6rem;
+            font-weight: 800;
+        }
+        .sales-panel-note {
+            margin: 6px 0 0;
+            color: var(--sales-muted);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .sales-config-card {
+            background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+        }
+        .sales-config-grid {
+            display: grid;
+            gap: 18px;
+        }
+        .sales-field-block {
+            padding: 16px;
+            border: 1px solid var(--sales-border);
+            border-radius: 14px;
+            background: var(--sales-surface-alt);
+        }
+        .sales-field-block .form-label {
+            color: var(--sales-text);
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 10px;
+        }
+        .sales-credit-toggle {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            border: 1px solid var(--sales-border);
+            border-radius: 14px;
+            background: #f8fbff;
+        }
+        .sales-credit-toggle .form-check {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 0;
+        }
+        .sales-credit-toggle .form-check-input {
+            width: 1.3rem;
+            height: 1.3rem;
+            margin: 0;
+        }
+        .sales-credit-toggle .form-check-label {
+            margin: 0;
+            color: var(--sales-text);
+            font-size: 1rem;
+            font-weight: 700;
+        }
+        .sales-panel .form-control,
+        .sales-panel .form-select,
+        .sales-panel .input-group-text {
+            min-height: 50px;
+            border-color: #c9d4e5;
+            border-radius: 12px;
+            box-shadow: none;
+        }
+        .sales-panel .input-group > .form-control,
+        .sales-panel .input-group > .form-select {
+            border-radius: 12px;
+        }
+        .sales-panel .input-group > .btn {
+            border-radius: 12px;
+        }
+        .sales-cart-panel {
+            min-height: 100%;
+        }
+        .sales-cart-table-shell {
+            padding: 0 22px;
+        }
+        .sales-table-wrap {
+            border: 1px solid var(--sales-border);
+            border-radius: 16px;
+            background: var(--sales-surface-alt);
+            overflow-x: auto !important;
+            overflow-y: hidden;
+        }
+        .sales-order-table {
+            margin: 0;
+            min-width: 860px;
+            background: transparent;
+        }
+        .sales-order-table thead th {
+            background: transparent;
+            border-bottom: 1px solid var(--sales-border);
+            color: var(--sales-muted);
+            font-size: 0.82rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 18px 16px;
+            white-space: nowrap;
+        }
+        .sales-order-table tbody td {
+            padding: 18px 16px;
+            border-bottom: 1px solid rgba(203, 213, 225, 0.7);
+            background: #fff;
+            white-space: nowrap;
+        }
+        .sales-order-table tbody tr:last-child td {
+            border-bottom: 0;
+        }
+        .editable-sale-row .form-control,
+        .editable-sale-row .form-select {
+            min-width: 100px;
+            min-height: 42px;
+            background: #fff;
+        }
+        .editable-sale-row .sale-product-select {
+            min-width: 240px;
+        }
+        .sales-empty-state {
+            margin: 18px 22px 0;
+            padding: 48px 24px;
+            border: 1px dashed var(--sales-border);
+            border-radius: 16px;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+        }
+        .sales-totals-bar {
+            margin: 22px;
+            padding: 22px 24px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #172554 0%, #2563eb 100%);
+            color: #fff;
+        }
+        .sales-totals-bar h5,
+        .sales-totals-bar .text-muted,
+        .sales-totals-bar .text-primary {
+            color: #fff !important;
+        }
+        .sales-totals-bar .text-muted.small {
+            color: rgba(255,255,255,0.78) !important;
+        }
+        .sales-total-amount {
+            font-size: clamp(2rem, 3vw, 3rem);
+            font-weight: 800;
+            line-height: 1;
+        }
+        .sales-checkout {
+            margin: 0 22px 22px;
+            padding: 22px;
+            border: 1px solid var(--sales-border);
+            border-radius: 18px;
+            background: #fff;
+        }
+        .sales-checkout-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+        .sales-checkout-summary {
+            min-width: 180px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: var(--sales-surface-alt);
+            text-align: right;
+        }
+        .sales-checkout-summary strong {
+            color: var(--sales-accent);
+            font-size: 1.4rem;
+            font-weight: 800;
+        }
+        .sales-payment-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+        .payment-method-item {
+            display: block;
+            margin: 0;
+        }
+        .sales-payment-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px;
+            border: 1px solid var(--sales-border);
+            border-radius: 14px;
+            background: var(--sales-surface-alt);
+        }
+        .sales-payment-card .input-group-text {
+            min-height: 44px;
+            border: 0;
+            background: transparent;
+            padding: 0;
+        }
+        .sales-payment-card label {
+            color: var(--sales-text);
+            font-weight: 700;
+        }
+        .sales-payment-card .form-control {
+            min-height: 44px;
+            background: #fff;
+        }
+        .sales-actions-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-top: 22px;
+            padding: 18px;
+            border-radius: 16px;
+            background: linear-gradient(180deg, #f8fbff 0%, #eef5ff 100%);
+            border: 1px solid var(--sales-border);
+        }
+        .sales-actions-bar .btn-success {
+            min-height: 52px;
+            padding-inline: 28px;
+            border-radius: 14px;
+            font-weight: 700;
+        }
+        @media (max-width: 1199.98px) {
+            .sales-shell {
+                padding: 14px;
+            }
+            .sales-layout {
+                gap: 14px;
+            }
+            .sales-left-column,
+            .sales-right-column {
+                width: 100%;
+            }
+        }
+        @media (max-width: 991.98px) {
+            .sales-panel-header,
+            .sales-panel-body,
+            .sales-cart-table-shell,
+            .sales-checkout,
+            .sales-totals-bar,
+            .sales-empty-state {
+                margin-left: 0;
+                margin-right: 0;
+            }
+            .sales-cart-table-shell {
+                padding: 0 16px;
+            }
+            .sales-totals-bar,
+            .sales-checkout {
+                margin: 16px;
+            }
+            .sales-payment-grid {
+                grid-template-columns: 1fr;
+            }
+            .sales-checkout-head {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .sales-checkout-summary {
+                width: 100%;
+                text-align: left;
+            }
+        }
+        @media (max-width: 767.98px) {
+            .sales-shell {
+                padding: 10px;
+            }
+            .sales-panel-header,
+            .sales-panel-body,
+            .sales-checkout {
+                padding: 16px;
+            }
+            .sales-cart-table-shell {
+                padding: 0 12px;
+            }
+            .sales-totals-bar {
+                margin: 12px;
+                padding: 16px;
+            }
+            .sales-checkout {
+                margin: 12px;
+            }
+            .sales-empty-state {
+                margin: 12px;
+                padding: 28px 16px;
+            }
+            .sales-actions-bar {
+                padding: 14px;
+            }
+            .sales-actions-bar > * {
+                width: 100%;
+            }
+            .sales-actions-bar .btn-success {
+                width: 100%;
+            }
+        }
     </style>
 @endsection
 
