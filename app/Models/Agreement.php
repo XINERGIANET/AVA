@@ -38,7 +38,6 @@ class Agreement extends Model
 		'date',
 		'payment_date',
 		'total',
-		'total_pay',
 		'status',
 		'paid',
 		'deleted'

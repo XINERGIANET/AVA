@@ -188,8 +188,10 @@
                                 <button class="btn btn-sm btn-success" onclick="openPaymentsModal({{ $oac->id }})" title="Gestionar Pagos">
                                     <i class="bi bi-currency-dollar"></i>
                                 </button>
-                                <form action="" method="POST" style="display:inline;">
-                                    <button type="submit" class="btn btn-sm btn-danger" title="Eliminar">
+                                <form action="{{ route('contracts.destroy', $oac->id) }}" method="POST" style="display:inline;">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="button" class="btn btn-sm btn-danger" title="Eliminar" onclick="if(confirm('¿Está seguro de eliminar este contrato?')) this.form.submit();">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>
@@ -242,7 +244,7 @@
 
 <!-- Modal para Ver Órdenes -->
 <div class="modal fade" id="modalOrdenes" tabindex="-1" aria-labelledby="modalOrdenesLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="modalOrdenesLabel">Órdenes del Contrato</h5>
@@ -963,25 +965,90 @@
                                     }
                                 });
                             }
-                            productColumns += `<td>${totalQuantity > 0 ? totalQuantity : 'N/A'}</td>`;
+                            productColumns += `<td>${totalQuantity > 0 ? totalQuantity : '0'}</td>`;
                         });
                         return `
-                            <tr>
+                            <tr id="row-orden-${orden.id}">
                                 <td>${orden.number}</td>
                                 ${productColumns}
                                 <td>
-                                    <button type="button" class="btn btn-sm btn-primary" onclick="abrirAgregarProductos(${orden.id}, productosContratoActual)" title="Agregar Productos">
+                                    <button type="button" class="btn btn-sm btn-primary" onclick="toggleAgregarProductos(${orden.id})" title="Agregar Productos">
                                         <i class="bi bi-plus-lg"></i>
                                     </button>
-                                    <!--<button type="button" class="btn btn-sm btn-warning" onclick="abrirAgregarProductos(${orden.id}, productosContratoActual)" title="Editar">
+                                    <!--<button type="button" class="btn btn-sm btn-warning" onclick="toggleAgregarProductos(${orden.id})" title="Editar">
                                         <i class="bi bi-pencil-fill"></i>
                                     </button>-->
-                                    <button type="button" class="btn btn-sm btn-info" onclick="verAreas(${orden.id})" title="Ver Area">
+                                    <button type="button" class="btn btn-sm btn-info" onclick="toggleAreas(${orden.id})" title="Ver Area">
                                         <i class="bi bi-eye-fill"></i>
                                     </button>
                                     <button type="button" class="btn btn-sm btn-danger" onclick="eliminarOrden(${orden.id})" title="Eliminar">
                                         <i class="bi bi-trash-fill"></i>
                                     </button>
+                                </td>
+                            </tr>
+                            <tr id="form-agregar-${orden.id}" style="display: none;" class="bg-light">
+                                <td colspan="${data.products.length + 2}" class="p-0">
+                                    <div class="p-3 m-2 border rounded shadow-sm bg-white border-primary" style="border-left: 4px solid #0d6efd !important;">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h6 class="text-primary mb-0"><i class="bi bi-box-seam"></i> Asignar productos a <b>${orden.number}</b></h6>
+                                            <button type="button" class="btn-close" onclick="toggleAgregarProductos(${orden.id})"></button>
+                                        </div>
+                                        <div class="row" id="inputs-orden-${orden.id}">
+                                            <!-- Inputs rendered here by JS -->
+                                        </div>
+                                        <div class="d-flex justify-content-end mt-2">
+                                            <button type="button" class="btn btn-sm btn-secondary me-2" onclick="toggleAgregarProductos(${orden.id})">
+                                                <i class="bi bi-x-circle"></i> Cancelar
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-success shadow-sm" onclick="guardarProductosInline(${orden.id})">
+                                                <i class="bi bi-check-circle"></i> Guardar Cantidades
+                                            </button>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr id="form-areas-${orden.id}" style="display: none;" class="bg-light">
+                                <td colspan="${data.products.length + 2}" class="p-0">
+                                    <div class="p-3 m-2 border rounded shadow-sm bg-white border-info" style="border-left: 4px solid #0dcaf0 !important;">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h6 class="text-info mb-0"><i class="bi bi-diagram-3"></i> Áreas de la orden <b>${orden.number}</b></h6>
+                                            <button type="button" class="btn-close" onclick="toggleAreas(${orden.id})"></button>
+                                        </div>
+                                        
+                                        <div class="row mb-3">
+                                            <div class="col-md-3 mb-3">
+                                                <label class="form-label small fw-bold text-dark mb-1">Nombre del Área</label>
+                                                <input type="text" class="form-control form-control-sm border-info" id="area-input-${orden.id}" placeholder="Ej: Limpieza Pública">
+                                            </div>
+                                            <div class="col-md-9">
+                                                <div class="row" id="productos-area-${orden.id}">
+                                                    <!-- inputs generados por js -->
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex justify-content-end mb-3">
+                                            <button type="button" class="btn btn-sm btn-info text-white shadow-sm" onclick="guardarAreasInline(${orden.id})">
+                                                <i class="bi bi-plus-circle"></i> Agregar Detalle con Área
+                                            </button>
+                                        </div>
+
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-bordered table-striped mb-0">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>ID</th>
+                                                        <th>Área</th>
+                                                        <th>Producto</th>
+                                                        <th>Cantidad</th>
+                                                        <th>Acciones</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="tabla-areas-list-${orden.id}">
+                                                    <tr><td colspan="5" class="text-center">Cargando...</td></tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                         `;
@@ -1005,24 +1072,107 @@
         });
     }
 
-    function abrirAgregarProductos(orderId, productos) {
-        $('#agregar_order_id').val(orderId);
-
+    function toggleAgregarProductos(ordenId) {
+        const formRow = $(`#form-agregar-${ordenId}`);
+        
+        if (formRow.is(':visible')) {
+            formRow.fadeOut('fast');
+            return;
+        }
+        
         let html = '';
-        productos.forEach(function(product) {
+        productosContratoActual.forEach(function(product) {
             html += `
-                <div class="mb-3">
-                    <label class="form-label">
+                <div class="col-md-3 mb-3">
+                    <label class="form-label small fw-bold text-dark mb-1">
                         ${product.name}
-                        (Restante: ${product.total_restante})
                     </label>
-                    <input type="hidden" name="product_ids[]" value="${product.id}">
-                    <input type="number" name="quantities[]" class="form-control" placeholder="Cantidad" min="0.01" max="${product.total_restante}" step="0.01">
+                    <div class="input-group input-group-sm mb-1">
+                        <input type="hidden" name="inline_product_ids_${ordenId}[]" value="${product.id}">
+                        <input type="number" name="inline_quantities_${ordenId}[]" 
+                               class="form-control border-primary shadow-none" 
+                               placeholder="Cantidad" min="0.01" max="${product.total_restante}" step="0.01"
+                               ${product.total_restante <= 0 ? 'disabled' : ''}>
+                    </div>
+                    <small class="text-muted"><span class="badge ${product.total_restante > 0 ? 'bg-success' : 'bg-danger'}">Restante: ${product.total_restante}</span></small>
                 </div>
             `;
         });
-        $('#contenedorProductosAgregar').html(html);
-        $('#modalAgregarProductos').modal('show');
+        $(`#inputs-orden-${ordenId}`).html(html);
+        
+        $('[id^="form-agregar-"]').not(formRow).fadeOut('fast');
+        formRow.fadeIn('fast');
+    }
+
+    function guardarProductosInline(ordenId) {
+        $('#global-spinner').removeClass('spinner-hidden').addClass('spinner-visible');
+        
+        let product_ids = [];
+        let quantities = [];
+        let hasValidData = false;
+        let errores = [];
+        
+        $(`input[name="inline_product_ids_${ordenId}[]"]`).each(function(i) {
+            const productId = $(this).val();
+            const quantityInput = $(`input[name="inline_quantities_${ordenId}[]"]`).eq(i);
+            const quantity = parseFloat(quantityInput.val()) || 0;
+            const maxQuantity = parseFloat(quantityInput.attr('max')) || 0;
+            const productName = quantityInput.closest('.col-md-3').find('label').text().trim();
+            
+            if (quantity > 0) {
+                if (quantity > maxQuantity) {
+                    errores.push(`${productName}: No puede agregar ${quantity}, máximo permitido: ${maxQuantity}`);
+                    return;
+                }
+                
+                if (maxQuantity <= 0) {
+                    errores.push(`${productName}: No hay cantidades disponibles`);
+                    return;
+                }
+                
+                product_ids.push(productId);
+                quantities.push(quantity);
+                hasValidData = true;
+            }
+        });
+        
+        if (errores.length > 0) {
+            $('#global-spinner').removeClass('spinner-visible').addClass('spinner-hidden');
+            ToastError.fire({text: errores.join('\n')});
+            return;
+        }
+        
+        if (!hasValidData) {
+            $('#global-spinner').removeClass('spinner-visible').addClass('spinner-hidden');
+            ToastError.fire({text: 'Por favor ingrese al menos una cantidad válida'});
+            return;
+        }
+        
+        $.ajax({
+            url: "{{ route('orderdetails.store') }}",
+            method: 'POST',
+            data: {
+                order_id: ordenId,
+                product_ids: product_ids,
+                quantities: quantities,
+                _token: '{{ csrf_token() }}'
+            },
+            success: function(response) {
+                ToastMessage.fire({text: response.message});
+                const contratoId = $('#contratoId').val();
+                verOrdenes(contratoId);
+            },
+            error: function(xhr) {
+                if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+                    ToastError.fire({text: xhr.responseJSON.errors.join('\n')});
+                } else {
+                    ToastError.fire({text: 'Error al agregar productos'});
+                }
+            },
+            complete: function() {
+                $('#global-spinner').removeClass('spinner-visible').addClass('spinner-hidden');
+            }
+        });
     }
 
     // Botón para agregar orden (sin formulario)
@@ -1190,7 +1340,12 @@
             icon: 'warning',
             showCancelButton: true,
             cancelButtonText: 'Cancelar',
-            confirmButtonText: 'Sí, eliminar'
+            confirmButtonText: 'Sí, eliminar',
+            buttonsStyling: false,
+            customClass: {
+                confirmButton: 'btn btn-danger text-white mx-2',
+                cancelButton: 'btn btn-secondary text-white mx-2'
+            }
         }).then((result) => {
             if (!result.isConfirmed) return;
 
@@ -1217,73 +1372,69 @@
         });
     }
 
-    // Lógica para ver áreas de una orden
-    function verAreas(ordenId) {
-        $('#ordenId').val(ordenId);
+    // --- LÓGICA DE ÁREAS (INLINE) ---
+    function toggleAreas(ordenId) {
+        const formRow = $(`#form-areas-${ordenId}`);
+        
+        if (formRow.is(':visible')) {
+            formRow.fadeOut('fast');
+            return;
+        }
+        
+        $('[id^="form-agregar-"]').fadeOut('fast');
+        $('[id^="form-areas-"]').not(formRow).fadeOut('fast');
+        formRow.fadeIn('fast');
+        
+        cargarDatosAreas(ordenId);
+    }
 
+    function cargarDatosAreas(ordenId) {
         $.ajax({
             url: "{{ route('orders.show', ':id') }}".replace(':id', ordenId),
             method: 'GET',
             success: function(data) {
-                // Llenar el contenedor de productos para áreas - solo productos disponibles (sin área)
                 if (data && data.order_details && data.order_details.length > 0) {
                     let productosHTML = '';
-                    
-                    // Filtrar solo productos sin área asignada
                     const productosDisponibles = data.order_details.filter(detail => !detail.area);
                     
                     productosDisponibles.forEach(function(detail) {
                         productosHTML += `
-                            <div class="row mb-3 align-items-center">
-                                <div class="col-md-4">
-                                    <label class="form-label mb-0">${detail.product ? detail.product.name : 'Producto'}</label>
-                                    (Restante: ${detail.quantity})
-                                </div>
-                                <div class="col-md-8">
-                                    <input type="number" class="form-control cantidad-area" 
+                            <div class="col-sm-6 col-md-4 col-lg-3 mb-2">
+                                <label class="form-label small fw-bold text-dark mb-1 text-truncate w-100" title="${detail.product ? detail.product.name : 'Producto'}">
+                                    ${detail.product ? detail.product.name : 'Producto'}
+                                </label>
+                                <div class="input-group input-group-sm mb-1">
+                                    <input type="number" class="form-control cantidad-area-inline border-info shadow-none" 
                                            data-product-id="${detail.product_id}" 
-                                           placeholder="Cantidad" 
+                                           placeholder="Cant." 
                                            max="${detail.quantity}" 
                                            step="0.01">
                                 </div>
+                                <small class="text-muted" style="font-size: 0.75rem;">Restante: ${detail.quantity}</small>
                             </div>
                         `;
                     });
                     
                     if (productosHTML) {
-                        $('#productosAreaContainer').html(productosHTML);
+                        $(`#productos-area-${ordenId}`).html(productosHTML);
                     } else {
-                        $('#productosAreaContainer').html(`
-                            <div class="row mb-3 align-items-center">
-                                <div class="col-12 text-center text-muted">
-                                    <i class="bi bi-info-circle"></i> No hay productos disponibles para asignar áreas
-                                </div>
-                            </div>
-                        `);
+                        $(`#productos-area-${ordenId}`).html(`<span class="text-muted small"><i class="bi bi-info-circle"></i> No hay productos disponibles para asignar áreas</span>`);
                     }
                 } else {
-                    $('#productosAreaContainer').html(`
-                        <div class="row mb-3 align-items-center">
-                            <div class="col-12 text-center text-muted">
-                                <i class="bi bi-info-circle"></i> No hay productos en esta orden
-                            </div>
-                        </div>
-                    `);
+                    $(`#productos-area-${ordenId}`).html(`<span class="text-muted small"><i class="bi bi-info-circle"></i> No hay productos en esta orden</span>`);
                 }
                 
-                const tablaAreas = document.getElementById('tablaAreas');
-
-                // Los order_details contienen la información de las áreas
+                const tablaAreas = document.getElementById(`tabla-areas-list-${ordenId}`);
                 if (data && data.order_details && data.order_details.length > 0) {
                     tablaAreas.innerHTML = data.order_details.map((detail, index) => `
                         <tr>
                             <td>${index + 1}</td>
-                            <td>${detail.area || 'Sin área'}</td>
+                            <td>${detail.area || '<span class="text-muted">Sin área</span>'}</td>
                             <td>${detail.product ? detail.product.name : '-'}</td>
                             <td>${detail.quantity || 'N/A'}</td>
                             <td>
                                 ${detail.area ? `
-                                    <button type="button" class="btn btn-sm btn-danger" onclick="eliminarDetalle(${detail.id})">
+                                    <button type="button" class="btn btn-sm btn-danger py-0 px-2" onclick="eliminarDetalleInline(${detail.id}, ${ordenId})">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 ` : ''}
@@ -1291,28 +1442,20 @@
                         </tr>
                     `).join('');
                 } else {
-                    tablaAreas.innerHTML = `
-                        <tr>
-                            <td colspan="5" class="text-center">No hay detalles para esta orden.</td>
-                        </tr>
-                    `;
+                    tablaAreas.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No hay detalles para esta orden.</td></tr>`;
                 }
-
-                $('#modalAreas').modal('show');
             },
             error: function(xhr, status, error) {
-                console.error('Error al obtener los detalles de la orden:', error);
-                alert('Error al obtener los detalles de la orden.');
+                console.error('Error:', error);
+                ToastError.fire({text: 'Error al obtener áreas.'});
             }
         });
     }
 
-    // Botón para agregar detalle con área (sin formulario)
-    $(document).on('click', '#btnAgregarDetalle', function() {
+    function guardarAreasInline(ordenId) {
         $('#global-spinner').removeClass('spinner-hidden').addClass('spinner-visible');
         
-        const area = $('#area').val();
-        const ordenId = $('#ordenId').val();
+        const area = $(`#area-input-${ordenId}`).val();
         
         if (!area) {
             $('#global-spinner').removeClass('spinner-visible').addClass('spinner-hidden');
@@ -1320,35 +1463,21 @@
             return;
         }
         
-        // Recoger datos de productos y cantidades con validaciones
         let productos = [];
         let hasValidData = false;
         let errores = [];
         
-        $('.cantidad-area').each(function() {
+        $(`#productos-area-${ordenId} .cantidad-area-inline`).each(function() {
             const productId = $(this).data('product-id');
             const qty = parseFloat($(this).val()) || 0;
             const maxQty = parseFloat($(this).attr('max')) || 0;
             
             if (qty > 0) {
-                // Validar que no exceda el máximo
                 if (qty > maxQty) {
-                    const productName = $(this).closest('.row').find('label').text().split('(')[0].trim();
-                    errores.push(`${productName}: No puede asignar ${qty}, máximo disponible: ${maxQty}`);
+                    errores.push(`No puede asignar ${qty}, máximo disponible: ${maxQty}`);
                     return;
                 }
-                
-                // Validar que hay stock disponible
-                if (maxQty <= 0) {
-                    const productName = $(this).closest('.row').find('label').text().split('(')[0].trim();
-                    errores.push(`${productName}: No hay stock disponible para asignar área`);
-                    return;
-                }
-                
-                productos.push({
-                    product_id: productId,
-                    quantity: qty
-                });
+                productos.push({ product_id: productId, quantity: qty });
                 hasValidData = true;
             }
         });
@@ -1365,7 +1494,6 @@
             return;
         }
         
-        // Procesar cada producto por separado
         let completedRequests = 0;
         let totalRequests = productos.length;
         let errors = [];
@@ -1385,44 +1513,29 @@
                     completedRequests++;
                     if (completedRequests === totalRequests) {
                         if (errors.length === 0) {
-                            ToastMessage.fire({text: `Área "${area}" asignada correctamente a ${totalRequests} producto(s)`});
+                            ToastMessage.fire({text: `Área asignada correctamente`});
                         } else {
-                            ToastMessage.fire({text: `Área asignada parcialmente. ${errors.length} error(es) encontrado(s)`});
+                            ToastMessage.fire({text: `Área asignada parcialmente.`});
                         }
-                        // Refrescar el modal de áreas
-                        verAreas(ordenId);
-                        // Limpiar formulario
-                        $('#area').val('');
-                        $('.cantidad-area').val('');
+                        $(`#area-input-${ordenId}`).val('');
+                        cargarDatosAreas(ordenId);
                         $('#global-spinner').removeClass('spinner-visible').addClass('spinner-hidden');
                     }
                 },
                 error: function(xhr) {
                     completedRequests++;
-                    if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.message) {
-                        errors.push(xhr.responseJSON.message);
-                    } else {
-                        errors.push('Error al asignar área a un producto');
-                    }
-                    
+                    errors.push('Error al asignar área');
                     if (completedRequests === totalRequests) {
-                        if (errors.length > 0) {
-                            ToastError.fire({text: `Errores: ${errors.join(', ')}`});
-                        }
-                        // Refrescar el modal de áreas aunque haya errores
-                        verAreas(ordenId);
-                        // Limpiar formulario
-                        $('#area').val('');
-                        $('.cantidad-area').val('');
+                        ToastError.fire({text: `Errores al guardar.`});
+                        cargarDatosAreas(ordenId);
                         $('#global-spinner').removeClass('spinner-visible').addClass('spinner-hidden');
                     }
                 }
             });
         });
-    });
+    }
 
-    // Función para eliminar un detalle de orden
-    function eliminarDetalle(detailId) {
+    function eliminarDetalleInline(detailId, ordenId) {
         $('#global-spinner').removeClass('spinner-hidden').addClass('spinner-visible');
 
         $.ajax({
@@ -1431,8 +1544,7 @@
             headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
             success: function(response) {
                 ToastMessage.fire({ text: response.message });
-                const ordenId = $('#ordenId').val();
-                verAreas(ordenId);
+                cargarDatosAreas(ordenId);
             },
             error: function(xhr) {
                 ToastError.fire({ text: 'Error al eliminar el área del detalle.' });
@@ -1442,6 +1554,7 @@
             }
         });
     }
+    // --- FIN LÓGICA DE ÁREAS (INLINE) ---
 
     // Validación en tiempo real para cantidad-orden
     $(document).on('input', '.cantidad-orden', function() {
@@ -1463,8 +1576,8 @@
         }
     });
 
-    // Validación en tiempo real para quantities en modal agregar productos
-    $(document).on('input', '#contenedorProductosAgregar input[name="quantities[]"]', function() {
+    // Validación en tiempo real para quantities en la fila expandida (inline)
+    $(document).on('input', 'input[name^="inline_quantities_"]', function() {
         const qty = parseFloat($(this).val()) || 0;
         const maxQty = parseFloat($(this).attr('max')) || 0;
         
