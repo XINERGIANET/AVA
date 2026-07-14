@@ -133,16 +133,17 @@
 </div>
 
 <script>
-    // Variables globales para el modal de pagos
-    let currentAgreementId = null;
+// Variables globales para el modal de pagos
+    let currentId = null;
+    let currentType = 'agreement';
     let currentSaldo = 0;
     let currentTotal = 0;
     let currentPagado = 0;
 
     // Función para abrir el modal de pagos
-    function openPaymentsModal(paymentId) {
-        // Usar payment_id directamente
-        currentAgreementId = paymentId;
+    function openPaymentsModal(id, type = 'agreement') {
+        currentId = id;
+        currentType = type;
 
         // Limpiar campos del formulario
         $('#paymentForm')[0].reset();
@@ -156,7 +157,9 @@
         $('#payment-amount-error').text('');
 
         // Establecer el ID en el campo hidden
-        $('#modal-agreement-id').val(paymentId);
+        $('#modal-agreement-id').val(id);
+        // Cambiar el nombre del campo oculto según el tipo
+        $('#modal-agreement-id').attr('name', type === 'payment' ? 'payment_id' : 'agreement_id');
 
         // Cargar pagos existentes
         loadPayments();
@@ -167,14 +170,19 @@
 
     // Función para cargar pagos existentes
     function loadPayments() {
-        if (!currentAgreementId) return;
+        if (!currentId) return;
+
+        let requestData = {};
+        if (currentType === 'payment') {
+            requestData.payment_id = currentId;
+        } else {
+            requestData.agreement_id = currentId;
+        }
 
         $.ajax({
             url: "{{ route('payments.get') }}",
             method: 'GET',
-            data: {
-                payment_id: currentAgreementId // Usamos payment_id directamente
-            },
+            data: requestData,
             success: function(response) {
                 if (response.success) {
                     // Actualizar variables globales

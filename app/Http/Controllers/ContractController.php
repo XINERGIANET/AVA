@@ -425,7 +425,6 @@ class ContractController extends Controller
                 'number' => $contractNumber,
                 'location_id' => $validated['location_id'],
                 'total' => $validated['total'],
-                'total_pay' => $validated['total'],
                 'type' => 'contract',
                 'status' => 0,
                 'paid' => $isPaid ? 1 : 0,
@@ -732,17 +731,13 @@ class ContractController extends Controller
         }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  Agreement  $agreement
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function destroy(Agreement $agreement)
+    public function destroy($id)
     {
-        $agreement->delete();
+        $agreement = Agreement::findOrFail($id);
+        $agreement->deleted = 1;
+        $agreement->save();
 
-        return redirect()->route('agreements.index')
+        return redirect()->back()
             ->with('success', 'Acuerdo eliminado exitosamente.');
     }
 
