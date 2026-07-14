@@ -35,7 +35,11 @@ class CashCloseController extends Controller
             ->unique('isle_id')
             ->keyBy('isle_id');
 
-        return view('pettyCash.index', compact('isles', 'openCashCloses'));
+        $vaultLocations = Location::where('deleted', 0)
+            ->orderBy('name')
+            ->get();
+
+        return view('pettyCash.index', compact('isles', 'openCashCloses', 'vaultLocations'));
     }
 
     public function index(Request $request)

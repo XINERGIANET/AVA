@@ -212,6 +212,7 @@ class VaultController extends Controller
         $request->validate([
             'amount'  => 'required|numeric|min:0.01',
             'isle_id' => 'required|exists:isles,id',
+            'location_id' => 'nullable|exists:locations,id',
         ]);
 
         DB::beginTransaction();
@@ -233,16 +234,36 @@ class VaultController extends Controller
             }
 
             $currentCash = floatval($isle->cash_amount ?? 0);
+            if ($currentCash < $amount) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Saldo insuficiente en la caja chica. Disponible: S/ ' . number_format($currentCash, 2)
+                ], 422);
+            }
+
+            $destinationLocationId = $request->input('location_id') ?: $isle->location_id;
+            $destinationLocation = Location::lockForUpdate()->find($destinationLocationId);
+
+            if (!$destinationLocation) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Boveda destino no encontrada.'
+                ], 404);
+            }
+
             $isle->decrement('cash_amount', $amount);
-            $location = Location::find($isle->location_id);
+            $sourceLocation = Location::find($isle->location_id);
+            $description = 'Transferencia a boveda desde cierre de caja (Isla: ' . $isle->name . ', Sede origen: ' . ($sourceLocation->name ?? 'N/A') . ') hacia boveda de ' . $destinationLocation->name;
 
             if (auth()->user()->role->nombre === 'worker') {
                 $expense = Transaction::create([
                     'user_id' => $user->id,
-                    'location_id' => $location->id,
+                    'location_id' => $destinationLocation->id,
                     'isle_id' => $isle->id, // Guardamos de qué isla salió
                     'type' => 'eb', // Enviar a Bóveda
-                    'description' => 'Transferencia a bóveda desde cierre de caja (Isla: ' . $isle->name . ')',
+                    'description' => $description,
                     'amount' => $amount,
                     'date' => now(),
                     'status' => 0, // 0 = Pendiente
@@ -252,16 +273,14 @@ class VaultController extends Controller
 
             } else {
                 // Si es Admin/Master, se aprueba automáticamente y entra a la Bóveda Central
-                if ($location) {
-                    $location->increment('vault', $amount);
-                }
+                $destinationLocation->increment('vault', $amount);
 
                 $expense = Transaction::create([
                     'user_id' => $user->id,
-                    'location_id' => $location->id,
+                    'location_id' => $destinationLocation->id,
                     'isle_id' => $isle->id,
                     'type' => 'eb',
-                    'description' => 'Transferencia a bóveda desde cierre de caja (Isla: ' . $isle->name . ')',
+                    'description' => $description,
                     'amount' => $amount,
                     'date' => now(),
                     'status' => 1, // 1 = Aprobado/Ingresado
@@ -414,7 +433,7 @@ class VaultController extends Controller
             $isApproved = intval($transaction->status) === 1;
             $description = (string) ($transaction->description ?? '');
             $isCashCloseTransfer = $transaction->type === 'eb'
-                && stripos($description, 'Transferencia a bóveda desde cierre de caja') !== false;
+                && stripos($description, 'desde cierre de caja') !== false;
 
             if ($transaction->type === 'sb') {
                 if (!$isle) {

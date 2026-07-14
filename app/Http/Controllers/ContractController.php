@@ -6,13 +6,18 @@ use App\Exports\ClosingExport;
 use App\Exports\ContractExport;
 use App\Models\Agreement;
 use App\Models\AgreementDetail;
+use App\Models\CashClose;
 use App\Models\Client;
+use App\Models\Isle;
 use App\Models\Location;
 use App\Models\Order;
 use App\Models\OrderDetail;
+use App\Models\Payment;
+use App\Models\PaymentMethod;
 use App\Models\SaleDetail;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
@@ -292,15 +297,36 @@ class ContractController extends Controller
         $products = Product::all();
         $areas = Location::all();
         $clients = Client::all();
+        $paymentMethods = PaymentMethod::where('deleted', 0)->orderBy('name')->get();
+        $isles = Isle::where('deleted', 0)->orderBy('name')->get();
+        $nextContractNumber = $this->generateNextContractNumber();
         return view(
             'contracts.create',
             compact(
                 'agreements',
                 'products',
                 'clients',
-                'areas'
+                'areas',
+                'paymentMethods',
+                'isles',
+                'nextContractNumber'
             )
         );
+    }
+
+    private function generateNextContractNumber(bool $lock = false): string
+    {
+        $query = Agreement::where('type', 'contract');
+
+        if ($lock) {
+            $query->lockForUpdate();
+        }
+
+        $maxNumber = $query
+            ->selectRaw('MAX(CAST(number AS UNSIGNED)) as max_number')
+            ->value('max_number');
+
+        return str_pad(((int) $maxNumber) + 1, 5, '0', STR_PAD_LEFT);
     }
 
     /**
@@ -317,8 +343,12 @@ class ContractController extends Controller
         $validated = $request->validate([
             'client_id' => 'required|exists:clients,id',
             'location_id' => 'required|exists:locations,id',
-            'number' => 'required|string',
+            'date' => 'required|date',
             'total' => 'required|numeric|min:0',
+            'payment_type' => 'required|in:contado,credito',
+            'contract_paid' => 'nullable|boolean',
+            'payment_method_id' => 'nullable|exists:payment_methods,id',
+            'payment_isle_id' => 'nullable|exists:isles,id',
             'product_ids' => 'required|array',
             'product_ids.*' => 'exists:products,id',
             'prices' => 'required|array',
@@ -334,18 +364,97 @@ class ContractController extends Controller
         try {
             DB::beginTransaction();
 
+            $isPaid = ($validated['payment_type'] === 'contado') && $request->boolean('contract_paid');
+            $paymentMethod = null;
+            $paymentIsle = null;
+
+            if ($isPaid) {
+                if (empty($validated['payment_method_id'])) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Seleccione el medio de pago utilizado.'
+                    ], 422);
+                }
+
+                $paymentMethod = PaymentMethod::find($validated['payment_method_id']);
+                $isCashPayment = $paymentMethod && strtolower(trim($paymentMethod->name)) === 'efectivo';
+
+                if ($isCashPayment) {
+                    if (empty($validated['payment_isle_id'])) {
+                        DB::rollBack();
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Seleccione la caja de isla donde ingresara el efectivo.'
+                        ], 422);
+                    }
+
+                    $paymentIsle = Isle::whereKey($validated['payment_isle_id'])
+                        ->where('location_id', $validated['location_id'])
+                        ->where('deleted', 0)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if (!$paymentIsle) {
+                        DB::rollBack();
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'La caja de isla seleccionada no pertenece a la sede del contrato.'
+                        ], 422);
+                    }
+
+                    $hasOpenCash = CashClose::where('isle_id', $paymentIsle->id)
+                        ->whereNull('real_cash_amount')
+                        ->exists();
+
+                    if (!$hasOpenCash) {
+                        DB::rollBack();
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'La caja de esta isla esta cerrada. Abre la caja antes de registrar el pago en efectivo.'
+                        ], 409);
+                    }
+                }
+            }
+
+            $contractNumber = $this->generateNextContractNumber(true);
+
             // 1. Crear el contrato (agreement)
             $agreement = Agreement::create([
                 'client_id' => $validated['client_id'],
-                'number' => $validated['number'],
+                'number' => $contractNumber,
                 'location_id' => $validated['location_id'],
                 'total' => $validated['total'],
                 'total_pay' => $validated['total'],
                 'type' => 'contract',
                 'status' => 0,
-                'date' => now(),
+                'paid' => $isPaid ? 1 : 0,
+                'payment_date' => $isPaid ? $validated['date'] : null,
+                'date' => $validated['date'],
                 'deleted' => false
             ]);
+
+            if ($isPaid) {
+                $client = Client::find($validated['client_id']);
+                $clientName = $client ? ($client->business_name ?: $client->contact_name) : null;
+
+                Payment::create([
+                    'agreement_id' => $agreement->id,
+                    'user_id' => Auth::id(),
+                    'client_id' => $agreement->client_id,
+                    'client_name' => $clientName,
+                    'amount' => $validated['total'],
+                    'payment_method_id' => $validated['payment_method_id'],
+                    'number' => $contractNumber,
+                    'status' => 'paid',
+                    'date' => $validated['date'],
+                    'deleted' => false
+                ]);
+
+                if ($paymentIsle) {
+                    $paymentIsle->increment('cash_amount', $validated['total']);
+                }
+            }
 
             // 2. Crear los detalles del contrato (agreement_details)
             for ($i = 0; $i < count($validated['product_ids']); $i++) {
@@ -370,7 +479,7 @@ class ContractController extends Controller
                     Order::create([
                         'agreement_id' => $agreement->id,
                         'number' => 'ORD-' . $agreement->id . '-' . str_pad($j, 3, '0', STR_PAD_LEFT),
-                        'date' => now(),
+                        'date' => $validated['date'],
                         'deleted' => false
                     ]);
                 }
@@ -378,7 +487,7 @@ class ContractController extends Controller
                 Order::create([
                     'agreement_id' => $agreement->id,
                     'number' => 'ORD-' . $agreement->id . '-001',
-                    'date' => now(),
+                    'date' => $validated['date'],
                     'deleted' => false
                 ]);
             }

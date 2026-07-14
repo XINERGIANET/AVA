@@ -36,9 +36,18 @@
                         <label class="form-label">N° de Contrato</label>
                     </div>
                     <div class="col-md-7">
-                        <input type="text" id="number" name="number" class="form-control" placeholder="Ingrese el N° de Contrato">
+                        <input type="text" id="number" class="form-control" value="{{ $nextContractNumber }}" readonly>
                     </div>
                 </div>
+                <div class="row mb-3 align-items-center">
+                    <div class="col-md-3">
+                        <label class="form-label">Fecha</label>
+                    </div>
+                    <div class="col-md-7">
+                        <input type="date" id="contract_date" name="date" class="form-control" value="{{ now()->toDateString() }}">
+                    </div>
+                </div>
+
 
                 <!-- Fila 2: Sede del contrato -->
                 <div class="row mb-3 align-items-center">
@@ -78,6 +87,46 @@
                     </div>
                 </div>
 
+                <div class="row mb-3 align-items-center">
+                    <div class="col-md-3">
+                        <label class="form-label">Pago</label>
+                    </div>
+                    <div class="col-md-3">
+                        <select id="paymentType" name="payment_type" class="form-select">
+                            <option value="contado">Al contado</option>
+                            <option value="credito">Al credito</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3" id="contractPaidGroup">
+                        <select id="contractPaid" name="contract_paid" class="form-select">
+                            <option value="0">No pagado</option>
+                            <option value="1">Ya pagado</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row mb-3 align-items-center d-none" id="paymentDetailsGroup">
+                    <div class="col-md-3">
+                        <label class="form-label">Medio de pago</label>
+                    </div>
+                    <div class="col-md-3">
+                        <select id="paymentMethod" name="payment_method_id" class="form-select">
+                            <option value="">Seleccione</option>
+                            @foreach($paymentMethods as $method)
+                                <option value="{{ $method->id }}" data-name="{{ strtolower(trim($method->name)) }}">{{ $method->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-none" id="paymentIsleGroup">
+                        <select id="paymentIsle" name="payment_isle_id" class="form-select">
+                            <option value="">Caja de isla</option>
+                            @foreach($isles as $isle)
+                                <option value="{{ $isle->id }}" data-location="{{ $isle->location_id }}">{{ $isle->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
                 <!-- Botón de Guardar Contrato -->
                 <div class="row mb-3 justify-content-end">
                     <div class="col-auto d-flex align-items-center">
@@ -110,7 +159,7 @@
                             <td>{{ $oac->id }}</td>
                             <td>{{ $oac->number }}</td>
                             <td>{{ $oac->client->document }}</td>
-                            <td>{{ $oac->client->business_name }}</td>
+                            <td>{{ $oac->client->commercial_name ?? $oac->client->business_name ?? $oac->client->contact_name ?? 'N/A' }}</td>
                             <td>
                                 <ul>
                                     @php
@@ -388,8 +437,8 @@
                         success: function(data) {
                             response($.map(data, function(item) {
                                 return {
-                                    label: item.business_name ? item.business_name : item.contact_name,
-                                    value: item.business_name ? item.business_name : item.contact_name,
+                                    label: item.commercial_name || item.business_name || item.contact_name || '',
+                                    value: item.commercial_name || item.business_name || item.contact_name || '',
                                     id: item.id,
                                 };
                             }));
@@ -427,8 +476,8 @@
                         success: function(data) {
                             response($.map(data, function(item) {
                                 return {
-                                    label: item.business_name ? item.business_name : item.contact_name,
-                                    value: item.business_name ? item.business_name : item.contact_name,
+                                    label: item.commercial_name || item.business_name || item.contact_name || '',
+                                    value: item.commercial_name || item.business_name || item.contact_name || '',
                                     id: item.id,
                                 };
                             }));
@@ -514,6 +563,48 @@
     });
 
     $(document).ready(function() {
+        function filterPaymentIsles() {
+            const locationId = $('#sedeSelect').val();
+            $('#paymentIsle option').each(function() {
+                const optionLocation = $(this).data('location');
+                const shouldShow = !optionLocation || String(optionLocation) === String(locationId);
+                $(this).toggle(shouldShow);
+            });
+
+            const selectedOption = $('#paymentIsle option:selected');
+            if (selectedOption.length && selectedOption.data('location') && String(selectedOption.data('location')) !== String(locationId)) {
+                $('#paymentIsle').val('');
+            }
+        }
+
+        function togglePaymentFields() {
+            const paymentType = $('#paymentType').val();
+            const isPaid = $('#contractPaid').val() === '1';
+            const methodName = ($('#paymentMethod option:selected').data('name') || '').toString().toLowerCase();
+            const isCash = methodName === 'efectivo';
+
+            $('#contractPaidGroup').toggleClass('d-none', paymentType !== 'contado');
+            $('#paymentDetailsGroup').toggleClass('d-none', !(paymentType === 'contado' && isPaid));
+            $('#paymentIsleGroup').toggleClass('d-none', !(paymentType === 'contado' && isPaid && isCash));
+
+            if (paymentType !== 'contado') {
+                $('#contractPaid').val('0');
+            }
+
+            if (!(paymentType === 'contado' && isPaid)) {
+                $('#paymentMethod').val('');
+                $('#paymentIsle').val('');
+            }
+
+            if (!isCash) {
+                $('#paymentIsle').val('');
+            }
+
+            filterPaymentIsles();
+        }
+
+        $('#paymentType, #contractPaid, #paymentMethod').on('change', togglePaymentFields);
+        togglePaymentFields();
         // Mejor manejo de backdrops para evitar quitar el fondo cuando queda
         // otro modal abierto y evitar backdrops huérfanos.
         // - Al ocultar un modal, solo eliminar el backdrop si no quedan modales abiertos.
@@ -558,6 +649,7 @@
         $('#sedeSelect').change(function() {
             const locationId = $(this).val();
             const productosContainer = $('#productos-container');
+            filterPaymentIsles();
 
             if (locationId) {
                 // Mostrar loading
@@ -677,6 +769,33 @@
             $('#global-spinner').removeClass('spinner-visible').addClass('spinner-hidden');
             ToastError.fire({ text: 'Por favor selecciona un cliente' });
             return false;
+        }
+
+        if (!$('#contract_date').val()) {
+            $('#global-spinner').removeClass('spinner-visible').addClass('spinner-hidden');
+            ToastError.fire({ text: 'Seleccione la fecha del contrato' });
+            return false;
+        }
+
+        if (!$('#sedeSelect').val()) {
+            $('#global-spinner').removeClass('spinner-visible').addClass('spinner-hidden');
+            ToastError.fire({ text: 'Seleccione una sede' });
+            return false;
+        }
+
+        if ($('#paymentType').val() === 'contado' && $('#contractPaid').val() === '1') {
+            if (!$('#paymentMethod').val()) {
+                $('#global-spinner').removeClass('spinner-visible').addClass('spinner-hidden');
+                ToastError.fire({ text: 'Seleccione el medio de pago utilizado' });
+                return false;
+            }
+
+            const methodName = ($('#paymentMethod option:selected').data('name') || '').toString().toLowerCase();
+            if (methodName === 'efectivo' && !$('#paymentIsle').val()) {
+                $('#global-spinner').removeClass('spinner-visible').addClass('spinner-hidden');
+                ToastError.fire({ text: 'Seleccione la caja de isla donde ingresara el efectivo' });
+                return false;
+            }
         }
 
         // Validar que hay al menos un producto con precio y cantidad

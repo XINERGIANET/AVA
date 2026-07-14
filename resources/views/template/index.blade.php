@@ -90,6 +90,23 @@
                 flex: 0 0 auto;
             }
         }
+
+        .swal2-container .swal2-styled {
+            color: #fff !important;
+            font-weight: 600 !important;
+            text-shadow: none !important;
+        }
+
+        .swal2-container .swal2-styled.swal2-confirm,
+        .swal2-container .swal2-styled.swal2-cancel,
+        .swal2-container .swal2-styled.swal2-deny {
+            color: #fff !important;
+        }
+
+        .swal2-container .swal2-popup .swal2-title,
+        .swal2-container .swal2-popup .swal2-html-container {
+            color: #4b5563;
+        }
     </style>
 
     @yield('styles')

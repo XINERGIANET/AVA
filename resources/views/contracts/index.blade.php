@@ -89,7 +89,7 @@
                                     @foreach ($contracts as $contract)
                                         <tr>
                                             <td>{{ $contract->client->document }}</td>
-                                            <td>{{ $contract->client->commercial_name }}</td>
+                                            <td>{{ $contract->client->commercial_name ?? $contract->client->business_name ?? $contract->client->contact_name ?? 'N/A' }}</td>
                                             <td>
                                                 @php
                                                     $productos = $contract->totalProductos();
@@ -174,13 +174,14 @@
                                 query: currentTerm
                             },
                             success: function(data) {
-                                response($.map(data, function(item) {
-                                    return {
-                                        label: item.business_name,
-                                        value: item.business_name,
-                                        id: item.id,
-                                    };
-                                }));
+                            response($.map(data, function(item) {
+                                const clientName = item.commercial_name || item.business_name || item.contact_name || '';
+                                return {
+                                    label: clientName,
+                                    value: clientName,
+                                    id: item.id,
+                                };
+                            }));
                             }
                         });
                     } else {

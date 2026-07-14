@@ -17,7 +17,7 @@
                             <form id="purchaseForm">
                                 @csrf
                                 
-                                <!-- SECCIÓN: DATOS GENERALES -->
+                                <!-- SECCIÃ“N: DATOS GENERALES -->
                                 <h5 class="mb-3 text-primary" style="font-weight: 600; font-size: 1.1rem; color: #465fff !important;">
                                     <i class="bi bi-truck me-2"></i>Datos Generales
                                 </h5>
@@ -28,7 +28,7 @@
                                             <i class="bi bi-building me-1 text-secondary"></i>Proveedor:
                                         </label>
                                         <div class="input-group">
-                                            <input type="text" id="search-supplier" class="form-control" placeholder="Buscar proveedor por RUC o Razón Social...">
+                                            <input type="text" id="search-supplier" class="form-control" placeholder="Buscar proveedor por RUC o RazÃ³n Social...">
                                             <input type="hidden" id="supplier_id" name="supplier_id">
                                             <button type="button" class="btn btn-success text-white" id="openProviderModal" data-bs-toggle="modal" data-bs-target="#providerModal" data-bs-toggle="tooltip" title="Agregar nuevo proveedor">
                                                 <i class="bi bi-plus-lg"></i>
@@ -44,7 +44,7 @@
                                     </div>
                                 </div>
 
-                                <!-- SECCIÓN: DETALLE DE COMPRA -->
+                                <!-- SECCIÃ“N: DETALLE DE COMPRA -->
                                 <h5 class="mb-3 mt-4 text-primary border-top pt-4" style="font-weight: 600; font-size: 1.1rem; color: #465fff !important;">
                                     <i class="bi bi-receipt-cutoff me-2"></i>Detalle del Comprobante y Almacenamiento
                                 </h5>
@@ -61,13 +61,13 @@
                                         </select>
                                     </div>
                                     <div class="col-md-3">
-                                        <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">N° Comprobante (*)</label>
+                                        <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">NÂ° Comprobante (*)</label>
                                         <input type="text" class="form-control" id="invoiceNumber" name="invoice_number" placeholder="Ej. F001-000123">
                                     </div>
                                     <div class="col-md-3">
-                                        <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">Método de Pago</label>
+                                        <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">MÃ©todo de Pago</label>
                                         <select class="form-select" id="paymentMethod" name="payment_method_id" required>
-                                            <option value="">Seleccione un método</option>
+                                            <option value="">Seleccione un mÃ©todo</option>
                                             @foreach ($paymentMethods as $method)
                                                 <option value="{{ $method->id }}">{{ $method->name }}</option>
                                             @endforeach
@@ -77,17 +77,17 @@
 
                                 <div class="row g-3 mb-4">
                                     <div class="col-md-3">
-                                        <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">T° de Compra</label>
+                                        <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">TÂ° de Compra</label>
                                         <div class="input-group">
                                             <input type="number" step="0.01" class="form-control" id="purchase_temp" name="purchase_temp" placeholder="0.00">
-                                            <span class="input-group-text">°C</span>
+                                            <span class="input-group-text">Â°C</span>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
-                                        <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">T° de Llegada</label>
+                                        <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">TÂ° de Llegada</label>
                                         <div class="input-group">
                                             <input type="number" step="0.01" class="form-control" id="real_temp" name="real_temp" placeholder="0.00">
-                                            <span class="input-group-text">°C</span>
+                                            <span class="input-group-text">Â°C</span>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
@@ -110,18 +110,20 @@
                                         <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">
                                             <i class="bi bi-database me-1 text-secondary"></i>Tanque(s)
                                         </label>
-                                        <select class="form-select" id="tank_id" name="tank_id[]" multiple size="4" required>
+                                        <input type="text" class="form-control mb-2" id="tankSearch" placeholder="Buscar tanque...">
+                                        <div id="tankList" class="border rounded-3 p-2 bg-white" style="max-height: 140px; overflow-y: auto;">
                                             @foreach ($tanks as $tank)
-                                                <option data-location_id="{{ $tank->location_id }}"
-                                                    data-product_id="{{ $tank->product_id }}" value="{{ $tank->id }}">
-                                                    {{ $tank->name }}</option>
+                                                <label class="d-flex align-items-start gap-2 mb-2 tank-item" data-location_id="{{ $tank->location_id }}" data-product_id="{{ $tank->product_id }}" data-name="{{ strtolower($tank->name) }}" style="cursor: pointer;">
+                                                    <input class="form-check-input mt-1 tank-checkbox" type="checkbox" name="tank_id[]" value="{{ $tank->id }}">
+                                                    <span class="small text-dark tank-name">{{ $tank->name }}</span>
+                                                </label>
                                             @endforeach
-                                        </select>
-                                        <div class="form-text small text-muted">Use Ctrl/Shift + click para seleccionar varios</div>
+                                        </div>
+                                        <div class="form-text small text-muted">Marca uno o varios tanques. El listado se filtra por sede.</div>
                                     </div>
                                 </div>
 
-                                <!-- SECCIÓN: PRODUCTOS -->
+                                <!-- SECCIÃ“N: PRODUCTOS -->
                                 <div class="p-3 mt-4 mb-4" style="background-color: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
                                     <div class="row align-items-end g-3">
                                         <div class="col-md-4">
@@ -154,7 +156,7 @@
                                                 <th class="border-0" style="background-color: #465fff !important; color: white !important; font-weight: 600; padding: 12px 15px;">Cantidad</th>
                                                 <th class="border-0" style="background-color: #465fff !important; color: white !important; font-weight: 600; padding: 12px 15px;">Subtotal</th>
                                                 <th class="border-0" style="background-color: #465fff !important; color: white !important; font-weight: 600; padding: 12px 15px;">Merma</th>
-                                                <th class="border-0 text-center" style="background-color: #465fff !important; color: white !important; font-weight: 600; padding: 12px 15px;">Acción</th>
+                                                <th class="border-0 text-center" style="background-color: #465fff !important; color: white !important; font-weight: 600; padding: 12px 15px;">AcciÃ³n</th>
                                             </tr>
                                         </thead>
                                         <tbody class="align-middle"></tbody>
@@ -192,7 +194,7 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="company_name" class="form-label">Razón Social</label>
+                                    <label for="company_name" class="form-label">RazÃ³n Social</label>
                                     <input type="text" class="form-control" id="company_name" name="company_name"
                                         required>
                                 </div>
@@ -218,7 +220,7 @@
             width: 100px;
         }
 
-        /* Limita la altura del menú y añade scroll vertical */
+        /* Limita la altura del menÃº y aÃ±ade scroll vertical */
         .ui-autocomplete {
             max-height: 200px;
             /* ajusta la altura a tu gusto */
@@ -230,7 +232,7 @@
             z-index: 1000;
         }
 
-        /* Opcional: mejorar visibilidad de cada ítem */
+        /* Opcional: mejorar visibilidad de cada Ã­tem */
         .ui-menu-item-wrapper {
             white-space: nowrap;
             padding: 4px 8px;
@@ -317,7 +319,7 @@
                 attachEventsToRows();
             }
 
-            // Limpiar campo de búsqueda
+            // Limpiar campo de bÃºsqueda
             $('#search-product').val('');
         }
 
@@ -449,14 +451,14 @@
                     if (response.status) {
                         ToastMessage.fire({
                             icon: 'success',
-                            text: response.message || 'Operación exitosa'
+                            text: response.message || 'OperaciÃ³n exitosa'
                         }).then(() => {
                             location.reload();
                         });
                     } else {
                         // Error del backend
                         ToastError.fire({
-                            text: response.error || 'Ocurrió un error'
+                            text: response.error || 'OcurriÃ³ un error'
                         });
                     }
                 },
@@ -465,14 +467,14 @@
                     spinner.classList.add('spinner-hidden');
                     spinner.classList.remove('spinner-visible');
 
-                    console.log("Error en la petición:");
+                    console.log("Error en la peticiÃ³n:");
                     console.log("Products enviados:", productsCart);
                     console.log("Supplies enviados:", suppliesCart);
                     console.log("XHR Response:", xhr);
                     console.log("XHR Status:", status);
                     console.log("XHR Error:", error);
 
-                    let mensaje = 'Ocurrió un error al procesar la compra';
+                    let mensaje = 'OcurriÃ³ un error al procesar la compra';
 
                     if (xhr.responseJSON) {
                         if (xhr.responseJSON.error) {
@@ -523,7 +525,7 @@
             saveBtn.disabled = true;
 
             fetch('{{ route('suppliers.saveSupplier') }}', {
-                    method: 'POST', // o el método que necesites
+                    method: 'POST', // o el mÃ©todo que necesites
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
@@ -535,11 +537,11 @@
                     console.log('Respuesta:', data);
 
                     if (data.success) {
-                        // Mostrar mensaje de éxito
+                        // Mostrar mensaje de Ã©xito
                         ToastMessage.fire({
                             icon: 'success',
                             text: data.message ||
-                                'Operación exitosa' // Corregido: usar data.message en lugar de response.message
+                                'OperaciÃ³n exitosa' // Corregido: usar data.message en lugar de response.message
                         }).then(() => {
                             console.log(data.supplier);
                             suppliers.push(data.supplier);
@@ -566,7 +568,7 @@
                     alert('Error: ' + error.message);
                 })
                 .finally(() => {
-                    // Restaurar estado del botón
+                    // Restaurar estado del botÃ³n
                     saveBtn.innerHTML = originalText;
                     saveBtn.disabled = false;
                 });
@@ -593,81 +595,45 @@
         });
 
         $(function() {
-            const tankSelect = $('#tank_id');
-            const allTankOptions = tankSelect.find('option').clone(); // cache opciones originales
+            const tankList = $('#tankList');
+            const searchInput = $('#tankSearch');
 
-            // Filtrar tanques cuando cambie la sede (mantener)
-            $('#location_id').on('change', function() {
-                const locId = $(this).val();
-                tankSelect.empty().append('<option value="">Seleccione uno o más tanques</option>');
-                if (!locId) {
-                    allTankOptions.each(function() {
-                        const $opt = $(this);
-                        if ($opt.val() !== '') tankSelect.append($opt.clone());
-                    });
-                    return;
-                }
-                allTankOptions.each(function() {
-                    const $opt = $(this);
-                    const optLoc = String($opt.attr('data-location_id') || '');
-                    if (optLoc === String(locId)) {
-                        tankSelect.append($opt.clone());
-                    }
+            function getVisibleSelectedTanks() {
+                return tankList.find('.tank-checkbox:checked').closest('.tank-item').filter(function() {
+                    return $(this).is(':visible');
                 });
-                tankSelect.val([]);
-                $('#purchaseTable tbody').empty();
-                updateTotal();
-            });
+            }
 
-            // Nuevo: al seleccionar tanque(s) crear una fila por tanque con "Tanque: [input]" en cantidad
-            tankSelect.on('change', function() {
-                const $select = $(this);
-                // obtener opciones actualmente seleccionadas (no vacías)
-                let selectedOptions = $select.find('option:selected').filter(function() {
-                    return $(this).val() !== '';
-                });
-
-                // limpiar tabla primero
+            function rebuildTankRows() {
+                const selectedItems = getVisibleSelectedTanks();
                 $('#purchaseTable tbody').empty();
 
-                if (selectedOptions.length === 0) {
+                if (selectedItems.length === 0) {
                     updateTotal();
                     return;
                 }
 
-                // validar mismo product_id entre seleccionados
-                let firstProductId = selectedOptions.first().attr('data-product_id');
-                const mismatch = selectedOptions.filter(function() {
-                    return String($(this).attr('data-product_id')) !== String(firstProductId);
+                let firstProductId = selectedItems.first().data('product_id');
+                const mismatch = selectedItems.filter(function() {
+                    return String($(this).data('product_id')) !== String(firstProductId);
                 });
 
                 if (mismatch.length > 0) {
+                    mismatch.find('.tank-checkbox').prop('checked', false);
                     ToastError.fire({
                         icon: 'warning',
-                        text: 'Todos los tanques seleccionados deben contener el mismo producto. Se deseleccionaron los que no coinciden.'
+                        text: 'Todos los tanques seleccionados deben contener el mismo producto. Se desmarcaron los que no coinciden.'
                     });
-
-                    // deseleccionar sólo los que no coinciden
-                    mismatch.prop('selected', false);
-
-                    // volver a calcular las opciones seleccionadas después de la deselección
-                    selectedOptions = $select.find('option:selected').filter(function() {
-                        return $(this).val() !== '';
-                    });
-
-                    // si ya no quedan seleccionados, limpiar y salir
-                    if (selectedOptions.length === 0) {
-                        updateTotal();
-                        return;
-                    }
-
-                    // actualizar el product_id de referencia (podría cambiar si el primer fue deseleccionado)
-                    firstProductId = selectedOptions.first().attr('data-product_id');
                 }
 
-                // obtener datos del producto (asegurar comparación numérica)
-                const productId = firstProductId;
-                const selectedProduct = newproducts.find(p => Number(p.id) === Number(productId));
+                const validItems = getVisibleSelectedTanks();
+                if (validItems.length === 0) {
+                    updateTotal();
+                    return;
+                }
+
+                firstProductId = validItems.first().data('product_id');
+                const selectedProduct = newproducts.find(p => Number(p.id) === Number(firstProductId));
                 if (!selectedProduct) {
                     ToastError.fire({
                         icon: 'error',
@@ -677,45 +643,67 @@
                     return;
                 }
 
-                // crear una fila por cada tanque actualmente seleccionado
-                selectedOptions.each(function() {
-                    const $opt = $(this);
-                    const tankId = $opt.val();
-                    const tankName = $opt.text();
+                validItems.each(function() {
+                    const $item = $(this);
+                    const tankId = $item.find('.tank-checkbox').val();
+                    const tankName = $item.find('.tank-name').text();
                     const newRow = `
-                    <tr data-product-id="${productId}" data-tank-id="${tankId}" data-unit="${selectedProduct.measurement_unit}">
-                        <td>${selectedProduct.name}</td>
-                        <td>${selectedProduct.measurement_unit}</td>
-                        <td><input type="number" class="form-control text-end unit_price" step="0.01" min="0"></td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <span class="me-2">${tankName}:</span>
-                                <input type="number" class="form-control text-end quantity cantidad-input" min="0.001" step="0.001">
-                            </div>
-                        </td>
-                        <td><input type="number" class="form-control text-end subtotal" min="0.001" step="0.001" disabled></td>
-                        <td><input type="number" class="form-control text-end waste" step="0.001" value="0"></td>
-                        <td>
-                            <button type="button" class="btn btn-danger btn-sm delete-row">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
+                        <tr data-product-id="${selectedProduct.id}" data-tank-id="${tankId}" data-unit="${selectedProduct.measurement_unit}">
+                            <td>${selectedProduct.name}</td>
+                            <td>${selectedProduct.measurement_unit}</td>
+                            <td><input type="number" class="form-control text-end unit_price" step="0.01" min="0"></td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <span class="me-2">${tankName}:</span>
+                                    <input type="number" class="form-control text-end quantity cantidad-input" min="0.001" step="0.001">
+                                </div>
+                            </td>
+                            <td><input type="number" class="form-control text-end subtotal" min="0.001" step="0.001" disabled></td>
+                            <td><input type="number" class="form-control text-end waste" step="0.001" value="0"></td>
+                            <td>
+                                <button type="button" class="btn btn-danger btn-sm delete-row">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
                     $('#purchaseTable tbody').append(newRow);
                 });
 
                 attachEventsToRows();
                 updateTotal();
-            });
+            }
 
-            // Si ya hay sede seleccionada al cargar, aplicar filtro
+            function applyTankFilters() {
+                const locationId = String($('#location_id').val() || '');
+                const term = searchInput.val().toLowerCase().trim();
+
+                tankList.find('.tank-item').each(function() {
+                    const $item = $(this);
+                    const itemLoc = String($item.data('location_id') || '');
+                    const itemName = String($item.data('name') || '');
+                    const matchesLocation = !locationId || itemLoc === locationId;
+                    const matchesSearch = !term || itemName.includes(term);
+                    const visible = matchesLocation && matchesSearch;
+
+                    $item.toggle(visible);
+                    if (!visible) {
+                        $item.find('.tank-checkbox').prop('checked', false);
+                    }
+                });
+
+                rebuildTankRows();
+            }
+
+            $('#location_id').on('change', applyTankFilters);
+            searchInput.on('input', applyTankFilters);
+            tankList.on('change', '.tank-checkbox', rebuildTankRows);
+
             if ($('#location_id').val()) {
-                $('#location_id').trigger('change');
+                applyTankFilters();
             }
         });
-
-        // Búsqueda de documento (DNI/RUC) mediante API
+        // BÃºsqueda de documento (DNI/RUC) mediante API
         function searchDocumentApi() {
             const doc = $('#document').val().trim();
 
@@ -723,11 +711,11 @@
 
             if (!/^\d{8}$|^\d{11}$/.test(doc)) {
                 if (typeof ToastError !== 'undefined') {
-                    ToastError.fire({ text: 'El documento debe tener 8 dígitos para DNI o 11 dígitos para RUC.' });
+                    ToastError.fire({ text: 'El documento debe tener 8 dÃ­gitos para DNI o 11 dÃ­gitos para RUC.' });
                 } else if (typeof Swal !== 'undefined') {
-                    Swal.fire('Error', 'El documento debe tener 8 dígitos para DNI o 11 dígitos para RUC.', 'error');
+                    Swal.fire('Error', 'El documento debe tener 8 dÃ­gitos para DNI o 11 dÃ­gitos para RUC.', 'error');
                 } else {
-                    alert('El documento debe tener 8 dígitos para DNI o 11 dígitos para RUC.');
+                    alert('El documento debe tener 8 dÃ­gitos para DNI o 11 dÃ­gitos para RUC.');
                 }
                 return;
             }
@@ -763,9 +751,9 @@
                         $('#company_name').val(data.name || '');
                     } else {
                         if (typeof ToastError !== 'undefined') {
-                            ToastError.fire({ text: response.message || 'No se encontró información para ese documento.' });
+                            ToastError.fire({ text: response.message || 'No se encontrÃ³ informaciÃ³n para ese documento.' });
                         } else {
-                            alert(response.message || 'No se encontró información para ese documento.');
+                            alert(response.message || 'No se encontrÃ³ informaciÃ³n para ese documento.');
                         }
                     }
                 },

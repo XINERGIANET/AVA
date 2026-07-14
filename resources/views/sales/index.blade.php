@@ -602,14 +602,14 @@
                             </div>
                         </div>
                         <div class="row g-3">
-                            <div class="col-md-6">
+                            <div class="col-12">
                                 <label class="form-label small fw-semibold">Documento</label>
                                 <div class="input-group">
                                     <input type="text" class="form-control" id="document" maxlength="11" placeholder="DNI o RUC">
                                     <button type="button" class="btn btn-outline-primary" id="btn-search-ruc" onclick="searchDocumentApi()"><i class="bi bi-search"></i></button>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12">
                                 <label class="form-label small fw-semibold">Fecha</label>
                                 <input type="date" class="form-control" id="sale_date" value="{{ now()->format('Y-m-d') }}">
                             </div>
