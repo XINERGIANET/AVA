@@ -282,6 +282,7 @@
         var suppliers = @json($suppliers);
         var newproducts = @json($products);
         var selectedProducts = [];
+        var purchaseSpinner = document.getElementById('spinner');
 
 
         function handleProductClickSelect(productId) {
@@ -406,8 +407,8 @@
             });
 
             if (productsCart.length === 0) {
-                spinner.classList.add('spinner-hidden');
-                spinner.classList.remove('spinner-visible');
+                purchaseSpinner.classList.add('spinner-hidden');
+                purchaseSpinner.classList.remove('spinner-visible');
 
                 ToastError.fire({
                     icon: 'warning',
@@ -418,8 +419,8 @@
             }
 
             // Mostrar spinner
-            spinner.classList.remove('spinner-hidden');
-            spinner.classList.add('spinner-visible');
+            purchaseSpinner.classList.remove('spinner-hidden');
+            purchaseSpinner.classList.add('spinner-visible');
 
             // Preparar los datos para enviar
             let data = {
@@ -445,8 +446,8 @@
                 method: 'POST',
                 data: data,
                 success: function(response) {
-                    spinner.classList.add('spinner-hidden');
-                    spinner.classList.remove('spinner-visible');
+                    purchaseSpinner.classList.add('spinner-hidden');
+                    purchaseSpinner.classList.remove('spinner-visible');
 
                     if (response.status) {
                         ToastMessage.fire({
@@ -464,8 +465,8 @@
                 },
 
                 error: function(xhr, status, error) {
-                    spinner.classList.add('spinner-hidden');
-                    spinner.classList.remove('spinner-visible');
+                    purchaseSpinner.classList.add('spinner-hidden');
+                    purchaseSpinner.classList.remove('spinner-visible');
 
                     console.log("Error en la peticiÃ³n:");
                     console.log("Products enviados:", productsCart);
