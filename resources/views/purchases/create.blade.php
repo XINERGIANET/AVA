@@ -17,7 +17,7 @@
                             <form id="purchaseForm">
                                 @csrf
                                 
-                                <!-- SECCIÃ“N: DATOS GENERALES -->
+                                <!-- SECCIÓN: DATOS GENERALES -->
                                 <h5 class="mb-3 text-primary" style="font-weight: 600; font-size: 1.1rem; color: #465fff !important;">
                                     <i class="bi bi-truck me-2"></i>Datos Generales
                                 </h5>
@@ -28,7 +28,7 @@
                                             <i class="bi bi-building me-1 text-secondary"></i>Proveedor:
                                         </label>
                                         <div class="input-group">
-                                            <input type="text" id="search-supplier" class="form-control" placeholder="Buscar proveedor por RUC o RazÃ³n Social...">
+                                            <input type="text" id="search-supplier" class="form-control" placeholder="Buscar proveedor por RUC o Razón Social...">
                                             <input type="hidden" id="supplier_id" name="supplier_id">
                                             <button type="button" class="btn btn-success text-white" id="openProviderModal" data-bs-toggle="modal" data-bs-target="#providerModal" data-bs-toggle="tooltip" title="Agregar nuevo proveedor">
                                                 <i class="bi bi-plus-lg"></i>
@@ -44,74 +44,77 @@
                                     </div>
                                 </div>
 
-                                <!-- SECCIÃ“N: DETALLE DE COMPRA -->
+                                <!-- SECCIÓN: DETALLE DE COMPRA -->
                                 <h5 class="mb-3 mt-4 text-primary border-top pt-4" style="font-weight: 600; font-size: 1.1rem; color: #465fff !important;">
                                     <i class="bi bi-receipt-cutoff me-2"></i>Detalle del Comprobante y Almacenamiento
                                 </h5>
 
                                 <div class="row g-3 mb-4">
-                                    <div class="col-md-3">
-                                        <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">Tipo de Comprobante</label>
-                                        <select class="form-select" id="voucherType" name="voucher_type" required>
-                                            <option value="">Seleccione</option>
-                                            <option value="1">Factura</option>
-                                            <option value="2">Boleta</option>
-                                            <option value="3">Nota de Venta</option>
-                                            <option value="4">Otro</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">NÂ° Comprobante (*)</label>
-                                        <input type="text" class="form-control" id="invoiceNumber" name="invoice_number" placeholder="Ej. F001-000123">
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">MÃ©todo de Pago</label>
-                                        <select class="form-select" id="paymentMethod" name="payment_method_id" required>
-                                            <option value="">Seleccione un mÃ©todo</option>
-                                            @foreach ($paymentMethods as $method)
-                                                <option value="{{ $method->id }}">{{ $method->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div class="row g-3 mb-4">
-                                    <div class="col-md-3">
-                                        <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">TÂ° de Compra</label>
-                                        <div class="input-group">
-                                            <input type="number" step="0.01" class="form-control" id="purchase_temp" name="purchase_temp" placeholder="0.00">
-                                            <span class="input-group-text">Â°C</span>
+                                    <div class="col-md-9">
+                                        <div class="row g-3">
+                                            <div class="col-md-4">
+                                                <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">Tipo de Comprobante</label>
+                                                <select class="form-select" id="voucherType" name="voucher_type" required>
+                                                    <option value="">Seleccione</option>
+                                                    <option value="1">Factura</option>
+                                                    <option value="2">Boleta</option>
+                                                    <option value="3">Nota de Venta</option>
+                                                    <option value="4">Otro</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">N° Comprobante (*)</label>
+                                                <input type="text" class="form-control" id="invoiceNumber" name="invoice_number" placeholder="Ej. F001-000123">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">Método de Pago</label>
+                                                <select class="form-select" id="paymentMethod" name="payment_method_id" required>
+                                                    <option value="">Seleccione un método</option>
+                                                    @foreach ($paymentMethods as $method)
+                                                        <option value="{{ $method->id }}">{{ $method->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="row g-3 mt-0">
+                                            <div class="col-md-4" style="min-width: 0;">
+                                                <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">T° de Compra</label>
+                                                <div class="input-group">
+                                                    <input type="number" step="0.01" class="form-control" id="purchase_temp" name="purchase_temp" placeholder="0.00">
+                                                    <span class="input-group-text">°C</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4" style="min-width: 0;">
+                                                <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">T° de Llegada</label>
+                                                <div class="input-group">
+                                                    <input type="number" step="0.01" class="form-control" id="real_temp" name="real_temp" placeholder="0.00">
+                                                    <span class="input-group-text">°C</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4" style="min-width: 0;">
+                                                <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">
+                                                    <i class="bi bi-geo-alt me-1 text-secondary"></i>Sede
+                                                </label>
+                                                <select class="form-select" id="location_id" name="location_id" {{ auth()->user()->role->nombre != 'master' ? 'disabled' : '' }}>
+                                                    @if (auth()->user()->role->nombre == 'master')
+                                                        <option value="" disabled selected>Seleccione una sede</option>
+                                                        @foreach ($locations as $location)
+                                                            <option value="{{ $location->id }}">{{ $location->name }}</option>
+                                                        @endforeach
+                                                    @else
+                                                        <option value="{{ auth()->user()->location_id }}" selected>
+                                                            {{ auth()->user()->location->name }}</option>
+                                                    @endif
+                                                </select>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">TÂ° de Llegada</label>
-                                        <div class="input-group">
-                                            <input type="number" step="0.01" class="form-control" id="real_temp" name="real_temp" placeholder="0.00">
-                                            <span class="input-group-text">Â°C</span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">
-                                            <i class="bi bi-geo-alt me-1 text-secondary"></i>Sede
-                                        </label>
-                                        <select class="form-select" id="location_id" name="location_id" {{ auth()->user()->role->nombre != 'master' ? 'disabled' : '' }}>
-                                            @if (auth()->user()->role->nombre == 'master')
-                                                <option value="" disabled selected>Seleccione una sede</option>
-                                                @foreach ($locations as $location)
-                                                    <option value="{{ $location->id }}">{{ $location->name }}</option>
-                                                @endforeach
-                                            @else
-                                                <option value="{{ auth()->user()->location_id }}" selected>
-                                                    {{ auth()->user()->location->name }}</option>
-                                            @endif
-                                        </select>
-                                    </div>
-                                    <div class="col-md-3">
+                                    <div class="col-md-3" style="min-width: 0;">
                                         <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">
                                             <i class="bi bi-database me-1 text-secondary"></i>Tanque(s)
                                         </label>
                                         <input type="text" class="form-control mb-2" id="tankSearch" placeholder="Buscar tanque...">
-                                        <div id="tankList" class="border rounded-3 p-2 bg-white" style="max-height: 140px; overflow-y: auto;">
+                                        <div id="tankList" class="border rounded-3 p-2 bg-white" style="max-height: 100px; overflow-y: auto;">
                                             @foreach ($tanks as $tank)
                                                 <label class="d-flex align-items-start gap-2 mb-2 tank-item" data-location_id="{{ $tank->location_id }}" data-product_id="{{ $tank->product_id }}" data-name="{{ strtolower($tank->name) }}" style="cursor: pointer;">
                                                     <input class="form-check-input mt-1 tank-checkbox" type="checkbox" name="tank_id[]" value="{{ $tank->id }}">
@@ -123,7 +126,7 @@
                                     </div>
                                 </div>
 
-                                <!-- SECCIÃ“N: PRODUCTOS -->
+                                <!-- SECCIÓN: PRODUCTOS -->
                                 <div class="p-3 mt-4 mb-4" style="background-color: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
                                     <div class="row align-items-end g-3">
                                         <div class="col-md-4">
@@ -156,7 +159,7 @@
                                                 <th class="border-0" style="background-color: #465fff !important; color: white !important; font-weight: 600; padding: 12px 15px;">Cantidad</th>
                                                 <th class="border-0" style="background-color: #465fff !important; color: white !important; font-weight: 600; padding: 12px 15px;">Subtotal</th>
                                                 <th class="border-0" style="background-color: #465fff !important; color: white !important; font-weight: 600; padding: 12px 15px;">Merma</th>
-                                                <th class="border-0 text-center" style="background-color: #465fff !important; color: white !important; font-weight: 600; padding: 12px 15px;">AcciÃ³n</th>
+                                                <th class="border-0 text-center" style="background-color: #465fff !important; color: white !important; font-weight: 600; padding: 12px 15px;">Acción</th>
                                             </tr>
                                         </thead>
                                         <tbody class="align-middle"></tbody>
@@ -194,7 +197,7 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="company_name" class="form-label">RazÃ³n Social</label>
+                                    <label for="company_name" class="form-label">Razón Social</label>
                                     <input type="text" class="form-control" id="company_name" name="company_name"
                                         required>
                                 </div>
@@ -220,7 +223,7 @@
             width: 100px;
         }
 
-        /* Limita la altura del menÃº y aÃ±ade scroll vertical */
+        /* Limita la altura del menú y añade scroll vertical */
         .ui-autocomplete {
             max-height: 200px;
             /* ajusta la altura a tu gusto */
@@ -232,10 +235,22 @@
             z-index: 1000;
         }
 
-        /* Opcional: mejorar visibilidad de cada Ã­tem */
+        /* Opcional: mejorar visibilidad de cada ítem */
         .ui-menu-item-wrapper {
             white-space: nowrap;
             padding: 4px 8px;
+        }
+
+        /* Resalta toda la fila del tanque marcado, no solo el checkbox */
+        .tank-item.is-checked,
+        .tank-item:has(.tank-checkbox:checked) {
+            background-color: rgba(58, 87, 232, 0.08);
+            border-radius: 0.375rem;
+        }
+        .tank-item.is-checked .tank-name,
+        .tank-item:has(.tank-checkbox:checked) .tank-name {
+            font-weight: 600;
+            color: #3a57e8;
         }
     </style>
 @endsection
@@ -320,7 +335,7 @@
                 attachEventsToRows();
             }
 
-            // Limpiar campo de bÃºsqueda
+            // Limpiar campo de búsqueda
             $('#search-product').val('');
         }
 
@@ -452,14 +467,14 @@
                     if (response.status) {
                         ToastMessage.fire({
                             icon: 'success',
-                            text: response.message || 'OperaciÃ³n exitosa'
+                            text: response.message || 'Operación exitosa'
                         }).then(() => {
                             location.reload();
                         });
                     } else {
                         // Error del backend
                         ToastError.fire({
-                            text: response.error || 'OcurriÃ³ un error'
+                            text: response.error || 'Ocurrió un error'
                         });
                     }
                 },
@@ -468,14 +483,14 @@
                     purchaseSpinner.classList.add('spinner-hidden');
                     purchaseSpinner.classList.remove('spinner-visible');
 
-                    console.log("Error en la peticiÃ³n:");
+                    console.log("Error en la petición:");
                     console.log("Products enviados:", productsCart);
                     console.log("Supplies enviados:", suppliesCart);
                     console.log("XHR Response:", xhr);
                     console.log("XHR Status:", status);
                     console.log("XHR Error:", error);
 
-                    let mensaje = 'OcurriÃ³ un error al procesar la compra';
+                    let mensaje = 'Ocurrió un error al procesar la compra';
 
                     if (xhr.responseJSON) {
                         if (xhr.responseJSON.error) {
@@ -526,7 +541,7 @@
             saveBtn.disabled = true;
 
             fetch('{{ route('suppliers.saveSupplier') }}', {
-                    method: 'POST', // o el mÃ©todo que necesites
+                    method: 'POST', // o el método que necesites
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
@@ -538,11 +553,11 @@
                     console.log('Respuesta:', data);
 
                     if (data.success) {
-                        // Mostrar mensaje de Ã©xito
+                        // Mostrar mensaje de éxito
                         ToastMessage.fire({
                             icon: 'success',
                             text: data.message ||
-                                'OperaciÃ³n exitosa' // Corregido: usar data.message en lugar de response.message
+                                'Operación exitosa' // Corregido: usar data.message en lugar de response.message
                         }).then(() => {
                             console.log(data.supplier);
                             suppliers.push(data.supplier);
@@ -569,7 +584,7 @@
                     alert('Error: ' + error.message);
                 })
                 .finally(() => {
-                    // Restaurar estado del botÃ³n
+                    // Restaurar estado del botón
                     saveBtn.innerHTML = originalText;
                     saveBtn.disabled = false;
                 });
@@ -689,22 +704,29 @@
 
                     $item.toggle(visible);
                     if (!visible) {
-                        $item.find('.tank-checkbox').prop('checked', false);
+                        $item.find('.tank-checkbox').prop('checked', false).trigger('markchange');
                     }
                 });
 
                 rebuildTankRows();
             }
 
+            function syncTankMark() {
+                const $checkbox = $(this);
+                $checkbox.closest('.tank-item').toggleClass('is-checked', $checkbox.is(':checked'));
+            }
+
             $('#location_id').on('change', applyTankFilters);
             searchInput.on('input', applyTankFilters);
+            tankList.on('change markchange', '.tank-checkbox', syncTankMark);
             tankList.on('change', '.tank-checkbox', rebuildTankRows);
+            tankList.find('.tank-checkbox').each(syncTankMark);
 
             if ($('#location_id').val()) {
                 applyTankFilters();
             }
         });
-        // BÃºsqueda de documento (DNI/RUC) mediante API
+        // Búsqueda de documento (DNI/RUC) mediante API
         function searchDocumentApi() {
             const doc = $('#document').val().trim();
 
@@ -712,11 +734,11 @@
 
             if (!/^\d{8}$|^\d{11}$/.test(doc)) {
                 if (typeof ToastError !== 'undefined') {
-                    ToastError.fire({ text: 'El documento debe tener 8 dÃ­gitos para DNI o 11 dÃ­gitos para RUC.' });
+                    ToastError.fire({ text: 'El documento debe tener 8 dígitos para DNI o 11 dígitos para RUC.' });
                 } else if (typeof Swal !== 'undefined') {
-                    Swal.fire('Error', 'El documento debe tener 8 dÃ­gitos para DNI o 11 dÃ­gitos para RUC.', 'error');
+                    Swal.fire('Error', 'El documento debe tener 8 dígitos para DNI o 11 dígitos para RUC.', 'error');
                 } else {
-                    alert('El documento debe tener 8 dÃ­gitos para DNI o 11 dÃ­gitos para RUC.');
+                    alert('El documento debe tener 8 dígitos para DNI o 11 dígitos para RUC.');
                 }
                 return;
             }
@@ -752,9 +774,9 @@
                         $('#company_name').val(data.name || '');
                     } else {
                         if (typeof ToastError !== 'undefined') {
-                            ToastError.fire({ text: response.message || 'No se encontrÃ³ informaciÃ³n para ese documento.' });
+                            ToastError.fire({ text: response.message || 'No se encontró información para ese documento.' });
                         } else {
-                            alert(response.message || 'No se encontrÃ³ informaciÃ³n para ese documento.');
+                            alert(response.message || 'No se encontró información para ese documento.');
                         }
                     }
                 },

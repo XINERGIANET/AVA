@@ -30,26 +30,26 @@
                                 <form action="" method="GET">
                                     <div class="row align-items-end g-3">
                                         <!-- Fecha inicial -->
-                                        <div class="col-md-2">
+                                        <div class="col-6 col-md-3">
                                             <label for="start_date" class="form-label small">Fecha Inicial</label>
                                             <input type="date" class="form-control" name="start_date" id="start_date"
                                                 value="{{ request()->start_date ? request()->start_date : '' }}">
                                         </div>
                                         <!-- Fecha final -->
-                                        <div class="col-md-2">
+                                        <div class="col-6 col-md-3">
                                             <label for="end_date" class="form-label small">Fecha Final</label>
                                             <input type="date" class="form-control" name="end_date" id="end_date"
                                                 value="{{ request()->end_date ? request()->end_date : '' }}">
                                         </div>
                                         <!-- Proveedor -->
 
-                                        <div class="col-md-3">
+                                        <div class="col-12 col-md-3">
                                             <label class="form-label">Proveedor</label>
                                             <input type="text" id="search-suppliers" class="form-control" value="{{ request()->company_name ?? '' }}">
                                             <input type="hidden" id="supplier_id" name="supplier_id" value="{{ request()->supplier_id ?? '' }}">
                                         </div>
 
-                                        <div class="col-md-3">
+                                        <div class="col-12 col-md-3">
                                             <label for="search-product" class="form-label">Filtrar por Producto</label>
                                             <input hidden type="number" id="product_id" name="product_id" placeholder="">
                                             <input type="text" class="form-control" id="search-product" placeholder="Todos los productos">
@@ -57,8 +57,8 @@
 
 
                                         <!-- Botones -->
-                                        <div class="col-md-8">
-                                            <div class="d-flex gap-2">
+                                        <div class="col-12">
+                                            <div class="d-flex flex-wrap gap-2">
                                                 <button class="btn btn-primary" type="submit">
                                                     <i class="fas fa-filter"></i> Filtrar
                                                 </button>
