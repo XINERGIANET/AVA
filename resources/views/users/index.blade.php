@@ -41,7 +41,7 @@
                                 <tr>
                                     <td>{{ $user->name }}</td>
                                     <td>{{ $user->email }}</td>
-                                    <td>{{ $user->role->name }}</td>
+                                    <td>{{ $user->role->nombre }}</td>
                                     <td>
                                         <button class="btn btn-sm btn-warning edit-user-btn" data-bs-toggle="modal"
                                             data-bs-target="#editModal" data-id="{{ $user->id }}">
@@ -174,10 +174,10 @@
                                 '<option value="">Seleccione un rol</option>'
                             )
                             roles.forEach(function(rol) {
-                                const selected = (rol.id == user.rol_id) ? 'selected' :
+                                const selected = (rol.id == user.role_id) ? 'selected' :
                                     '';
                                 $('#edit_rol_id').append(
-                                    `<option value="${rol.id}" ${selected}>${rol.name}</option>`
+                                    `<option value="${rol.id}" ${selected}>${rol.nombre}</option>`
                                 )
                             });
                         } else {

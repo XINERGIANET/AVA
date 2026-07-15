@@ -15,25 +15,15 @@
                 <!-- Formulario de Registro -->
                 <form id="createSedeForm" class="mb-5" action="{{ route('sedes.store') }}" method="POST">
                     @csrf
-                    <!-- Fila 1: Nombre -->
-                    <div class="row mb-3 align-items-center">
-                        <div class="col-md-6">
-                            <div class="row align-items-center">
-                                <div class="col-md-4">
-                                    <label for="name" class="form-label mb-0">Nombre</label>
-                                </div>
-                                <div class="col-md-8">
-                                    <input type="text" class="form-control" placeholder="Ingrese el nombre de la sede"
-                                        id="name" name="name" required>
-                                </div>
-                            </div>
+                    <!-- Nombre y botón en la misma línea, apilados en móvil -->
+                    <div class="row g-3 align-items-end">
+                        <div class="col-12 col-md-6">
+                            <label for="name" class="form-label mb-1">Nombre</label>
+                            <input type="text" class="form-control" placeholder="Ingrese el nombre de la sede"
+                                id="name" name="name" required>
                         </div>
-                    </div>
-
-                    <!-- Botón de Guardar (alineado a la derecha) -->
-                    <div class="row mb-3">
-                        <div class="d-flex justify-content-end">
-                            <button type="submit" class="btn btn-primary">Agregar sede</button>
+                        <div class="col-12 col-md-auto ms-md-auto">
+                            <button type="submit" class="btn btn-primary w-100">Agregar sede</button>
                         </div>
                     </div>
                 </form>
