@@ -74,12 +74,23 @@
                         </thead>
                         <tbody class="text-center">
                             @forelse ($tanques as $tanque)
-                                <tr style="border-bottom: 1px solid #e9ecef;">
-                                    <td class="text-dark">{{ $tanque->id }}</td>
-                                    <td class="text-dark">{{ $tanque->sede_nombre }}</td>
-                                    <td class="text-dark">{{ $tanque->name }}</td>
-                                    <td class="text-dark">{{ number_format($tanque->capacity) }}</td>
-                                    <td class="text-dark">{{ $tanque->producto_nombre ?? 'Sin producto' }}</td>
+                                <tr>
+                                    <td>{{ ($tanques->currentPage() - 1) * $tanques->perPage() + $loop->iteration }}</td>
+                                    <td>{{ $tanque->sede_nombre }}</td>
+                                    <td>{{ $tanque->name }}</td>
+                                    <td>{{ number_format($tanque->capacity) }}</td>
+                                    <td>
+                                        @if ($tanque->producto_nombre)
+                                            {{ $tanque->producto_nombre }}
+                                        @elseif ($tanque->product_id)
+                                            <span class="text-danger" title="El producto asignado a este tanque fue eliminado del catálogo">
+                                                <i class="bi bi-exclamation-triangle-fill me-1"></i>Producto eliminado
+                                            </span>
+                                        @else
+                                            <span class="text-muted">Sin producto</span>
+                                        @endif
+                                    </td>
+                                    <td>{{ $tanque->is_reserve === 1 ? 'Si' : 'No' }}</td>
                                     <td>
                                         <span class="badge {{ $tanque->is_reserve === 1 ? 'bg-primary' : 'bg-secondary' }}">
                                             {{ $tanque->is_reserve === 1 ? 'Si' : 'No' }}

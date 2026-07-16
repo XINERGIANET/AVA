@@ -36,7 +36,7 @@ class Purchase extends Model
 	protected $guarded = [
 	];
 
-	protected $appends = ['total'];
+	protected $appends = ['total', 'paid_amount', 'balance'];
 
 	protected $dates = [
 		'date'
@@ -62,9 +62,26 @@ class Purchase extends Model
 		return $this->hasMany(PurchaseDetail::class);
 	}
 
+	public function payments()
+	{
+		return $this->hasMany(SupplierPayment::class)->where('deleted', 0);
+	}
+
 	//Campo total
 	public function getTotalAttribute()
 	{
 		return $this->purchase_details()->sum('subtotal');
+	}
+
+	// Cuentas por Pagar: cuánto se le ha pagado ya al proveedor por esta compra
+	public function getPaidAmountAttribute()
+	{
+		return (float) $this->payments()->sum('amount');
+	}
+
+	// Cuentas por Pagar: saldo pendiente de esta compra
+	public function getBalanceAttribute()
+	{
+		return round($this->total - $this->paid_amount, 2);
 	}
 }

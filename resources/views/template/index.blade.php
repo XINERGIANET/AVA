@@ -179,7 +179,7 @@
                         $cfgPeopleOpen = request()->routeIs('collaborators.*', 'users.*');
                         $cfgOpen = $cfgStructureOpen || $cfgCatalogOpen || $cfgPeopleOpen;
 
-                        $supplyOpen = request()->routeIs('purchases.*', 'discharges.*', 'storages.*')
+                        $supplyOpen = request()->routeIs('purchases.*', 'discharges.*', 'storages.*', 'supplier_payments.*')
                             || (request()->routeIs('transfers.*') && !request()->routeIs('transfers.historico'));
 
                         $salesOpen = (request()->routeIs('sales.*') && !request()->routeIs('sales.historico'))
@@ -372,6 +372,13 @@
                                         <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
                                         <i class="sidenav-mini-icon"> HC </i>
                                         <span class="item-name">Compras</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->routeIs('supplier_payments.*') ? 'active' : '' }}" href="{{ route('supplier_payments.index') }}">
+                                        <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
+                                        <i class="sidenav-mini-icon"> CP </i>
+                                        <span class="item-name">Cuentas por Pagar</span>
                                     </a>
                                 </li>
                                 <li class="nav-item">

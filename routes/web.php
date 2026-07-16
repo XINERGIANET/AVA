@@ -31,6 +31,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\FlowMeterController;
 use App\Http\Controllers\MermaController;
 use App\Http\Controllers\LoanController;
+use App\Http\Controllers\SupplierPaymentController;
 use Illuminate\Support\Facades\Artisan;
 
 /*
@@ -186,6 +187,10 @@ Route::group(['middleware' => 'auth'], function () {
     Route::resource('purchases', PurchaseController::class);
     Route::get('/buscar-supplier', [PurchaseController::class, 'buscarSuppliers'])->name('buscar.suppliers');
     Route::get('/buscar-product', [PurchaseController::class, 'buscarProducts'])->name('buscar.products');
+
+    //CUENTAS POR PAGAR
+    Route::get('cuentas-por-pagar', [SupplierPaymentController::class, 'index'])->name('supplier_payments.index');
+    Route::post('cuentas-por-pagar', [SupplierPaymentController::class, 'store'])->name('supplier_payments.store');
 
     Route::get('payments/excel', [PaymentController::class, 'excel'])->name('payments.excel');
     Route::get('payments/pdf', [PaymentController::class, 'pdf'])->name('payments.pdf');

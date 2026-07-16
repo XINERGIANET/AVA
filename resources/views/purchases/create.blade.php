@@ -67,13 +67,11 @@
                                                 <input type="text" class="form-control" id="invoiceNumber" name="invoice_number" placeholder="Ej. F001-000123">
                                             </div>
                                             <div class="col-md-4">
-                                                <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">Método de Pago</label>
-                                                <select class="form-select" id="paymentMethod" name="payment_method_id" required>
-                                                    <option value="">Seleccione un método</option>
-                                                    @foreach ($paymentMethods as $method)
-                                                        <option value="{{ $method->id }}">{{ $method->name }}</option>
-                                                    @endforeach
-                                                </select>
+                                                <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">Condición</label>
+                                                <div class="form-control bg-light text-muted d-flex align-items-center text-nowrap overflow-hidden" style="min-height: 42px;" title="Se registra como Cuenta por Pagar">
+                                                    <i class="bi bi-journal-check me-2 flex-shrink-0"></i>Cuenta por Pagar
+                                                </div>
+                                                <input type="hidden" id="paymentMethod" name="payment_method_id" value="">
                                             </div>
                                         </div>
                                         <div class="row g-3 mt-0">
