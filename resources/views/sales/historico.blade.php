@@ -258,18 +258,19 @@
                                 <tr>
                                     <th>Producto</th>
                                     <th>Cantidad</th>
-                                    <th>Precio Unitario</th>
+                                    <th>Precio Tablero</th>
+                                    <th>Precio Vendido</th>
                                     <th>Subtotal</th>
                                 </tr>
                             </thead>
                             <tbody id="detail-productos">
                                 <tr>
-                                    <td colspan="4" class="text-center">Cargando productos...</td>
+                                    <td colspan="5" class="text-center">Cargando productos...</td>
                                 </tr>
                             </tbody>
                             <tfoot>
                                 <tr id="total-row" style="display: none;">
-                                    <th colspan="3" class="text-end">Total:</th>
+                                    <th colspan="4" class="text-end">Total:</th>
                                     <th id="total-amount">S/ 0.00</th>
                                 </tr>
                             </tfoot>
@@ -489,18 +490,22 @@
                         if (response.productos && response.productos.length > 0) {
                             response.productos.forEach(function(producto) {
                                 total += parseFloat(producto.subtotal);
+                                const boardPrice = parseFloat(producto.board_price ?? producto.unit_price);
+                                const soldPrice = parseFloat(producto.sold_price ?? producto.unit_price);
+                                const priceChanged = Math.abs(soldPrice - boardPrice) > 0.009;
                                 productosHtml += `
                             <tr>
                                 <td>${producto.name}</td>
                                 <td>${producto.quantity}</td>
-                                <td>S/ ${producto.unit_price.toFixed(2)}</td>
+                                <td>S/ ${boardPrice.toFixed(2)}</td>
+                                <td class="${priceChanged ? 'text-warning fw-semibold' : ''}">S/ ${soldPrice.toFixed(2)}</td>
                                 <td>S/ ${producto.subtotal.toFixed(2)}</td>
                             </tr>
                         `;
                             });
                         } else {
                             productosHtml =
-                                '<tr><td colspan="4" class="text-center">No hay productos en esta venta</td></tr>';
+                                '<tr><td colspan="5" class="text-center">No hay productos en esta venta</td></tr>';
                         }
 
                         $('#detail-productos').html(productosHtml);

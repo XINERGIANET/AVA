@@ -5,6 +5,44 @@
 @endsection
 @section('content')
     <div class="container-fluid content-inner mt-0">
+        <div class="row g-3 mb-3">
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-muted small text-uppercase fw-semibold">Acumulado en bóveda</div>
+                        <div class="fs-3 fw-bold text-primary">S/ {{ number_format($vaultAccumulated, 2) }}</div>
+                        <div class="text-muted small">{{ $currentLocation ? 'Sede: ' . $currentLocation->name : 'Selecciona una sede arriba' }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-muted small text-uppercase fw-semibold">Enviado a Banco</div>
+                        <div class="fs-3 fw-bold text-secondary">S/ 0.00</div>
+                        <div class="text-muted small">Sin movimientos aún</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-muted small text-uppercase fw-semibold">Enviado al Dueño</div>
+                        <div class="fs-3 fw-bold text-secondary">S/ 0.00</div>
+                        <div class="text-muted small">Sin movimientos aún</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-muted small text-uppercase fw-semibold">Enviado a Otra Bóveda</div>
+                        <div class="fs-3 fw-bold text-secondary">S/ 0.00</div>
+                        <div class="text-muted small">Sin movimientos aún</div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="row">
             <div class="col-sm-12">
                 <div class="card">

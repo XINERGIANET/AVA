@@ -3712,12 +3712,16 @@
                             pump_id: pumpIdRow
                         });
                     } else {
-                        // Venta directa normal: unit_price = precio por sede, discounted_price = null
+                        // Venta directa normal: unit_price = precio tablero (por sede).
+                        // discounted_price solo se envía si el precio cobrado realmente
+                        // difiere del de catálogo (ej. el cajero lo editó a mano), para
+                        // poder distinguir "Precio Tablero" vs "Precio Vendido" en el detalle.
+                        const huboAjusteManual = Math.abs(precioActual - precioOriginal) > 0.009;
                         products.push({
                             product_id: productId,
                             quantity: cantidad,
-                            unit_price: precioOriginal, // Precio por sede
-                            discounted_price: null, // Sin descuento
+                            unit_price: precioOriginal, // Precio tablero (por sede)
+                            discounted_price: huboAjusteManual ? precioActual : null, // Precio vendido, si difiere
                             subtotal: subtotalExacto, // Enviar subtotal exacto
                             vehicle_plate: vehiclePlate,
                             is_wholesale: false,

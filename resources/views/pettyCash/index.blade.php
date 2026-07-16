@@ -32,16 +32,24 @@
                                         <div class="text-muted fw-semibold mt-1">Base: S/ {{ number_format((float)$openCash->initial_cash_amount, 2) }}</div>
                                     @else
                                         <div class="text-muted">Sin turno de caja activo</div>
+                                        @if((float)($isle->cash_amount ?? 0) > 0)
+                                            <div class="text-warning fw-semibold mt-1">Pendiente de enviar a bóveda: S/ {{ number_format((float)$isle->cash_amount, 2) }}</div>
+                                        @endif
                                     @endif
                                 </div>
                                 <span class="badge {{ $openCash ? 'bg-success' : 'bg-secondary' }} align-self-start">● {{ $openCash ? 'Abierta' : 'Cerrada' }}</span>
                             </div>
                             <div class="d-flex flex-wrap gap-2 mt-3">
-                                @if(!$openCash && auth()->user()->role->nombre !== 'worker')
-                                    <button class="btn btn-primary js-cash-action" data-action="open" data-isle="{{ $isle->id }}" data-name="{{ $isle->name }}" data-location="{{ $isle->location_id }}"><i class="bi bi-unlock me-1"></i>Abrir caja</button>
-                                @elseif($openCash)
+                                @if(!$openCash)
+                                    @if(auth()->user()->role->nombre !== 'worker')
+                                        <button class="btn btn-primary js-cash-action" data-action="open" data-isle="{{ $isle->id }}" data-name="{{ $isle->name }}" data-location="{{ $isle->location_id }}"><i class="bi bi-unlock me-1"></i>Abrir caja</button>
+                                    @endif
+                                    @if((float)($isle->cash_amount ?? 0) > 0)
+                                        <button class="btn btn-outline-info js-cash-action" data-action="vault" data-isle="{{ $isle->id }}" data-name="{{ $isle->name }}" data-location="{{ $isle->location_id }}" data-amount="{{ number_format((float)($isle->cash_amount ?? 0), 2, '.', '') }}"><i class="bi bi-safe me-1"></i>Enviar a bóveda</button>
+                                    @endif
+                                @else
                                     <button class="btn btn-outline-danger js-cash-action" data-action="expense" data-isle="{{ $isle->id }}" data-name="{{ $isle->name }}" data-location="{{ $isle->location_id }}"><i class="bi bi-box-arrow-right me-1"></i>Egreso</button>
-                                    <button class="btn btn-outline-info js-cash-action" data-action="vault" data-isle="{{ $isle->id }}" data-name="{{ $isle->name }}" data-location="{{ $isle->location_id }}"><i class="bi bi-safe me-1"></i>Enviar a bóveda</button>
+                                    <button class="btn btn-outline-info js-cash-action" data-action="vault" data-isle="{{ $isle->id }}" data-name="{{ $isle->name }}" data-location="{{ $isle->location_id }}" data-amount="{{ number_format((float)($isle->cash_amount ?? 0), 2, '.', '') }}"><i class="bi bi-safe me-1"></i>Enviar a bóveda</button>
                                     @if(auth()->user()->role->nombre !== 'worker')
                                         <button class="btn btn-outline-secondary js-cash-action" data-action="close" data-isle="{{ $isle->id }}" data-name="{{ $isle->name }}" data-location="{{ $isle->location_id }}"><i class="bi bi-lock me-1"></i>Cerrar caja</button>
                                     @endif
@@ -106,7 +114,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('cashIsleName').textContent = btn.dataset.name;
         document.getElementById('cashModalTitle').textContent = labels[action][0];
         document.getElementById('cashAmountLabel').textContent = labels[action][1];
-        document.getElementById('cashAmount').value = '';
+        if (action === 'open') {
+            document.getElementById('cashAmount').value = '0';
+        } else if (action === 'vault') {
+            document.getElementById('cashAmount').value = btn.dataset.amount || '';
+        } else {
+            document.getElementById('cashAmount').value = '';
+        }
+        document.getElementById('cashAmount').readOnly = action === 'open';
         document.getElementById('cashDescription').value = '';
         document.getElementById('cashVaultLocation').value = btn.dataset.location || '';
         document.getElementById('vaultLocationGroup').classList.toggle('d-none', action !== 'vault');
@@ -136,7 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const isle = document.getElementById('cashIsle').value;
         const amount = Number(document.getElementById('cashAmount').value);
         const vaultLocation = document.getElementById('cashVaultLocation').value;
-        if (!amount || amount <= 0) { Swal.fire('Dato requerido', 'Ingrese un monto mayor a cero.', 'warning'); return; }
+        if (action !== 'open' && (!amount || amount <= 0)) { Swal.fire('Dato requerido', 'Ingrese un monto mayor a cero.', 'warning'); return; }
         if (action === 'vault' && !vaultLocation) { Swal.fire('Dato requerido', 'Seleccione la bóveda destino.', 'warning'); return; }
         let url, method = 'POST', body;
         if (action === 'open') { url=urls.open; body={initial_cash_amount:amount,isle_id:isle}; }

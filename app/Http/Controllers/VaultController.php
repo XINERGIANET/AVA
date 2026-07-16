@@ -70,7 +70,15 @@ class VaultController extends Controller
 
         $users = User::where('deleted', 0)->get();
 
-        return view('vault.index', compact('transactions', 'locations', 'users', 'isles'));
+        // Tarjetas de resumen: saldo acumulado en bóveda de la sede actualmente seleccionada
+        // (la del selector superior, auth()->user()->location_id), sumando el vault de sus islas.
+        $currentLocationId = auth()->user()->location_id;
+        $currentLocation = $currentLocationId ? Location::find($currentLocationId) : null;
+        $vaultAccumulated = $currentLocationId
+            ? Isle::where('location_id', $currentLocationId)->where('deleted', 0)->sum('vault')
+            : 0;
+
+        return view('vault.index', compact('transactions', 'locations', 'users', 'isles', 'currentLocation', 'vaultAccumulated'));
     }
 
     public function create(Request $request)
@@ -272,8 +280,22 @@ class VaultController extends Controller
                 $message = 'Dinero descontado de la isla. Envío a bóveda pendiente de aprobación.';
 
             } else {
-                // Si es Admin/Master, se aprueba automáticamente y entra a la Bóveda Central
-                $destinationLocation->increment('vault', $amount);
+                // Si es Admin/Master, se aprueba automáticamente y entra a la Bóveda de la isla.
+                // El saldo de bóveda se lleva por isla (Isle.vault), no por sede, para que
+                // coincida con lo que ya muestra la pantalla de Registrar Bóveda.
+                if ((int) $destinationLocation->id === (int) $isle->location_id) {
+                    $isle->increment('vault', $amount);
+                } else {
+                    // Transferencia a otra sede: se acredita a la primera isla activa de esa sede.
+                    $destinationIsle = Isle::where('location_id', $destinationLocation->id)
+                        ->where('deleted', 0)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if ($destinationIsle) {
+                        $destinationIsle->increment('vault', $amount);
+                    }
+                }
 
                 $expense = Transaction::create([
                     'user_id' => $user->id,

@@ -611,8 +611,13 @@ class SaleController extends Controller
                 $precioSede = $locationPrice ? $locationPrice->unit_price : $product->unit_price;
 
                 $unitPrice = $precioSede;
+                // discounted_price = "Precio Vendido": se guarda siempre que el frontend
+                // envíe un precio distinto al de catálogo (mayorista, contrato/crédito, o un
+                // ajuste manual en una venta directa normal), para no perder ese dato.
                 $discountedPrice = null;
-                if (isset($productData['is_wholesale']) && $productData['is_wholesale']) {
+                if ($discountedPriceFromRequest > 0 && abs($discountedPriceFromRequest - $unitPrice) > 0.009) {
+                    $discountedPrice = $discountedPriceFromRequest;
+                } elseif (isset($productData['is_wholesale']) && $productData['is_wholesale']) {
                     $discountedPrice = $discountedPriceFromRequest > 0 ? $discountedPriceFromRequest : $unitPriceFromRequest;
                 } elseif ($request->order_detail_id) {
                     $discountedPrice = $discountedPriceFromRequest > 0 ? $discountedPriceFromRequest : $unitPriceFromRequest;
@@ -938,29 +943,21 @@ class SaleController extends Controller
             if ($sale) {
                 $adicional = $sale->adicional;
             }
-            if ($sale->type_sale === 0) {
-                // Venta directa: mostrar unit_price
-                $productos = $sale->sale_details->map(function ($detail) {
-                    return [
-                        'name' => $detail->product->name ?? 'Producto',
-                        'quantity' => round($detail->quantity, 2),
-                        'unit_price' => round($detail->unit_price, 2),
-                        'subtotal' => round($detail->subtotal, 2),
-                    ];
-                });
-                $adicional = $sale->adicional;
-            } else {
-                // Contrato/Crédito: mostrar discounted_price
-                $productos = $sale->sale_details->map(function ($detail) {
-                    return [
-                        'name' => $detail->product->name ?? 'Producto',
-                        'quantity' => round($detail->quantity, 2),
-                        'unit_price' => round($detail->discounted_price ?? $detail->unit_price, 2),
-                        'subtotal' => round($detail->subtotal, 2),
-                    ];
-                });
-                
-            }
+            // Se muestran ambos precios en todos los tipos de venta:
+            // "Precio Tablero" = precio de catálogo/configuración al momento de la venta (unit_price).
+            // "Precio Vendido" = precio realmente cobrado (discounted_price si hubo ajuste/mayorista/contrato, si no el mismo tablero).
+            $productos = $sale->sale_details->map(function ($detail) {
+                return [
+                    'name' => $detail->product->name ?? 'Producto',
+                    'quantity' => round($detail->quantity, 2),
+                    'board_price' => round($detail->unit_price, 2),
+                    'sold_price' => round($detail->discounted_price ?? $detail->unit_price, 2),
+                    // Se mantiene 'unit_price' por compatibilidad con quien ya lea este campo.
+                    'unit_price' => round($detail->discounted_price ?? $detail->unit_price, 2),
+                    'subtotal' => round($detail->subtotal, 2),
+                ];
+            });
+            $adicional = $sale->adicional;
 
             return response()->json([
                 'status' => true,
