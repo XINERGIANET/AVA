@@ -136,18 +136,18 @@
                                 <div class="p-3 mt-4 mb-4" style="background-color: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
                                     <div class="row align-items-end g-3">
                                         <div class="col-md-4">
-                                            <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">Filtro de Productos en Tabla</label>
-                                            <div class="input-group">
+                                            <label class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Buscar Producto</label>
+                                            <div class="input-group input-group-sm">
                                                 <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
-                                                <input type="text" class="form-control" id="busquedaProducto" placeholder="Buscar producto en la lista...">
+                                                <input type="text" class="form-control" id="busquedaProducto" placeholder="Filtrar producto en la lista...">
                                             </div>
                                         </div>
                                         <div class="col-md-8 text-end">
                                             <div class="d-inline-block me-4">
-                                                <span class="text-muted" style="font-size: 1.1rem;">Total:</span>
-                                                <strong class="text-primary ms-1" style="font-size: 1.5rem; color: #465fff !important;">S/ <span id="totalAmount">0.00</span></strong>
+                                                <span class="text-muted fw-bold" style="font-size: 1rem;">Total:</span>
+                                                <strong class="text-primary ms-1" style="font-size: 1.25rem;">S/ <span id="totalAmount">0.00</span></strong>
                                             </div>
-                                            <button type="submit" class="btn btn-primary px-4 py-2" id="savePurchase" style="background-color: #465fff; border-color: #465fff;">
+                                            <button type="submit" class="btn btn-primary px-4 btn-sm fw-medium" id="savePurchase" style="border-radius: 6px;">
                                                 <i class="bi bi-save me-2"></i>Guardar Compra
                                             </button>
                                         </div>
@@ -155,20 +155,20 @@
                                 </div>
 
                                 <!-- Tabla de productos -->
-                                <div class="table-responsive rounded shadow-sm border mb-3">
-                                    <table class="table table-hover mb-0" id="purchaseTable">
-                                        <thead class="text-white">
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0" id="purchaseTable" style="border: 1px solid #e9ecef;">
+                                        <thead class="text-center">
                                             <tr>
-                                                <th class="border-0" style="background-color: #465fff !important; color: white !important; font-weight: 600; padding: 12px 15px;">Producto</th>
-                                                <th class="border-0" style="background-color: #465fff !important; color: white !important; font-weight: 600; padding: 12px 15px;">Unidad</th>
-                                                <th class="border-0" style="background-color: #465fff !important; color: white !important; font-weight: 600; padding: 12px 15px;">Precio Unitario</th>
-                                                <th class="border-0" style="background-color: #465fff !important; color: white !important; font-weight: 600; padding: 12px 15px;">Cantidad</th>
-                                                <th class="border-0" style="background-color: #465fff !important; color: white !important; font-weight: 600; padding: 12px 15px;">Subtotal</th>
-                                                <th class="border-0" style="background-color: #465fff !important; color: white !important; font-weight: 600; padding: 12px 15px;">Merma</th>
-                                                <th class="border-0 text-center" style="background-color: #465fff !important; color: white !important; font-weight: 600; padding: 12px 15px;">Acción</th>
+                                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Producto</th>
+                                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Unidad</th>
+                                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Precio Unitario</th>
+                                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Cantidad</th>
+                                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Subtotal</th>
+                                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Merma</th>
+                                                <th class="pe-4 text-center fw-bold text-uppercase" style="width: 10%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Acción</th>
                                             </tr>
                                         </thead>
-                                        <tbody class="align-middle"></tbody>
+                                        <tbody class="text-center align-middle"></tbody>
                                     </table>
                                 </div>
                             </form>
@@ -184,40 +184,31 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="providerModalLabel">Agregar Proveedor</h5>
+                    <h5 class="modal-title text-dark fw-bold" id="providerModalLabel">Agregar Proveedor</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <form id="providerForm">
                         <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="document" class="form-label">RUC/DNI</label>
-                                    <div class="input-group">
-                                        <input type="number" class="form-control" id="document" name="document" placeholder="Ingrese RUC o DNI" required>
-                                        <button class="btn btn-outline-primary" type="button" onclick="searchDocumentApi()">
-                                            <i class="bi bi-search"></i>
-                                        </button>
-                                    </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="document" class="form-label text-dark fw-bold">RUC/DNI</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="document" name="document" placeholder="Ingrese RUC o DNI" required>
+                                    <button class="btn btn-outline-primary" type="button" onclick="searchDocumentApi()">
+                                        <i class="bi bi-search"></i>
+                                    </button>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="company_name" class="form-label">Razón Social</label>
-                                    <input type="text" class="form-control" id="company_name" name="company_name"
-                                        required>
-                                </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="company_name" class="form-label text-dark fw-bold">Razón Social</label>
+                                <input type="text" class="form-control" id="company_name" name="company_name" required>
                             </div>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times"></i> Cancelar
-                    </button>
-                    <button type="button" class="btn btn-primary" id="saveSupplier">
-                        <i class="fas fa-save"></i> Guardar
-                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary px-4" id="saveSupplier">Guardar</button>
                 </div>
             </div>
         </div>

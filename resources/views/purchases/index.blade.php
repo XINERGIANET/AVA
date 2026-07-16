@@ -62,6 +62,9 @@
                     <button class="btn btn-success btn-sm fw-medium" type="button" id="excelBtn" style="border-radius: 6px;">
                         <i class="bi bi-file-earmark-excel-fill me-1"></i> Excel
                     </button>
+                    <a href="{{ route('purchases.create') }}" class="btn btn-primary btn-sm fw-medium" style="border-radius: 6px;">
+                        <i class="bi bi-plus-lg me-1"></i> Nueva Compra
+                    </a>
                 </div>
                 <div>
                     <h5 class="mb-0 text-dark fw-bold">Total: <span class="text-primary">S/ {{ number_format($total, 2, '.', ',') }}</span></h5>

@@ -17,12 +17,42 @@
 <div class="container-fluid content-inner" style="padding-top: 1rem;">
     <div class="card shadow-sm border-0" style="border-radius: 10px;">
         <div class="card-body">
-            <!-- Header Toolbar -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h5 class="mb-0 text-dark fw-bold">Registro de Transferencias</h5>
-                <button type="button" class="btn btn-primary fw-medium px-4" data-bs-toggle="modal" data-bs-target="#createModal" style="border-radius: 6px;">
-                    <i class="bi bi-plus-lg me-2"></i>Nueva Transferencia
-                </button>
+            <!-- Toolbar de Filtros y Acciones -->
+            <div class="row mb-4 align-items-center">
+                <div class="col-md-9">
+                    <form action="{{ route('transfers.index') }}" method="GET" id="filterForm">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-3">
+                                <label for="start_date" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Fecha Inicial</label>
+                                <input type="date" class="form-control form-control-sm" name="start_date" id="start_date" value="{{ request('start_date') }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="end_date" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Fecha Final</label>
+                                <input type="date" class="form-control form-control-sm" name="end_date" id="end_date" value="{{ request('end_date') }}">
+                            </div>
+                            @if(auth()->user()->role->nombre == 'master')
+                            <div class="col-md-3">
+                                <label for="location_id" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Sede</label>
+                                <select name="location_id" id="location_id" class="form-select form-select-sm">
+                                    <option value="">Todas</option>
+                                    @foreach(\App\Models\Location::all() as $loc)
+                                        <option value="{{ $loc->id }}" {{ request('location_id') == $loc->id ? 'selected' : '' }}>{{ $loc->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            @endif
+                            <div class="col-md-3 d-flex gap-2">
+                                <button type="submit" class="btn btn-secondary btn-sm w-100 fw-medium"><i class="bi bi-funnel me-1"></i>Filtrar</button>
+                                <a href="{{ route('transfers.index') }}" class="btn btn-light btn-sm text-muted fw-medium w-100"><i class="bi bi-eraser me-1"></i>Limpiar</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="col-md-3 text-end">
+                    <button type="button" class="btn btn-primary fw-medium px-4 btn-sm w-100" data-bs-toggle="modal" data-bs-target="#createModal" style="border-radius: 6px;">
+                        <i class="bi bi-plus-lg me-2"></i>Nueva Transferencia
+                    </button>
+                </div>
             </div>
 
             <div class="table-responsive">
