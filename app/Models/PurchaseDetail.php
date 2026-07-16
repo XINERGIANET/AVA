@@ -29,6 +29,8 @@ class PurchaseDetail extends Model
 	protected $guarded = [
 	];
 
+	protected $appends = ['display_name'];
+
 	public function product()
 	{
 		return $this->belongsTo(Product::class);
@@ -42,5 +44,12 @@ class PurchaseDetail extends Model
 	public function purchase()
 	{
 		return $this->belongsTo(Purchase::class);
+	}
+
+	// Nombre a mostrar: el del producto de catálogo, o la descripción libre
+	// cuando la línea no está atada a ningún producto (ej. Otros Gastos).
+	public function getDisplayNameAttribute()
+	{
+		return $this->product->name ?? ($this->description ?: 'Ítem sin descripción');
 	}
 }

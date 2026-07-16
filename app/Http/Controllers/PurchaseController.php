@@ -9,6 +9,7 @@ use App\Models\PurchaseDetail;
 use App\Models\PaymentMethod;
 use App\Models\Supplier;
 use App\Models\Product;
+use App\Models\PurchaseConcept;
 use App\Models\Tank;
 use App\Exports\PurchasesExport;
 use App\Models\Waste;
@@ -80,8 +81,9 @@ class PurchaseController extends Controller
         $suppliers = Supplier::select('id', 'company_name')->where('deleted', 0)->get();
         $products = Product::where('deleted', 0)
             ->get();
+        $purchaseConcepts = PurchaseConcept::where('deleted', 0)->get();
 
-        return view('purchases.create', compact('paymentMethods', 'suppliers', 'products','locations','tanks'));
+        return view('purchases.create', compact('paymentMethods', 'suppliers', 'products', 'locations', 'tanks', 'purchaseConcepts'));
 
     }
 
@@ -93,11 +95,15 @@ class PurchaseController extends Controller
             'voucher_type'               => 'required|numeric|min:1',
             'invoice_number'             => 'nullable|string',
             'payment_method_id'          => 'nullable|exists:payment_methods,id',
+            'purchase_concept_id'        => 'required|exists:purchase_concepts,id',
+            'glosa'                      => 'nullable|string|max:2000',
             'date'                       => 'required|date',
             'supplier_id'                => 'nullable|exists:suppliers,id',
             'purchase_temp'              => 'nullable|numeric|min:0.01',
             'real_temp'                  => 'nullable|numeric|min:0.01',
             'details'                    => 'required|array|min:1',
+            'details.*.product_id'       => 'nullable|exists:products,id',
+            'details.*.description'      => 'nullable|string|max:255',
             'details.*.quantity'         => 'required|numeric|min:0.01',
             'details.*.unit_price'       => 'required|numeric|min:0',
             'details.*.subtotal'         => 'required|numeric|min:0',
@@ -120,16 +126,22 @@ class PurchaseController extends Controller
             foreach ($details as $detail) {
                 if ($detail['quantity'] <= 0) continue;
 
-                $productId = $detail['product_id'];
+                $productId = $detail['product_id'] ?? null;
+                $description = $detail['description'] ?? null;
+
+                if (!$productId && !$description) {
+                    throw new \Exception('Cada línea debe tener un producto o una descripción.');
+                }
 
                 $processedDetails[] = [
                     'product_id'  => $productId,
+                    'description' => $description,
                     'quantity'    => $detail['quantity'],
                     'unit_price'  => $detail['unit_price'],
-                    'measurement_unit'  => $detail['measurement_unit'],
+                    'measurement_unit'  => $detail['measurement_unit'] ?? null,
                     'subtotal'    => $detail['subtotal'],
-                    'waste'    => $detail['waste'],
-                    'tank_id'    => $detail['tank_id'],
+                    'waste'    => $detail['waste'] ?? 0,
+                    'tank_id'    => $detail['tank_id'] ?? null,
                 ];
             }
 
@@ -139,13 +151,15 @@ class PurchaseController extends Controller
 
             // Crear la compra
             $compra = Purchase::create([
-                'voucher_type'       => $request->voucher_type,
-                'invoice_number'     => $request->invoice_number,
-                'payment_method_id'  => $request->payment_method_id,
-                'date'               => $request->date,
-                'supplier_id'        => $request->supplier_id,
-                'purchase_temp'      => $request->purchase_temp,
-                'real_temp'          => $request->real_temp,
+                'voucher_type'         => $request->voucher_type,
+                'invoice_number'       => $request->invoice_number,
+                'payment_method_id'    => $request->payment_method_id,
+                'purchase_concept_id'  => $request->purchase_concept_id,
+                'glosa'                => $request->glosa,
+                'date'                 => $request->date,
+                'supplier_id'          => $request->supplier_id,
+                'purchase_temp'        => $request->purchase_temp,
+                'real_temp'            => $request->real_temp,
             ]);
 
             // Procesar los detalles
