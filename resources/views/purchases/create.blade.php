@@ -97,9 +97,9 @@
                                                 </label>
                                                 <select class="form-select" id="location_id" name="location_id" {{ auth()->user()->role->nombre != 'master' ? 'disabled' : '' }}>
                                                     @if (auth()->user()->role->nombre == 'master')
-                                                        <option value="" disabled selected>Seleccione una sede</option>
+                                                        <option value="" disabled {{ auth()->user()->location_id ? '' : 'selected' }}>Seleccione una sede</option>
                                                         @foreach ($locations as $location)
-                                                            <option value="{{ $location->id }}">{{ $location->name }}</option>
+                                                            <option value="{{ $location->id }}" {{ auth()->user()->location_id == $location->id ? 'selected' : '' }}>{{ $location->name }}</option>
                                                         @endforeach
                                                     @else
                                                         <option value="{{ auth()->user()->location_id }}" selected>
@@ -651,9 +651,10 @@
                 firstProductId = validItems.first().data('product_id');
                 const selectedProduct = newproducts.find(p => Number(p.id) === Number(firstProductId));
                 if (!selectedProduct) {
+                    validItems.find('.tank-checkbox').prop('checked', false);
                     ToastError.fire({
                         icon: 'error',
-                        text: 'El producto asociado a este tanque no está disponible o ha sido eliminado.'
+                        text: 'El producto asociado a este tanque no está disponible o ha sido eliminado. Se desmarcó automáticamente.'
                     });
                     updateTotal();
                     return;

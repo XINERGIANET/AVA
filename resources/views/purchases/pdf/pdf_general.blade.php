@@ -7,7 +7,7 @@
     </title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'DejaVu Sans', sans-serif;
             font-size: 11px;
             margin: 15px;
             line-height: 1.3;

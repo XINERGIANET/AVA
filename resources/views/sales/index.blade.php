@@ -146,10 +146,10 @@
         }
         .editable-sale-row .form-control,
         .editable-sale-row .form-select {
-            min-width: 95px;
+            min-width: 80px;
         }
         .editable-sale-row .sale-product-select {
-            min-width: 180px;
+            min-width: 160px;
         }
         .sales-create-page {
             padding: 0 !important;
@@ -329,17 +329,17 @@
         }
         .sales-order-table {
             margin: 0;
-            min-width: 860px;
+            min-width: 560px;
             background: transparent;
         }
         .sales-order-table thead th {
             background: transparent;
             border-bottom: 1px solid var(--sales-border);
-            color: var(--sales-muted);
-            font-size: 0.82rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
+            color: var(--sales-text);
+            font-size: 1rem;
+            font-weight: 700;
+            text-transform: none;
+            letter-spacing: normal;
             padding: 18px 16px;
             white-space: nowrap;
         }
@@ -354,12 +354,125 @@
         }
         .editable-sale-row .form-control,
         .editable-sale-row .form-select {
-            min-width: 100px;
+            min-width: 80px;
             min-height: 42px;
-            background: #fff;
+            background-color: #fff;
         }
         .editable-sale-row .sale-product-select {
-            min-width: 240px;
+            min-width: 160px;
+            border-color: #3a57e8;
+            color: #3a57e8;
+            font-weight: 600;
+        }
+        .editable-sale-row .sale-product-select:focus {
+            border-color: #3a57e8;
+            box-shadow: 0 0 0 0.2rem rgba(58, 87, 232, 0.25);
+        }
+        .editable-sale-row .sale-product-select option {
+            color: #3a57e8;
+            font-weight: 600;
+            background-color: #fff;
+        }
+        .editable-sale-row .sale-product-select option:disabled {
+            color: #94a3b8;
+            font-weight: 400;
+            font-style: italic;
+            background-color: #f8fafc;
+        }
+
+        /* Combo de producto personalizado (reemplaza visualmente al <select> nativo, que
+           queda oculto pero sigue existiendo para no romper la lógica de cálculo/envío) */
+        .custom-combo {
+            position: relative;
+            min-width: 160px;
+        }
+        .custom-combo-trigger {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            width: 100%;
+            min-height: 42px;
+            padding: 0.375rem 0.75rem;
+            background-color: #fff;
+            border: 1px solid #3a57e8;
+            border-radius: 0.375rem;
+            color: #3a57e8;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+        .custom-combo-trigger:focus {
+            outline: none;
+            border-color: #3a57e8;
+            box-shadow: 0 0 0 0.2rem rgba(58, 87, 232, 0.25);
+        }
+        .custom-combo-label {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .custom-combo-label.is-placeholder {
+            color: #94a3b8;
+            font-weight: 400;
+            font-style: italic;
+        }
+        .custom-combo-trigger .bi-chevron-down {
+            flex-shrink: 0;
+            transition: transform 0.15s ease;
+        }
+        .custom-combo.is-open .custom-combo-trigger .bi-chevron-down {
+            transform: rotate(180deg);
+        }
+        .custom-combo-menu {
+            display: none;
+            position: fixed;
+            z-index: 3000;
+            width: max-content;
+            max-width: 320px;
+            max-height: 220px;
+            overflow-y: auto;
+            background: #fff;
+            border: 1px solid #3a57e8;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 25px rgba(23, 37, 84, 0.15);
+            padding: 6px;
+        }
+        .custom-combo-menu.is-open {
+            display: block;
+        }
+        #comboPortal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 0;
+        }
+        .custom-combo-option {
+            display: block;
+            width: 100%;
+            text-align: left;
+            background: none;
+            border: 0;
+            border-radius: 0.375rem;
+            padding: 8px 10px;
+            color: #3a57e8;
+            font-weight: 600;
+            font-size: 0.875rem;
+            white-space: nowrap;
+        }
+        .custom-combo-option:hover,
+        .custom-combo-option:focus {
+            background-color: rgba(58, 87, 232, 0.1);
+            outline: none;
+        }
+        .custom-combo-option.is-active {
+            background-color: rgba(58, 87, 232, 0.15);
+        }
+        .custom-combo-option.is-placeholder {
+            color: #94a3b8;
+            font-style: italic;
+            font-weight: 400;
         }
         .sales-empty-state {
             margin: 18px 22px 0;
@@ -582,7 +695,6 @@
                                     <i class="bi bi-file-earmark-text"></i>
                                     <h6>Datos de la venta</h6>
                                 </div>
-                                <p class="sales-panel-note">Configura el tipo de venta y el modo de cobro antes de registrar la operacion.</p>
                             </div>
                         </div>
                         <div class="sales-panel-body">
@@ -718,7 +830,6 @@
                                     <i class="bi bi-cart3"></i>
                                     <h6>Productos Agregados</h6>
                                 </div>
-                                <p class="sales-panel-note">Edita producto, precio, cantidad o subtotal directamente en la tabla.</p>
                             </div>
                             <button type="button" class="btn btn-primary btn-sm" id="btn-add-editable-product-row" style="display: none;">
                                 <i class="bi bi-plus-circle me-1"></i>Agregar fila
@@ -1654,38 +1765,99 @@
             });
         }
 
-        function productOptionsHtml(selectedId) {
+        function buildProductOptionsData() {
+            // Cuenta cuántas entradas comparten el mismo nombre para distinguirlas (ej. el mismo
+            // producto disponible en dos tanques distintos) en vez de mostrarlas idénticas.
+            const nameCounts = {};
+            directSaleProducts.forEach(function(product) {
+                nameCounts[product.name] = (nameCounts[product.name] || 0) + 1;
+            });
+            const nameSeen = {};
+
             return directSaleProducts.map(function(product) {
-                const selected = String(product.id) === String(selectedId) ? 'selected' : '';
-                return `<option value="${product.id}"
-                    data-price="${product.price}"
-                    data-original-price="${product.price}"
-                    data-tank-id="${product.tank_id || ''}"
-                    data-pump-id="${product.pump_id || ''}"
-                    data-order-detail-id="${product.order_detail_id || ''}"
-                    ${selected}>${product.name}</option>`;
+                let label = product.name;
+                if (nameCounts[product.name] > 1) {
+                    nameSeen[product.name] = (nameSeen[product.name] || 0) + 1;
+                    label = `${product.name} (Tanque ${product.tank_id || nameSeen[product.name]})`;
+                }
+                return {
+                    id: product.id,
+                    label: label,
+                    price: product.price,
+                    tank_id: product.tank_id || '',
+                    pump_id: product.pump_id || '',
+                    order_detail_id: product.order_detail_id || '',
+                };
+            });
+        }
+
+        function productOptionsHtml(selectedId) {
+            return buildProductOptionsData().map(function(opt) {
+                const selected = String(opt.id) === String(selectedId) ? 'selected' : '';
+                return `<option value="${opt.id}"
+                    data-price="${opt.price}"
+                    data-original-price="${opt.price}"
+                    data-tank-id="${opt.tank_id}"
+                    data-pump-id="${opt.pump_id}"
+                    data-order-detail-id="${opt.order_detail_id}"
+                    ${selected}>${opt.label}</option>`;
             }).join('');
+        }
+
+        function productComboLabel(selectedId) {
+            if (!selectedId) return '(Seleccione un producto...)';
+            const match = buildProductOptionsData().find(o => String(o.id) === String(selectedId));
+            return match ? match.label : '(Seleccione un producto...)';
+        }
+
+        function productComboMenuHtml(selectedId) {
+            const placeholderActive = !selectedId ? 'is-active' : '';
+            let html = `<button type="button" class="custom-combo-option is-placeholder ${placeholderActive}" data-value="">(Seleccione un producto...)</button>`;
+            html += buildProductOptionsData().map(function(opt) {
+                const active = String(opt.id) === String(selectedId) ? 'is-active' : '';
+                return `<button type="button" class="custom-combo-option ${active}"
+                    data-value="${opt.id}"
+                    data-price="${opt.price}"
+                    data-tank-id="${opt.tank_id}"
+                    data-pump-id="${opt.pump_id}"
+                    data-order-detail-id="${opt.order_detail_id}">${opt.label}</button>`;
+            }).join('');
+            return html;
         }
 
         function appendEditableProductRow(selectedProductId) {
             if (!directSaleProducts.length) return;
 
-            const product = directSaleProducts.find(p => String(p.id) === String(selectedProductId)) || directSaleProducts[0];
-            const price = parseFloat(product.price || 0);
-            const quantity = 1;
+            const product = selectedProductId
+                ? directSaleProducts.find(p => String(p.id) === String(selectedProductId))
+                : null;
+            const price = product ? parseFloat(product.price || 0) : 0;
+            const quantity = product ? 1 : 0;
             const subtotal = price * quantity;
+            const placeholderSelected = product ? '' : 'selected';
+            const comboSelectedId = product ? product.id : null;
             const row = `
                 <tr class="editable-sale-row"
-                    data-product-id="${product.id}"
-                    data-tank-id="${product.tank_id || ''}"
-                    data-pump-id="${product.pump_id || ''}"
+                    data-product-id="${product ? product.id : ''}"
+                    data-tank-id="${product ? (product.tank_id || '') : ''}"
+                    data-pump-id="${product ? (product.pump_id || '') : ''}"
                     data-original-price="${price}"
                     data-current-price="${price}"
                     data-subtotal="${subtotal.toFixed(2)}"
                     data-calc-source="quantity">
                     <td>
-                        <select class="form-select form-select-sm sale-product-select">
-                            ${productOptionsHtml(product.id)}
+                        <div class="custom-combo">
+                            <button type="button" class="custom-combo-trigger">
+                                <span class="custom-combo-label${product ? '' : ' is-placeholder'}">${productComboLabel(comboSelectedId)}</span>
+                                <i class="bi bi-chevron-down"></i>
+                            </button>
+                            <div class="custom-combo-menu">
+                                ${productComboMenuHtml(comboSelectedId)}
+                            </div>
+                        </div>
+                        <select class="form-select form-select-sm sale-product-select d-none">
+                            <option value="" data-price="0" data-original-price="0" ${placeholderSelected} disabled>(Seleccione un producto...)</option>
+                            ${productOptionsHtml(comboSelectedId)}
                         </select>
                     </td>
                     <td>
@@ -1745,9 +1917,104 @@
             const $row = $(this).closest('tr');
             const selected = $(this).find('option:selected');
             const price = parseFloat(selected.data('price')) || 0;
+
+            // La cantidad no se toca aquí: solo se recalcula el precio y el subtotal la mantiene.
+            if (parseFloat($row.find('.sale-quantity').val()) <= 0) {
+                $row.find('.sale-quantity').val((1).toFixed(3));
+                $row.data('calc-source', 'quantity');
+            }
+
             $row.find('.sale-unit-price').val(price.toFixed(2));
+
+            if (price === 0) {
+                ToastError.fire({
+                    icon: 'warning',
+                    text: 'Este producto no tiene un precio configurado para la sede actual. Revísalo antes de cobrar.'
+                });
+            }
+
             recalculateEditableRow($row, $row.data('calc-source') || 'quantity');
             recalculateTotal();
+        });
+
+        // Combo de producto personalizado: abre/cierra el menú y sincroniza el <select> oculto.
+        // El menú se mueve a #comboPortal (hijo directo de body) mientras está abierto, para
+        // escapar del overflow:auto de la tabla (si no, quedaba recortado/oculto detrás del total).
+        if (!$('#comboPortal').length) {
+            $('body').append('<div id="comboPortal"></div>');
+        }
+
+        function positionComboMenu($combo, $menu) {
+            const rect = $combo.find('.custom-combo-trigger')[0].getBoundingClientRect();
+            $menu.css({
+                top: rect.bottom + 4,
+                left: rect.left,
+                minWidth: rect.width
+            });
+        }
+
+        function closeComboMenu($combo) {
+            const $menu = $combo.data('open-menu');
+            if (!$menu) return;
+            $menu.removeClass('is-open').appendTo($combo);
+            $combo.removeClass('is-open').removeData('open-menu');
+        }
+
+        $(document).on('click', '.custom-combo-trigger', function(e) {
+            e.stopPropagation();
+            const $combo = $(this).closest('.custom-combo');
+            const wasOpen = $combo.hasClass('is-open');
+
+            $('.custom-combo.is-open').each(function() {
+                closeComboMenu($(this));
+            });
+
+            if (!wasOpen) {
+                const $menu = $combo.find('.custom-combo-menu');
+                $combo.addClass('is-open').data('open-menu', $menu);
+                $menu.data('owner-combo', $combo).appendTo('#comboPortal').addClass('is-open');
+                positionComboMenu($combo, $menu);
+            }
+        });
+
+        $(document).on('click', '.custom-combo-option', function(e) {
+            e.stopPropagation();
+            const $option = $(this);
+            const $menu = $option.closest('.custom-combo-menu');
+            const $combo = $menu.data('owner-combo');
+            if (!$combo) return;
+            const $row = $combo.closest('tr');
+            const value = $option.data('value') === undefined || $option.data('value') === null ? '' : String($option.data('value'));
+            const isPlaceholder = $option.hasClass('is-placeholder');
+
+            $menu.find('.custom-combo-option').removeClass('is-active');
+            $option.addClass('is-active');
+            $combo.find('.custom-combo-label')
+                .text($option.text())
+                .toggleClass('is-placeholder', isPlaceholder);
+
+            closeComboMenu($combo);
+            $row.find('.sale-product-select').val(value).trigger('change');
+        });
+
+        $(document).on('click', function() {
+            $('.custom-combo.is-open').each(function() {
+                closeComboMenu($(this));
+            });
+        });
+
+        $(document).on('keydown', function(e) {
+            if (e.key === 'Escape') {
+                $('.custom-combo.is-open').each(function() {
+                    closeComboMenu($(this));
+                });
+            }
+        });
+
+        $(window).on('scroll resize', function() {
+            $('.custom-combo.is-open').each(function() {
+                closeComboMenu($(this));
+            });
         });
 
         $('#tbl-order-items').on('input', '.sale-quantity', function() {

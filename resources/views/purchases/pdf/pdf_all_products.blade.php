@@ -5,7 +5,7 @@
     <title>Reporte de {{ $tipo === 'egreso' ? 'Egresos' : 'Compras' }} por Productos</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'DejaVu Sans', sans-serif;
             font-size: 12px;
             margin: 0;
             padding: 20px;
