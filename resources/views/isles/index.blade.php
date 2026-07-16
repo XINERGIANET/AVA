@@ -157,19 +157,19 @@
           @method('PUT')
 
           <div class="modal-header">
-            <h5 class="modal-title">Editar isla</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <h5 class="modal-title text-dark fw-bold">Editar isla</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
           </div>
 
           <div class="modal-body row">
 
             <div class="col-md-6 mb-3">
-              <label class="form-label">Nombre</label>
+              <label class="form-label text-dark fw-bold">Nombre</label>
               <input type="text" class="form-control" id="edit_name" name="name" required>
             </div>
 
             <div class="col-md-6 mb-3">
-              <label class="form-label">Sede</label>
+              <label class="form-label text-dark fw-bold">Sede</label>
               <select name="location_id" id="edit_location_id" class="form-control" required>
                 @foreach($locations as $loc)
                   <option value="{{ $loc->id }}">{{ $loc->name }}</option>
@@ -181,7 +181,7 @@
 
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" class="btn btn-primary">Guardar cambios</button>
+            <button type="submit" class="btn btn-primary px-4">Guardar cambios</button>
           </div>
 
         </form>
@@ -199,17 +199,17 @@
           @method('DELETE')
 
           <div class="modal-header">
-            <h5 class="modal-title">Eliminar isla</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <h5 class="modal-title text-dark fw-bold">Eliminar isla</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
           </div>
 
           <div class="modal-body">
-            <p>¿Estás seguro de que deseas eliminar esta isla?</p>
+            <p class="text-dark">¿Estás seguro de que deseas eliminar esta isla?</p>
           </div>
 
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" class="btn btn-danger">Eliminar</button>
+            <button type="submit" class="btn btn-danger px-4">Eliminar</button>
           </div>
 
         </form>

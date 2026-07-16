@@ -1,8 +1,16 @@
 @extends('template.index')
 
 @section('header')
-    <h1>Compras</h1>
-    <p>Registro de compras</p>
+    <div class="d-flex align-items-center">
+        <h4 class="mb-0 text-dark fw-bold"><i class="bi bi-cart-plus me-2 text-primary"></i>Registrar Compra</h4>
+    </div>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0 bg-transparent p-0">
+            <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('purchases.index') }}" class="text-decoration-none text-muted">Abastecimiento</a></li>
+            <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">Registrar Compra</li>
+        </ol>
+    </nav>
 @endsection
 
 

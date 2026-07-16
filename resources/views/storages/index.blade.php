@@ -1,125 +1,140 @@
 @extends('template.index')
 
 @section('header')
-    <h1>Almacén</h1>
-    <p>Stock actual por sede y producto</p>
+    <div class="d-flex align-items-center">
+        <h4 class="mb-0 text-dark fw-bold"><i class="bi bi-box-seam me-2 text-primary"></i>Almacén</h4>
+    </div>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0 bg-transparent p-0">
+            <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('purchases.index') }}" class="text-decoration-none text-muted">Abastecimiento</a></li>
+            <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">Almacén (Stock Actual)</li>
+        </ol>
+    </nav>
 @endsection
 
 @section('content')
-    <div class="container-fluid content-inner mt-0">
-        <div class="row">
-            <div class="col-sm-12">
-                <div class="card">
-                    <div class="card-header">
-                        <div class="header-title">
-                            <h4 class="card-title">Stock Disponible</h4>
-                        </div>
+<div class="container-fluid content-inner" style="padding-top: 1rem;">
+    <div class="card shadow-sm border-0" style="border-radius: 10px;">
+        <div class="card-body">
+            <!-- Header Toolbar -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="mb-0 text-dark fw-bold">Stock Disponible por Tanque</h5>
+                
+                @if(auth()->user()->role->nombre == 'master')
+                    <div class="d-flex align-items-center">
+                        <label for="locationFilter" class="form-label text-dark fw-bold mb-0 me-2" style="font-size: 0.85rem; white-space: nowrap;">Filtrar por sede:</label>
+                        <select id="locationFilter" class="form-select form-select-sm" style="min-width: 200px;">
+                            <option value="">Todas las sedes</option>
+                            @foreach($locations as $location)
+                                <option value="{{ $location->id }}">{{ $location->name }}</option>
+                            @endforeach
+                        </select>
                     </div>
-                    <div class="card-body">
-                        @if(auth()->user()->role->nombre == 'master')
-                            <div class="mb-3">
-                                <label for="locationFilter" class="form-label">Filtrar por sede:</label>
-                                <select id="locationFilter" class="form-select">
-                                    <option value="">Todas las sedes</option>
-                                    @foreach($locations as $location)
-                                        <option value="{{ $location->id }}">{{ $location->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        @endif
-                        <div class="table-responsive">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Sede</th>
-                                        <th>Tanque</th>
-                                        <th>Producto</th>
-                                        <th>Capacidad</th>
-                                        <th>Stock Disponible</th>
-                                        <th>Unidad</th>
-                                        <td>Acciones</td>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($tanks as $tank)
-                                        <tr class="storage-row" data-location="{{ $tank->location_id }}">
-                                            <td>{{ $tank->location->name }}</td>
-                                            <td>{{ $tank->name }}</td>
-                                            <td>{{ $tank->product->name }}</td>
-                                            <td>{{ number_format($tank->capacity, 2) }}</td>
-                                            <td>{{ number_format($tank->stored_quantity, 3) }}</td>
-                                            <td>{{ $tank->product->measurement_unit }}</td>
-                                            <td>
-                                                <button type="button"
-                                                    class="btn btn-sm btn-warning btn-edit"
-                                                    data-id="{{ $tank->id }}"
-                                                    data-name="{{ $tank->name }}"
-                                                    data-capacity="{{ $tank->capacity ?? '' }}"
-                                                    data-stock="{{ $tank->stored_quantity ?? 0 }}"
-                                                    data-location="{{ $tank->location_id }}"
-                                                    data-product="{{ $tank->product_id }}">
-                                                    <i class="bi bi-pencil"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+                @endif
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" style="border: 1px solid #e9ecef;">
+                    <thead class="text-center">
+                        <tr>
+                            <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Sede</th>
+                            <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Tanque</th>
+                            <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Producto</th>
+                            <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Capacidad</th>
+                            <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Stock Disponible</th>
+                            <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Unidad</th>
+                            <th class="pe-4 text-center fw-bold text-uppercase" style="width: 10%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-center">
+                        @forelse($tanks as $tank)
+                            <tr class="storage-row" data-location="{{ $tank->location_id }}" style="border-bottom: 1px solid #e9ecef;">
+                                <td class="text-dark">{{ $tank->location->name }}</td>
+                                <td class="text-dark fw-medium">{{ $tank->name }}</td>
+                                <td class="text-dark">{{ $tank->product->name }}</td>
+                                <td class="text-dark">{{ number_format($tank->capacity, 2) }}</td>
+                                <td class="text-primary fw-bold">{{ number_format($tank->stored_quantity, 3) }}</td>
+                                <td class="text-dark">{{ $tank->product->measurement_unit }}</td>
+                                <td class="pe-4 text-center">
+                                    <button type="button"
+                                        class="btn btn-sm btn-warning text-white fw-medium btn-edit" style="border-radius: 4px; padding: 0.25rem 0.5rem;"
+                                        data-id="{{ $tank->id }}"
+                                        data-name="{{ $tank->name }}"
+                                        data-capacity="{{ $tank->capacity ?? '' }}"
+                                        data-stock="{{ $tank->stored_quantity ?? 0 }}"
+                                        data-location="{{ $tank->location_id }}"
+                                        data-product="{{ $tank->product_id }}" title="Ajustar Stock">
+                                        <i class="bi bi-pencil-fill"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-muted">No hay stock disponible registrado.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
+</div>
 
-    <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Editar Tanque</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="editForm">
-                        <div class="mb-3">
-                            <label for="editName" class="form-label">Nombre</label>
-                            <input type="text" class="form-control bg-light" id="editName" disabled required>
-                        </div>
-                        <div class="mb-3 d-none">
-                            <label for="editCapacity" class="form-label">Capacidad</label>
-                            <input type="number" class="form-control" id="editCapacity" step="0.001" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="editStock" class="form-label">Stock Disponible</label>
-                            <input type="number" class="form-control" id="editStock" step="0.001" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="editLocation" class="form-label">Sede</label>
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-dark fw-bold">Ajuste Manual de Inventario</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <div class="mb-3">
+                        <label for="editName" class="form-label text-dark fw-bold mb-1">Nombre</label>
+                        <input type="text" class="form-control bg-light" id="editName" disabled required>
+                    </div>
+                    <div class="mb-3 d-none">
+                        <label for="editCapacity" class="form-label">Capacidad</label>
+                        <input type="number" class="form-control" id="editCapacity" step="0.001" required>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="editLocation" class="form-label text-dark fw-bold mb-1">Sede</label>
                             <select class="form-select bg-light" id="editLocation" disabled required>
                                 @foreach($locations as $location)
                                     <option value="{{ $location->id }}">{{ $location->name }}</option>
                                 @endforeach
                             </select>
                         </div>
-                        <div class="mb-3">
-                            <label for="editProduct" class="form-label">Producto</label>
+                        <div class="col-md-6">
+                            <label for="editProduct" class="form-label text-dark fw-bold mb-1">Producto</label>
                             <select class="form-select bg-light" id="editProduct" disabled required>
                                 @foreach($products as $product)
                                     <option value="{{ $product->id }}">{{ $product->name }}</option>
                                 @endforeach
                             </select>
                         </div>
-                        <input type="hidden" id="editId">
-                        <input type="hidden" id="originalStock">
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="saveChanges">Guardar Cambios</button>
-                </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editStock" class="form-label text-dark fw-bold mb-1">Stock Disponible Actualizado</label>
+                        <input type="number" class="form-control fw-bold text-primary" id="editStock" step="0.001" required style="font-size: 1.1rem;">
+                        <small class="text-muted">La capacidad máxima teórica es calculada automáticamente.</small>
+                    </div>
+                    
+                    <input type="hidden" id="editId">
+                    <input type="hidden" id="originalStock">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary px-4" id="saveChanges">Guardar Cambios</button>
             </div>
         </div>
     </div>
+</div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {

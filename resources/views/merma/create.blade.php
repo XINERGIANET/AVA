@@ -1,20 +1,26 @@
 @extends('template.index')
 
 @section('header')
-    <h1>Toma de Inventario</h1>
-    <p>Registro de lectura física (varillaje) por tanque</p>
+    <div class="d-flex align-items-center">
+        <h4 class="mb-0 text-dark fw-bold"><i class="bi bi-clipboard2-data me-2 text-primary"></i>Toma de Inventario</h4>
+    </div>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0 bg-transparent p-0">
+            <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('merma.index') }}" class="text-decoration-none text-muted">Control de Merma</a></li>
+            <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">Registro de Lectura Física</li>
+        </ol>
+    </nav>
 @endsection
 
 @section('content')
-<div class="container-fluid content-inner mt-0">
-
-    <div class="card shadow">
+<div class="container-fluid content-inner" style="padding-top: 1rem;">
+    <div class="card shadow-sm border-0" style="border-radius: 10px;">
         <div class="card-body">
             <div class="mb-4">
                 <div class="row align-items-end">
-
                     <div class="col-md-4 mb-3">
-                        <label class="form-label fw-bold text-primary">1. Sede</label>
+                        <label class="form-label text-dark fw-bold mb-1">1. Sede</label>
                         <form method="GET" action="{{ route('merma.create') }}" id="form-location-filter">
                             <select name="location_id" class="form-select border-primary" onchange="document.getElementById('form-location-filter').submit()">
                                 @foreach($locations as $location)
@@ -25,7 +31,6 @@
                             </select>
                         </form>
                     </div>
-
                 </div>
             </div>
 
@@ -40,22 +45,22 @@
 
                     <div class="row mb-3">
                         <div class="col-md-3">
-                            <label class="form-label fw-bold">Fecha de la toma</label>
+                            <label class="form-label text-dark fw-bold mb-1">Fecha de la toma</label>
                             <input type="date" name="date" class="form-control" value="{{ old('date', now()->format('Y-m-d')) }}" required>
                         </div>
                     </div>
 
                     <div class="table-responsive">
-                        <table class="table table-bordered table-striped align-middle">
-                            <thead class="bg-light text-center">
+                        <table class="table table-hover align-middle mb-0" style="border: 1px solid #e9ecef;">
+                            <thead class="text-center">
                                 <tr>
-                                    <th style="width: 16%">Tanque</th>
-                                    <th style="width: 14%">Producto</th>
-                                    <th style="width: 12%">Capacidad</th>
-                                    <th style="width: 14%">Referencia anterior</th>
-                                    <th style="width: 16%">Lectura Física</th>
-                                    <th style="width: 12%">Diferencia (aprox.)</th>
-                                    <th style="width: 16%">Notas</th>
+                                    <th class="fw-bold text-uppercase" style="width: 16%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Tanque</th>
+                                    <th class="fw-bold text-uppercase" style="width: 14%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Producto</th>
+                                    <th class="fw-bold text-uppercase" style="width: 12%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Capacidad</th>
+                                    <th class="fw-bold text-uppercase" style="width: 14%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Ref. Anterior</th>
+                                    <th class="fw-bold text-uppercase" style="width: 16%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Lectura Física</th>
+                                    <th class="fw-bold text-uppercase" style="width: 12%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Dif. (aprox.)</th>
+                                    <th class="fw-bold text-uppercase" style="width: 16%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Notas</th>
                                 </tr>
                             </thead>
                             <tbody>

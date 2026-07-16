@@ -1,221 +1,150 @@
 @extends('template.index')
 
-@section('nav')
-<ul class="nav justify-content-center">
-    <li class="nav-item" style="margin: 0 10px 5px 10px;">
-        <a class="nav-link btn btn-primary active" href="{{ route('purchases.create') }}">Registro</a>
-    </li>
-    <li class="nav-item" style="margin: 0 10px 5px 10px;">
-        <a class="nav-link btn btn-secondary" href="{{ route('purchases.index') }}">Histórico</a>
-    </li>
-</ul>
-@endsection
-
 @section('header')
-<h2>Histórico de compras</h2>
-<p>Listado de todas las compras realizadas</p>
+    <div class="d-flex align-items-center">
+        <h4 class="mb-0 text-dark fw-bold"><i class="bi bi-cart-check me-2 text-primary"></i>Histórico de Compras</h4>
+    </div>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0 bg-transparent p-0">
+            <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('purchases.create') }}" class="text-decoration-none text-muted">Abastecimiento</a></li>
+            <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">Compras</li>
+        </ol>
+    </nav>
 @endsection
 
 @section('content')
-<div class="container-fluid content-inner mt-0">
-    <div class="row">
-        <div class="col-sm-12">
-            <div class="card">
-                <div class="card-body p-3">
-                    <div class="header-title w-100">
-                        <!-- Historial de Facturas -->
-                        <div class="row">
-                            <!-- Fila de filtros y botones en la misma línea -->
-                            <div class="col-12">
-                                <form action="" method="GET">
-                                    <div class="row align-items-end g-3">
-                                        <!-- Fecha inicial -->
-                                        <div class="col-6 col-md-3">
-                                            <label for="start_date" class="form-label small">Fecha Inicial</label>
-                                            <input type="date" class="form-control" name="start_date" id="start_date"
-                                                value="{{ request()->start_date ? request()->start_date : '' }}">
-                                        </div>
-                                        <!-- Fecha final -->
-                                        <div class="col-6 col-md-3">
-                                            <label for="end_date" class="form-label small">Fecha Final</label>
-                                            <input type="date" class="form-control" name="end_date" id="end_date"
-                                                value="{{ request()->end_date ? request()->end_date : '' }}">
-                                        </div>
-                                        <!-- Proveedor -->
-
-                                        <div class="col-12 col-md-3">
-                                            <label class="form-label">Proveedor</label>
-                                            <input type="text" id="search-suppliers" class="form-control" value="{{ request()->company_name ?? '' }}">
-                                            <input type="hidden" id="supplier_id" name="supplier_id" value="{{ request()->supplier_id ?? '' }}">
-                                        </div>
-
-                                        <div class="col-12 col-md-3">
-                                            <label for="search-product" class="form-label">Filtrar por Producto</label>
-                                            <input hidden type="number" id="product_id" name="product_id" placeholder="">
-                                            <input type="text" class="form-control" id="search-product" placeholder="Todos los productos">
-                                        </div>
-
-
-                                        <!-- Botones -->
-                                        <div class="col-12">
-                                            <div class="d-flex flex-wrap gap-2">
-                                                <button class="btn btn-primary" type="submit">
-                                                    <i class="fas fa-filter"></i> Filtrar
-                                                </button>
-                                                <div class="w-50s me-2">
-                                                    <a href="{{ route('purchases.index') }}"
-                                                        class="btn btn-warning w-100" id="btnLimpiar">
-                                                        Limpiar
-                                                    </a>
-                                                </div>
-                                                <!-- <button class="btn btn-danger" type="button" id="pdfBtn">
-                                                    <i class="fas fa-file-pdf"></i> PDF
-                                                </button>
-                                                <button class="btn btn-danger" type="button" id="pdfBtnGeneral">
-                                                    <i class="fas fa-file-pdf"></i> PDF (general)
-                                                </button>
-
-                                                <button class="btn btn-success" type="button" id="pdfBtnProduct">
-                                                    <i class="fas fa-file-pdf"></i> PDF Producto
-                                                </button>
-                                                <button class="btn btn-info" type="button" id="pdfBtnAllProducts">
-                                                    <i class="fas fa-file-pdf"></i> PDF Todos los Productos
-                                                </button> -->
-
-                                                <div class="btn-group">
-                                                    <button type="button" class="btn btn-danger btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" style="--bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
-                                                        <i class="fas fa-file-pdf"></i> INFORMES PDF
-                                                    </button>
-                                                    <ul class="dropdown-menu">
-                                                        <li>
-                                                            <a class="dropdown-item btn-pdf" href="#">
-                                                                <i class="bi bi-file-earmark-text"></i> DETALLE POR PROOVEDOR
-                                                            </a>
-                                                        </li>
-                                                        <li>
-                                                            <a class="dropdown-item btn-pdf-general" href="#">
-                                                                <i class="bi bi-file-earmark-text"></i> DETALLE TOTAL POR PROOVEDOR
-                                                            </a>
-                                                        </li>
-                                                        <li>
-                                                            <a class="dropdown-item btn-producto" href="#">
-                                                                <i class="bi bi-file-earmark-text"></i> DETALLE POR PRODUCTO
-                                                            </a>
-                                                        </li>
-                                                        <li>
-                                                            <a class="dropdown-item btn-producto-todo" href="#">
-                                                                <i class="bi bi-file-earmark-text"></i> DETALLE TOTAL POR PRODUCTO
-                                                            </a>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-
-                                                <button class="btn btn-success" type="button" id="excelBtn">
-                                                    <i class="fas fa-file-excel"></i> Excel
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-                            <!-- Fila del total - abajo a la derecha -->
-                            <div class="col-12 my-4">
-                                <div class="d-flex justify-content-end">
-                                    <div>
-                                        <h4>
-                                            <strong>TOTAL: S/ {{ number_format($total, 2, '.', ',') }}</strong>
-                                        </h4>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- <h4 class="mt-3">Historial de Facturas</h4> -->
-                        <div class="table-responsive">
-                            <table class="table table-striped" id="invoiceHistoryTable">
-                                <thead>
-                                    <tr>
-                                        <th>N° Comprobante</th>
-                                        <th>Proveedor</th>
-                                        <th>Fecha</th>
-                                        <th>Método de Pago</th>
-                                        <th>Total</th>
-                                        <th>Estado</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @if ($purchases->count())
-                                    @foreach ($purchases as $purchase)
-                                    <tr>
-                                        <td>{{ $purchase->invoice_number ?? '---' }}</td>
-                                        <td>{{ $purchase->supplier->company_name ?? 'Sin proveedor' }}</td>
-                                        <td>{{ $purchase->date->format('d/m/Y') }}</td>
-                                        <td>{{ $purchase->payment_method->name ?? 'Sin método de pago' }}</td>
-                                        <td>{{ number_format($purchase->total, 2) }}</td>
-                                        <td>{{ $purchase->deleted == 0 ? 'Activo' : 'Anulado' }}</td>
-                                        <td>
-                                            <button class="btn btn-primary btn-sm btn-icon btn-show"
-                                                data-id="{{ $purchase->id }}"
-                                                title="Ver Detalle">
-                                                <i class="bi bi-eye-fill"></i>
-                                            </button>
-
-                                            @if($purchase->deleted == 0)
-                                            <button class="btn btn-warning btn-sm btn-icon btn-edit"
-                                                data-id="{{ $purchase->id }}"
-                                                title="Editar">
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-
-                                            <button class="btn btn-danger btn-sm btn-icon btn-eliminar"
-                                                data-id="{{ $purchase->id }}"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#eliminarModal"
-                                                title="Eliminar">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                    @endforeach
-                                    @else
-                                    <tr>
-                                        <td colspan="6" class="text-center">Sin Registros</td>
-                                    </tr>
-                                    @endif
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="d-flex justify-content-center mt-3">
-                            {{ $purchases->links('pagination::bootstrap-4') }}
-                        </div>
+<div class="container-fluid content-inner" style="padding-top: 1rem;">
+    <div class="card shadow-sm border-0" style="border-radius: 10px;">
+        <div class="card-body">
+            <!-- Toolbar de Filtros -->
+            <form action="" method="GET" class="mb-4">
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-2">
+                        <label for="start_date" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Fecha Inicial</label>
+                        <input type="date" class="form-control form-control-sm" name="start_date" id="start_date" value="{{ request()->start_date ? request()->start_date : '' }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="end_date" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Fecha Final</label>
+                        <input type="date" class="form-control form-control-sm" name="end_date" id="end_date" value="{{ request()->end_date ? request()->end_date : '' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Proveedor</label>
+                        <input type="text" id="search-suppliers" class="form-control form-control-sm" placeholder="Buscar..." value="{{ request()->company_name ?? '' }}">
+                        <input type="hidden" id="supplier_id" name="supplier_id" value="{{ request()->supplier_id ?? '' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="search-product" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Producto</label>
+                        <input hidden type="number" id="product_id" name="product_id">
+                        <input type="text" class="form-control form-control-sm" id="search-product" placeholder="Todos">
+                    </div>
+                    <div class="col-md-2 d-flex gap-1">
+                        <button class="btn btn-primary btn-sm w-100" type="submit"><i class="bi bi-search me-1"></i>Filtrar</button>
+                        <a href="{{ route('purchases.index') }}" class="btn btn-warning btn-sm w-100 text-white"><i class="bi bi-eraser-fill me-1"></i>Limpiar</a>
                     </div>
                 </div>
+            </form>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex gap-2">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-danger btn-sm dropdown-toggle fw-medium" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 6px;">
+                            <i class="bi bi-file-earmark-pdf-fill me-1"></i> Informes PDF
+                        </button>
+                        <ul class="dropdown-menu shadow-sm">
+                            <li><a class="dropdown-item btn-pdf" href="#"><i class="bi bi-file-earmark-text me-2"></i>Detalle por Proveedor</a></li>
+                            <li><a class="dropdown-item btn-pdf-general" href="#"><i class="bi bi-file-earmark-ruled me-2"></i>Total por Proveedor</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item btn-producto" href="#"><i class="bi bi-file-earmark-text me-2"></i>Detalle por Producto</a></li>
+                            <li><a class="dropdown-item btn-producto-todo" href="#"><i class="bi bi-file-earmark-ruled me-2"></i>Total por Producto</a></li>
+                        </ul>
+                    </div>
+                    <button class="btn btn-success btn-sm fw-medium" type="button" id="excelBtn" style="border-radius: 6px;">
+                        <i class="bi bi-file-earmark-excel-fill me-1"></i> Excel
+                    </button>
+                </div>
+                <div>
+                    <h5 class="mb-0 text-dark fw-bold">Total: <span class="text-primary">S/ {{ number_format($total, 2, '.', ',') }}</span></h5>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="invoiceHistoryTable" style="border: 1px solid #e9ecef;">
+                    <thead class="text-center">
+                        <tr>
+                            <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">N° Comprobante</th>
+                            <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Proveedor</th>
+                            <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Fecha</th>
+                            <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Método de Pago</th>
+                            <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Total (S/)</th>
+                            <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Estado</th>
+                            <th class="pe-4 text-center fw-bold text-uppercase" style="width: 15%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-center">
+                        @if ($purchases->count())
+                            @foreach ($purchases as $purchase)
+                                <tr style="border-bottom: 1px solid #e9ecef;">
+                                    <td class="text-dark fw-medium">{{ $purchase->invoice_number ?? '---' }}</td>
+                                    <td class="text-dark">{{ $purchase->supplier->company_name ?? 'Sin proveedor' }}</td>
+                                    <td class="text-dark">{{ $purchase->date->format('d/m/Y') }}</td>
+                                    <td class="text-dark">{{ $purchase->payment_method->name ?? '---' }}</td>
+                                    <td class="text-dark fw-bold">{{ number_format($purchase->total, 2) }}</td>
+                                    <td>
+                                        <span class="badge {{ $purchase->deleted == 0 ? 'bg-success' : 'bg-danger' }}">
+                                            {{ $purchase->deleted == 0 ? 'Activo' : 'Anulado' }}
+                                        </span>
+                                    </td>
+                                    <td class="pe-4 text-center">
+                                        <button class="btn btn-sm btn-info text-white me-1 btn-show" style="border-radius: 4px; padding: 0.25rem 0.5rem;" data-id="{{ $purchase->id }}" title="Ver Detalle">
+                                            <i class="bi bi-eye-fill"></i>
+                                        </button>
+                                        @if($purchase->deleted == 0)
+                                            <button class="btn btn-sm btn-warning text-white me-1 btn-edit" style="border-radius: 4px; padding: 0.25rem 0.5rem;" data-id="{{ $purchase->id }}" title="Editar">
+                                                <i class="bi bi-pencil-fill"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger text-white btn-eliminar" style="border-radius: 4px; padding: 0.25rem 0.5rem;" data-id="{{ $purchase->id }}" data-bs-toggle="modal" data-bs-target="#eliminarModal" title="Anular">
+                                                <i class="bi bi-trash-fill"></i>
+                                            </button>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        @else
+                            <tr>
+                                <td colspan="7" class="text-center py-4">No hay compras registradas.</td>
+                            </tr>
+                        @endif
+                    </tbody>
+                </table>
+            </div>
+            <div class="d-flex justify-content-center mt-3">
+                {{ $purchases->links('pagination::bootstrap-4') }}
             </div>
         </div>
     </div>
 </div>
 
 <!-- Modal para mostrar detalles -->
-<div class="modal fade" id="showModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<div class="modal fade" id="showModal" tabindex="-1" aria-labelledby="showModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Detalle de la compra</h5>
+                <h5 class="modal-title text-dark fw-bold" id="showModalLabel">Detalle de la compra</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="table-responsive">
-                    <table class="table">
-                        <thead>
+                    <table class="table table-hover align-middle" style="border: 1px solid #e9ecef;">
+                        <thead class="text-center">
                             <tr>
-                                <th>Producto</th>
-                                <th>Cantidad</th>
-                                <th>Precio Unitario</th>
-                                <th>Subtotal</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; background-color: #2c3e50 !important; color: white !important;">Producto</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; background-color: #2c3e50 !important; color: white !important;">Cantidad</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; background-color: #2c3e50 !important; color: white !important;">Precio Unitario</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; background-color: #2c3e50 !important; color: white !important;">Subtotal</th>
                             </tr>
                         </thead>
-                        <tbody id="tbl-items"></tbody>
+                        <tbody id="tbl-items" class="text-center"></tbody>
                     </table>
                 </div>
             </div>
@@ -223,27 +152,27 @@
     </div>
 </div>
 
+<!-- Modal para editar compra -->
 <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Editar Compra</h5>
+                <h5 class="modal-title text-dark fw-bold">Editar Compra</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <!-- Aquí puedes incluir el formulario de edición -->
                 <form id="editForm">
                     @csrf
                     @method('PUT')
                     <!-- Fila 1: N° Comprobante y Proveedor -->
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="editInvoiceNumber" class="form-label">N° Comprobante</label>
+                            <label for="editInvoiceNumber" class="form-label text-dark fw-bold">N° Comprobante</label>
                             <input type="text" class="form-control" id="editInvoiceNumber" name="invoice_number">
                         </div>
                         <div class="col-md-6">
-                            <label for="editSupplier" class="form-label">Proveedor</label>
-                            <select class="form-control" id="editSupplier" name="supplier_id">
+                            <label for="editSupplier" class="form-label text-dark fw-bold">Proveedor</label>
+                            <select class="form-select" id="editSupplier" name="supplier_id">
                                 <option value="">Seleccionar proveedor</option>
                                 @foreach ($suppliers as $supplier)
                                 <option value="{{ $supplier->id }}">{{ $supplier->company_name }}</option>
@@ -254,12 +183,12 @@
                     <!-- Fila 2: Fecha, Método de Pago y Total -->
                     <div class="row mb-3">
                         <div class="col-md-4">
-                            <label for="editDate" class="form-label">Fecha</label>
+                            <label for="editDate" class="form-label text-dark fw-bold">Fecha</label>
                             <input type="date" class="form-control" id="editDate" name="date" required>
                         </div>
                         <div class="col-md-4">
-                            <label for="editPaymentMethod" class="form-label">Método de Pago</label>
-                            <select class="form-control" id="editPaymentMethod" name="payment_method_id" required>
+                            <label for="editPaymentMethod" class="form-label text-dark fw-bold">Método de Pago</label>
+                            <select class="form-select" id="editPaymentMethod" name="payment_method_id" required>
                                 <option value="">Seleccionar método de pago</option>
                                 @foreach ($paymentMethods as $method)
                                 <option value="{{ $method->id }}">{{ $method->name }}</option>
@@ -267,33 +196,37 @@
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label for="editTotal" class="form-label">Total</label>
+                            <label for="editTotal" class="form-label text-dark fw-bold">Total</label>
                             <input type="number" class="form-control" id="editTotal" name="total" step="0.01" disabled>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                    <div class="text-end mt-3">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary px-4">Guardar Cambios</button>
+                    </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
 
-<div class="modal fade modal-lg" id="eliminarModal" tabindex="-1" aria-labelledby="eliminarModalLabel" aria-hidden="true">
+<!-- Modal Eliminar -->
+<div class="modal fade" id="eliminarModal" tabindex="-1" aria-labelledby="eliminarModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header text-white">
-                <h5 class="modal-title" id="eliminarModalLabel">Confirmar Eliminación</h5>
-                <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            <div class="modal-header">
+                <h5 class="modal-title text-dark fw-bold" id="eliminarModalLabel">Confirmar Anulación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body">
-                <p>¿Estás seguro de que deseas anular esta compra?</p>
+                <p class="text-dark">¿Estás seguro de que deseas anular esta compra?</p>
             </div>
             <div class="modal-footer">
                 <form id="formEliminar" method="POST" action="">
                     @csrf
                     @method('DELETE')
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                    <button type="submit" class="btn btn-danger px-4">Anular Compra</button>
                 </form>
             </div>
         </div>
