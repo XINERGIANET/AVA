@@ -47,6 +47,11 @@ class Purchase extends Model
 		return $this->belongsTo(PaymentMethod::class);
 	}
 
+	public function purchase_concept()
+	{
+		return $this->belongsTo(PurchaseConcept::class);
+	}
+
 	public function supplier()
 	{
 		return $this->belongsTo(Supplier::class);

@@ -50,6 +50,16 @@
                                         </label>
                                         <input type="date" class="form-control" id="purchaseDate" name="date" required>
                                     </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">
+                                            <i class="bi bi-tag me-1 text-secondary"></i>Concepto
+                                        </label>
+                                        <select class="form-select" id="purchaseConcept" name="purchase_concept_id" required>
+                                            @foreach ($purchaseConcepts as $concept)
+                                                <option value="{{ $concept->id }}" data-is-fuel="{{ $concept->is_fuel ? '1' : '0' }}" {{ $concept->is_fuel ? 'selected' : '' }}>{{ $concept->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
                                 </div>
 
                                 <!-- SECCIÓN: DETALLE DE COMPRA -->
@@ -83,14 +93,14 @@
                                             </div>
                                         </div>
                                         <div class="row g-3 mt-0">
-                                            <div class="col-md-4" style="min-width: 0;">
+                                            <div class="col-md-4 fuel-only-field" style="min-width: 0;">
                                                 <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">T° de Compra</label>
                                                 <div class="input-group">
                                                     <input type="number" step="0.01" class="form-control" id="purchase_temp" name="purchase_temp" placeholder="0.00">
                                                     <span class="input-group-text">°C</span>
                                                 </div>
                                             </div>
-                                            <div class="col-md-4" style="min-width: 0;">
+                                            <div class="col-md-4 fuel-only-field" style="min-width: 0;">
                                                 <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">T° de Llegada</label>
                                                 <div class="input-group">
                                                     <input type="number" step="0.01" class="form-control" id="real_temp" name="real_temp" placeholder="0.00">
@@ -113,9 +123,18 @@
                                                     @endif
                                                 </select>
                                             </div>
+                                            <div class="col-md-8" id="glosaSection" style="display: none;">
+                                                <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">Glosa</label>
+                                                <div class="d-flex gap-2">
+                                                    <textarea class="form-control" id="glosa" name="glosa" rows="1" placeholder="Describe el gasto (ej. reparación de bomba, papelería de oficina)..."></textarea>
+                                                    <button type="button" class="btn btn-outline-primary text-nowrap" id="addManualRow">
+                                                        <i class="bi bi-plus-lg me-1"></i>Agregar línea
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-3" style="min-width: 0;">
+                                    <div class="col-md-3 fuel-only-field" id="tankSection" style="min-width: 0;">
                                         <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">
                                             <i class="bi bi-database me-1 text-secondary"></i>Tanque(s)
                                         </label>
@@ -394,18 +413,23 @@
 
             $('#purchaseTable tbody tr').each(function() {
                 let row = $(this);
-                let productId = row.data('product-id');
+                let productId = row.data('product-id') || null;
                 let tankId = row.data('tank-id') || null;
+                let isManualRow = !!row.data('manual-row');
+                let description = isManualRow ? row.find('.description-input').val() : null;
+                let measurement_unit = isManualRow ? row.find('.unit-input').val() : row.data('unit');
                 let quantity = parseFloat(row.find('.quantity').val());
                 let subtotal = parseFloat(row.find('.subtotal').val());
                 let unit_price = parseFloat(row.find('.unit_price').val());
                 let waste = parseFloat(row.find('.waste').val());
-                let measurement_unit = row.data('unit');
 
-                if (productId && quantity >= 0.01 && subtotal >= 0 && unit_price >= 0) {
+                const hasIdentity = productId || (description && description.trim() !== '');
+
+                if (hasIdentity && quantity >= 0.01 && subtotal >= 0 && unit_price >= 0) {
                     const item = {
                         product_id: productId,
                         tank_id: tankId,
+                        description: description,
                         quantity: quantity,
                         unit_price: unit_price,
                         subtotal: subtotal,
@@ -441,6 +465,8 @@
                 voucher_type: $('#voucherType').val(),
                 invoice_number: $('#invoiceNumber').val(),
                 payment_method_id: $('#paymentMethod').val(),
+                purchase_concept_id: $('#purchaseConcept').val(),
+                glosa: $('#glosa').val(),
                 date: $('#purchaseDate').val(),
                 purchase_temp: $('#purchase_temp').val(),
                 real_temp: $('#real_temp').val(),
@@ -591,11 +617,13 @@
             $('#busquedaProducto').on('keyup', function() {
                 var valor = $(this).val().toLowerCase();
                 $('#purchaseTable tbody tr').each(function() {
-                    var nombre = $(this).find('td:eq(0)').text().toLowerCase();
+                    var $row = $(this);
+                    var descripcionInput = $row.find('.description-input');
+                    var nombre = (descripcionInput.length ? descripcionInput.val() : $row.find('td:eq(0)').text()).toLowerCase();
                     if (nombre.includes(valor) || valor === '') {
-                        $(this).show();
+                        $row.show();
                     } else {
-                        $(this).hide();
+                        $row.hide();
                     }
                 });
             });
@@ -610,6 +638,7 @@
         $(function() {
             const tankList = $('#tankList');
             const searchInput = $('#tankSearch');
+            let manualRowCounter = 0;
 
             function getVisibleSelectedTanks() {
                 return tankList.find('.tank-checkbox:checked').closest('.tank-item').filter(function() {
@@ -684,6 +713,52 @@
                 attachEventsToRows();
                 updateTotal();
             }
+
+            function addManualPurchaseRow() {
+                manualRowCounter++;
+                const rowId = 'manual-' + manualRowCounter;
+                const newRow = `
+                    <tr data-product-id="" data-tank-id="" data-unit="" data-manual-row="${rowId}">
+                        <td><input type="text" class="form-control text-start description-input" placeholder="Describe el ítem..."></td>
+                        <td><input type="text" class="form-control text-start unit-input" placeholder="unidad"></td>
+                        <td><input type="number" class="form-control text-end unit_price" step="0.01" min="0"></td>
+                        <td><input type="number" class="form-control text-end quantity cantidad-input" min="0.001" step="0.001"></td>
+                        <td><input type="number" class="form-control text-end subtotal" min="0.001" step="0.001" disabled></td>
+                        <td><input type="number" class="form-control text-end waste" step="0.001" value="0" disabled></td>
+                        <td>
+                            <button type="button" class="btn btn-danger btn-sm delete-row">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                $('#purchaseTable tbody').append(newRow);
+                attachEventsToRows();
+                updateTotal();
+            }
+
+            function toggleConceptSections() {
+                const isFuel = $('#purchaseConcept option:selected').data('is-fuel') == 1;
+
+                $('.fuel-only-field').toggle(isFuel);
+                $('#glosaSection').toggle(!isFuel);
+
+                if (!isFuel) {
+                    $('#purchase_temp, #real_temp').val('');
+                } else {
+                    $('#glosa').val('');
+                }
+
+                // Al cambiar de concepto se limpia la selección anterior para no mezclar
+                // tanques (combustible) con líneas manuales (otros gastos).
+                $('#purchaseTable tbody').empty();
+                tankList.find('.tank-checkbox').prop('checked', false).trigger('markchange');
+                updateTotal();
+            }
+
+            $('#purchaseConcept').on('change', toggleConceptSections);
+            $('#addManualRow').on('click', addManualPurchaseRow);
+            toggleConceptSections();
 
             function applyTankFilters() {
                 const locationId = String($('#location_id').val() || '');
