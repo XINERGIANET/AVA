@@ -1,7 +1,15 @@
 @extends('template.index')
 @section('header')
-    <h1>Historico Distribución</h1>
-    <p>Registro de distribución</p>
+    <div class="d-flex align-items-center">
+        <h4 class="mb-0 text-dark fw-bold"><i class="bi bi-clock-history me-2 text-primary"></i>Histórico de Distribución</h4>
+    </div>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0 bg-transparent p-0">
+            <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('transfers.index') }}" class="text-decoration-none text-muted">Distribución</a></li>
+            <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">Histórico</li>
+        </ol>
+    </nav>
 @endsection
 @section('content')
     <div class="container-fluid content-inner mt-0">
@@ -92,19 +100,19 @@
 
                     <div class="card-body p-3">
                         <div class="table-responsive">
-                            <table class="table table-striped">
-                                <thead>
+                            <table class="table table-hover align-middle mb-0" style="border: 1px solid #e9ecef;">
+                                <thead class="text-center">
                                     <tr>
-                                        <th>Desde</th>
-                                        <th>Hacia</th>
-                                        <th>Producto</th>
-                                        <th>Cantidad</th>
-                                        <th>Fecha</th>
-                                        <th>Recibido</th>
-                                        <th>Acciones</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Desde</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Hacia</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Producto</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Cantidad</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Fecha</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Recibido</th>
+                                        <th class="fw-bold text-uppercase text-center pe-4" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important; width: 10%;">Acciones</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody class="text-center">
                                     @foreach ($distribuciones as $distribucion)
                                         <tr>
                                             <td>{{ $distribucion->from_tank->name }} -

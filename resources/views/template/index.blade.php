@@ -160,7 +160,7 @@
                     <!--logo End-->
                     <h4 class="logo-title">Ava</h4>
                 </a>
-                <div class="sidebar-toggle" data-toggle="sidebar" data-active="true" style="cursor: pointer; margin-left: auto;">
+                <div class="sidebar-toggle" data-toggle="sidebar" data-active="true" style="cursor: pointer; position: absolute; right: -40px;">
                     <i class="icon">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -210,7 +210,7 @@
 
                         {{-- ===================== CONFIGURACIÓN (antes "Base de Datos") ===================== --}}
                         <li class="nav-item">
-                            <a class="nav-link {{ $cfgOpen ? 'active' : '' }}" data-bs-toggle="collapse" href="#sidebar-config" role="button"
+                            <a class="nav-link " data-bs-toggle="collapse" href="#sidebar-config" role="button"
                                 aria-expanded="{{ $cfgOpen ? 'true' : 'false' }}" aria-controls="sidebar-config">
                                 <i class="icon">
                                     <svg class="icon-20" width="20" viewBox="0 0 24 24" fill="none"
@@ -231,7 +231,7 @@
                             </a>
                             <ul class="sub-nav collapse {{ $cfgOpen ? 'show' : '' }}" id="sidebar-config" data-bs-parent="#sidebar-menu">
                                 <li class="nav-item">
-                                    <a class="nav-link {{ $cfgStructureOpen ? 'active' : '' }}" data-bs-toggle="collapse" href="#sidebar-config-structure" role="button" aria-expanded="{{ $cfgStructureOpen ? 'true' : 'false' }}" aria-controls="sidebar-config-structure">
+                                    <a class="nav-link " data-bs-toggle="collapse" href="#sidebar-config-structure" role="button" aria-expanded="{{ $cfgStructureOpen ? 'true' : 'false' }}" aria-controls="sidebar-config-structure">
                                         <span class="item-name">Estructura de Sede</span>
                                         <i class="right-icon">
                                             <svg class="icon-14" xmlns="http://www.w3.org/2000/svg" width="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -273,7 +273,7 @@
                                     </ul>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link {{ $cfgCatalogOpen ? 'active' : '' }}" data-bs-toggle="collapse" href="#sidebar-config-catalog" role="button" aria-expanded="{{ $cfgCatalogOpen ? 'true' : 'false' }}" aria-controls="sidebar-config-catalog">
+                                    <a class="nav-link " data-bs-toggle="collapse" href="#sidebar-config-catalog" role="button" aria-expanded="{{ $cfgCatalogOpen ? 'true' : 'false' }}" aria-controls="sidebar-config-catalog">
                                         <span class="item-name">Catálogo Comercial</span>
                                         <i class="right-icon">
                                             <svg class="icon-14" xmlns="http://www.w3.org/2000/svg" width="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -313,7 +313,7 @@
                                     </ul>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link {{ $cfgPeopleOpen ? 'active' : '' }}" data-bs-toggle="collapse" href="#sidebar-config-people" role="button" aria-expanded="{{ $cfgPeopleOpen ? 'true' : 'false' }}" aria-controls="sidebar-config-people">
+                                    <a class="nav-link " data-bs-toggle="collapse" href="#sidebar-config-people" role="button" aria-expanded="{{ $cfgPeopleOpen ? 'true' : 'false' }}" aria-controls="sidebar-config-people">
                                         <span class="item-name">Equipo y Accesos</span>
                                         <i class="right-icon">
                                             <svg class="icon-14" xmlns="http://www.w3.org/2000/svg" width="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -343,7 +343,7 @@
 
                         {{-- ===================== ABASTECIMIENTO ===================== --}}
                         <li class="nav-item">
-                            <a class="nav-link {{ $supplyOpen ? 'active' : '' }}" data-bs-toggle="collapse" href="#sidebar-supply" role="button"
+                            <a class="nav-link " data-bs-toggle="collapse" href="#sidebar-supply" role="button"
                                 aria-expanded="{{ $supplyOpen ? 'true' : 'false' }}" aria-controls="sidebar-supply">
                                 <i class="icon">
                                     <svg class="icon-20" width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -407,7 +407,7 @@
 
                         {{-- ===================== VENTAS Y CAJA ===================== --}}
                         <li class="nav-item">
-                            <a class="nav-link {{ $salesOpen ? 'active' : '' }}" data-bs-toggle="collapse" href="#sidebar-sales" role="button"
+                            <a class="nav-link " data-bs-toggle="collapse" href="#sidebar-sales" role="button"
                                 aria-expanded="{{ $salesOpen ? 'true' : 'false' }}" aria-controls="sidebar-sales">
                                 <i class="icon">
                                     <svg class="icon-20" width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -478,7 +478,7 @@
 
                         {{-- ===================== CLIENTES Y CRÉDITO ===================== --}}
                         <li class="nav-item">
-                            <a class="nav-link {{ $creditOpen ? 'active' : '' }}" data-bs-toggle="collapse" href="#sidebar-credit" role="button"
+                            <a class="nav-link " data-bs-toggle="collapse" href="#sidebar-credit" role="button"
                                 aria-expanded="{{ $creditOpen ? 'true' : 'false' }}" aria-controls="sidebar-credit">
                                 <i class="icon">
                                     <svg class="icon-20" width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -537,7 +537,7 @@
 
                         {{-- ===================== CONTROL Y SOPORTE ===================== --}}
                         <li class="nav-item">
-                            <a class="nav-link {{ $supportOpen ? 'active' : '' }}" data-bs-toggle="collapse" href="#sidebar-support" role="button"
+                            <a class="nav-link " data-bs-toggle="collapse" href="#sidebar-support" role="button"
                                 aria-expanded="{{ $supportOpen ? 'true' : 'false' }}" aria-controls="sidebar-support">
                                 <i class="icon">
                                     <svg class="icon-20" width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -594,7 +594,7 @@
 
                         {{-- ===================== REPORTES (antes "Históricos") ===================== --}}
                         <li class="nav-item">
-                            <a class="nav-link {{ $reportsOpen ? 'active' : '' }}" data-bs-toggle="collapse" href="#sidebar-reports" role="button"
+                            <a class="nav-link " data-bs-toggle="collapse" href="#sidebar-reports" role="button"
                                 aria-expanded="{{ $reportsOpen ? 'true' : 'false' }}" aria-controls="sidebar-reports">
                                 <i class="bi bi-bar-chart-line"></i>
                                 <span class="item-name">Reportes</span>

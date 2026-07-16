@@ -1,93 +1,139 @@
 @extends('template.index')
 
 @section('header')
-<h1>Distribución</h1>
-<p>Registro de transferencias de sede a sede</p>
+    <div class="d-flex align-items-center">
+        <h4 class="mb-0 text-dark fw-bold"><i class="bi bi-arrow-left-right me-2 text-primary"></i>Distribución (Semaforo)</h4>
+    </div>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0 bg-transparent p-0">
+            <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('purchases.index') }}" class="text-decoration-none text-muted">Abastecimiento</a></li>
+            <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">Distribución</li>
+        </ol>
+    </nav>
 @endsection
 
 @section('content')
 <div class="container-fluid content-inner mt-0">
     <div class="row">
         <div class="col-sm-12">
-            <div class="card">
+            <div class="card shadow-sm border-0" style="border-radius: 10px;">
                 <div class="card-body">
-                    <form id="createTransferForm" class="row mb-5" action="{{ route('transfers.store') }}" method="POST">
-                        @csrf
-
-                        <div class="col-md-6 mb-3">
-                            <div class="row align-items-center">
-                                <div class="col-md-4">
-                                    <label for="from_location" class="form-label mb-0">Sede de origen</label>
+                    <!-- Toolbar de Filtros y Acciones -->
+                        <div class="col-md-12 mb-4">
+                            <form action="{{ route('transfers.index') }}" method="GET" id="filterForm">
+                                <div class="row g-2 align-items-end justify-content-between">
+                                    <div class="col-auto d-flex gap-2 align-items-end">
+                                        <div>
+                                            <label for="start_date" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Fecha Inicial</label>
+                                            <input type="date" class="form-control form-control-sm" name="start_date" id="start_date" value="{{ request('start_date') }}">
+                                        </div>
+                                        <div>
+                                            <label for="end_date" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Fecha Final</label>
+                                            <input type="date" class="form-control form-control-sm" name="end_date" id="end_date" value="{{ request('end_date') }}">
+                                        </div>
+                                        @if(auth()->user()->role->nombre == 'master')
+                                        <div>
+                                            <label for="location_id" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Sede</label>
+                                            <select name="location_id" id="location_id" class="form-select form-select-sm" style="min-width: 150px;">
+                                                <option value="">Todas</option>
+                                                @foreach(\App\Models\Location::all() as $loc)
+                                                    <option value="{{ $loc->id }}" {{ request('location_id') == $loc->id ? 'selected' : '' }}>{{ $loc->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        @endif
+                                        <div class="d-flex gap-2 ms-2">
+                                            <button type="submit" class="btn btn-secondary btn-sm fw-medium px-3"><i class="bi bi-funnel me-1"></i>Filtrar</button>
+                                            <a href="{{ route('transfers.index') }}" class="btn btn-light btn-sm text-muted fw-medium px-3"><i class="bi bi-eraser me-1"></i>Limpiar</a>
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <button type="button" class="btn btn-primary fw-medium px-3 btn-sm" data-bs-toggle="modal" data-bs-target="#createTransferModal" style="border-radius: 6px;">
+                                            <i class="bi bi-plus-lg me-1"></i>Nueva Transferencia
+                                        </button>
+                                    </div>
                                 </div>
-                                <div class="col-md-8">
-                                    <select class="form-control" id="from_location" required>
-                                        <option value="" selected>Seleccione una sede</option>
-                                        @foreach ($locations as $location)
-                                        <option value="{{ $location->id }}">{{ $location->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-
-                            <!-- Tanks grid for origen -->
-                            <div id="from_tanks_grid" class="mt-3 d-none"></div>
-                            <input type="hidden" id="from_tank_id" name="from_tank_id" required>
+                            </form>
                         </div>
 
-                        <div class="col-md-6 mb-3">
-                            <div class="row align-items-center">
-                                <div class="col-md-4">
-                                    <label for="to_location" class="form-label mb-0">Sede de destino</label>
+                    <!-- Modal Nueva Transferencia -->
+                    <div class="modal fade" id="createTransferModal" tabindex="-1" aria-labelledby="createTransferModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title text-dark fw-bold" id="createTransferModalLabel">Registrar Transferencia</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
-                                <div class="col-md-8">
-                                    <select class="form-control" id="to_location" required>
-                                        <option value="" selected>Seleccione una sede</option>
-                                        @foreach ($locations as $location)
-                                        <option value="{{ $location->id }}">{{ $location->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
+                                <form id="createTransferForm" action="{{ route('transfers.store') }}" method="POST">
+                                    <div class="modal-body">
+                                        @csrf
+                                        <div class="row">
+                                            <!-- Origen -->
+                                            <div class="col-md-6 border-end">
+                                                <h6 class="text-primary fw-bold mb-3"><i class="bi bi-box-arrow-up me-2"></i>Origen</h6>
+                                                <div class="mb-3">
+                                                    <label for="from_location" class="form-label text-dark fw-bold mb-1">Sede de origen</label>
+                                                    <select class="form-select" id="from_location" required>
+                                                        <option value="" selected>Seleccione una sede</option>
+                                                        @foreach ($locations as $location)
+                                                        <option value="{{ $location->id }}">{{ $location->name }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                                <!-- Tanks grid for origen -->
+                                                <div id="from_tanks_grid" class="mt-3 d-none"></div>
+                                                <input type="hidden" id="from_tank_id" name="from_tank_id" required>
+                                            </div>
 
-                            <!-- Tanks grid for destino -->
-                            <div id="to_tanks_grid" class="mt-3 d-none"></div>
-                            <input type="hidden" id="to_tank_id" name="to_tank_id" required>
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <div class="row align-items-center">
-                                <div class="col-md-4">
-                                    <label for="quantity" class="form-label mb-0">Cantidad</label>
-                                </div>
-                                <div class="col-md-8">
-                                    <input type="number" class="form-control" id="quantity" name="quantity" required placeholder="Ingrese una cantidad" step="0.01">
-                                </div>
+                                            <!-- Destino -->
+                                            <div class="col-md-6">
+                                                <h6 class="text-primary fw-bold mb-3"><i class="bi bi-box-arrow-down me-2"></i>Destino</h6>
+                                                <div class="mb-3">
+                                                    <label for="to_location" class="form-label text-dark fw-bold mb-1">Sede de destino</label>
+                                                    <select class="form-select" id="to_location" required>
+                                                        <option value="" selected>Seleccione una sede</option>
+                                                        @foreach ($locations as $location)
+                                                        <option value="{{ $location->id }}">{{ $location->name }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                                <!-- Tanks grid for destino -->
+                                                <div id="to_tanks_grid" class="mt-3 d-none"></div>
+                                                <input type="hidden" id="to_tank_id" name="to_tank_id" required>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3 border-top pt-3">
+                                            <div class="col-md-6 offset-md-3">
+                                                <label for="quantity" class="form-label text-dark fw-bold mb-1">Cantidad a Transferir</label>
+                                                <input type="number" class="form-control" id="quantity" name="quantity" required placeholder="Ingrese una cantidad" step="0.01">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                        <button type="submit" class="btn btn-primary px-4 fw-medium"><i class="bi bi-save me-1"></i>Guardar Transferencia</button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
-
-                        <!-- Botón de Guardar (alineado a la derecha) -->
-                        <div class="row mb-3">
-                            <div class="d-flex justify-content-end">
-                                <button type="submit" class="btn btn-primary">Guardar</button>
-                            </div>
-                        </div>
-                    </form>
+                    </div>
 
                     <!-- rest of view (table, modals, etc.) remain unchanged -->
                     <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead>
+                        <table class="table table-hover align-middle mb-0" style="border: 1px solid #e9ecef;">
+                            <thead class="text-center">
                                 <tr>
-                                    <th>Desde</th>
-                                    <th>Hacia</th>
-                                    <th>Producto</th>
-                                    <th>Unidad</th>
-                                    <th>Cantidad</th>
-                                    <th>Fecha</th>
-                                    <th>Acciones</th>
+                                    <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Desde</th>
+                                    <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Hacia</th>
+                                    <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Producto</th>
+                                    <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Unidad</th>
+                                    <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Cantidad</th>
+                                    <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Fecha</th>
+                                    <th class="fw-bold text-uppercase text-center pe-4" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important; width: 10%;">Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody class="text-center">
                                 @foreach($transfers as $transfer)
                                 <tr class="storage-row" data-location="{{ $transfer->location_id }}">
                                     <td>{{ $transfer->from_tank->name }} - {{ $transfer->from_tank->location->name }}</td>

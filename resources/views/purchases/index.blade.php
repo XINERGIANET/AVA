@@ -62,9 +62,9 @@
                     <button class="btn btn-success btn-sm fw-medium" type="button" id="excelBtn" style="border-radius: 6px;">
                         <i class="bi bi-file-earmark-excel-fill me-1"></i> Excel
                     </button>
-                    <a href="{{ route('purchases.create') }}" class="btn btn-primary btn-sm fw-medium" style="border-radius: 6px;">
+                    <button type="button" class="btn btn-primary btn-sm fw-medium" data-bs-toggle="modal" data-bs-target="#createPurchaseModal" style="border-radius: 6px;">
                         <i class="bi bi-plus-lg me-1"></i> Nueva Compra
-                    </a>
+                    </button>
                 </div>
                 <div>
                     <h5 class="mb-0 text-dark fw-bold">Total: <span class="text-primary">S/ {{ number_format($total, 2, '.', ',') }}</span></h5>
@@ -236,6 +236,8 @@
     </div>
 </div>
 
+@include('purchases.partials.create_modal')
+
 <div id="global-spinner" class="d-flex justify-content-center align-items-center spinner-hidden"
     style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.8); z-index: 1000;">
     <div class="spinner-border text-primary" role="status">
@@ -259,6 +261,8 @@
 @endsection
 
 @section('scripts')
+@include('purchases.partials.create_scripts')
+
 <script>
     let supplierSearchTimeout = null;
     $('#search-suppliers').autocomplete({
