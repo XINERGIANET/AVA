@@ -17,7 +17,10 @@ class TanqueController extends Controller
                 $query->where('tanks.location_id', auth()->user()->location_id);
             })
             ->join('locations', 'tanks.location_id', '=', 'locations.id')
-            ->leftJoin('products', 'tanks.product_id', '=', 'products.id')
+            ->leftJoin('products', function ($join) {
+                $join->on('tanks.product_id', '=', 'products.id')
+                    ->where('products.deleted', 0);
+            })
             ->select(
                 'tanks.*',
                 'locations.name as sede_nombre',

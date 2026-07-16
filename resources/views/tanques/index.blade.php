@@ -130,7 +130,17 @@
                                     <td>{{ $tanque->sede_nombre }}</td>
                                     <td>{{ $tanque->name }}</td>
                                     <td>{{ number_format($tanque->capacity) }}</td>
-                                    <td>{{ $tanque->producto_nombre ?? 'Sin producto' }}</td>
+                                    <td>
+                                        @if ($tanque->producto_nombre)
+                                            {{ $tanque->producto_nombre }}
+                                        @elseif ($tanque->product_id)
+                                            <span class="text-danger" title="El producto asignado a este tanque fue eliminado del catálogo">
+                                                <i class="bi bi-exclamation-triangle-fill me-1"></i>Producto eliminado
+                                            </span>
+                                        @else
+                                            <span class="text-muted">Sin producto</span>
+                                        @endif
+                                    </td>
                                     <td>{{ $tanque->is_reserve === 1 ? 'Si' : 'No' }}</td>
                                     <td>
                                         <button class="btn btn-sm btn-warning" data-bs-toggle="modal"

@@ -92,7 +92,7 @@ class PurchaseController extends Controller
         $validator = Validator::make(array_merge($request->all(), ['details' => $details]), [
             'voucher_type'               => 'required|numeric|min:1',
             'invoice_number'             => 'nullable|string',
-            'payment_method_id'          => 'required|exists:payment_methods,id',
+            'payment_method_id'          => 'nullable|exists:payment_methods,id',
             'date'                       => 'required|date',
             'supplier_id'                => 'nullable|exists:suppliers,id',
             'purchase_temp'              => 'nullable|numeric|min:0.01',
