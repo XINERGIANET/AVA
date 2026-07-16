@@ -20,15 +20,30 @@ class UserController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
-        $users = User::with('role')->when(auth()->user()->role->nombre != 'master' && auth()->user()->location_id, function($query){
-            $query->whereHas('location', function ($q) {
-                $q->where('location_id', auth()->user()->location_id);
-            });
-        }) ->where('deleted', 0)->paginate(10);
-        return view('users.index', compact('users'));
+        $search = $request->input('search');
+        
+        $users = User::with('role')
+            ->when($search, function ($query, $search) {
+                return $query->where(function($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%");
+                });
+            })
+            ->when(auth()->user()->role->nombre != 'master' && auth()->user()->location_id, function($query){
+                $query->where('location_id', auth()->user()->location_id);
+            })
+            ->where('deleted', 0)
+            ->paginate(10);
+            
+        $roles = Role::get();
+        $locations = Location::get();
+        $isles = Isle::where('location_id', auth()->user()->location_id)
+            ->where('deleted', 0)
+            ->get();
+            
+        return view('users.index', compact('users', 'roles', 'locations', 'isles'));
     }
 
     /**

@@ -10,7 +10,7 @@ use App\Models\Location;
 
 class PumpController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $fuelpumps = Pump::with('isle','product')  // Obtener la relación con Isla
             ->where('deleted', 0)
@@ -18,6 +18,15 @@ class PumpController extends Controller
                 $query->whereHas('isle', function ($q) {
                     $q->where('location_id', auth()->user()->location_id);
                 });
+            })
+            ->when($request->filled('isle_id'), function ($query) use ($request) {
+                $query->where('isle_id', $request->isle_id);
+            })
+            ->when($request->filled('product_id'), function ($query) use ($request) {
+                $query->where('product_id', $request->product_id);
+            })
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $query->where('name', 'like', '%' . $request->search . '%');
             })
             ->paginate(15);
 

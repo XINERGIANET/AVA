@@ -1,33 +1,138 @@
 @extends('template.index')
 
 @section('header')
-<h1>Surtidores</h1>
-<p>Lista de Surtidores</p>
+    <div class="d-flex align-items-center">
+        <h4 class="mb-0 text-dark fw-bold"><i class="bi bi-ev-station me-2 text-primary"></i>Surtidores</h4>
+    </div>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0 bg-transparent p-0">
+            <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">Surtidores</li>
+        </ol>
+    </nav>
 @endsection
 
 @section('content')
 @include('components.spinner')
 
-<div class="container-fluid content-inner mt-0">
-  <div class="card shadow">
+<div class="container-fluid content-inner" style="padding-top: 1rem;">
+  <div class="card shadow-sm border-0" style="border-radius: 10px;">
     <div class="card-body">
 
-      {{-- FORMULARIO DE REGISTRO --}}
-      <form id="createFuelPumpForm" class="mb-5" action="{{ route('fuelpumps.store') }}" method="POST">
-        @csrf
-
-        <div class="row mb-3">
-
-          {{-- Nombre --}}
-          <div class="col-md-6 mb-3">
-            <label class="form-label">Nombre del Surtidor</label>
-            <input type="text" class="form-control" placeholder="Ingrese nombre" id="name"
-              name="name" required>
+      <!-- Toolbar superior de la tarjeta -->
+      <div class="row mb-3 align-items-center">
+          <div class="col-md-9">
+              <form action="{{ route('fuelpumps.index') }}" method="GET" id="filterForm">
+                  <div class="row g-2 align-items-end">
+                      <div class="col-md-3">
+                          <label for="filter_isle" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Isla</label>
+                          <select name="isle_id" id="filter_isle" class="form-select form-select-sm">
+                              <option value="">Todas</option>
+                              @foreach ($isles as $isle)
+                                  <option value="{{ $isle->id }}" {{ request('isle_id') == $isle->id ? 'selected' : '' }}>{{ $isle->name }}</option>
+                              @endforeach
+                          </select>
+                      </div>
+                      <div class="col-md-3">
+                          <label for="filter_product" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Producto</label>
+                          <select name="product_id" id="filter_product" class="form-select form-select-sm">
+                              <option value="">Todos</option>
+                              @foreach ($products as $product)
+                                  <option value="{{ $product->id }}" {{ request('product_id') == $product->id ? 'selected' : '' }}>{{ $product->name }}</option>
+                              @endforeach
+                          </select>
+                      </div>
+                      <div class="col-md-4">
+                          <label for="filter_search" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Buscar Nombre</label>
+                          <input type="text" name="search" id="filter_search" class="form-control form-control-sm" placeholder="Ej. Surtidor 1..." value="{{ request('search') }}">
+                      </div>
+                      <div class="col-md-2">
+                          <button type="submit" class="btn btn-secondary btn-sm w-100"><i class="bi bi-search me-1"></i>Filtrar</button>
+                      </div>
+                  </div>
+              </form>
           </div>
+          <div class="col-md-3 text-end">
+              <button type="button" class="btn btn-success px-3 fw-medium" data-bs-toggle="modal" data-bs-target="#createModal" style="border-radius: 6px;">
+                  <i class="bi bi-plus-lg me-1"></i> Nuevo Surtidor
+              </button>
+          </div>
+      </div>
 
-          {{-- Isla --}}
+      {{-- TABLA DE REGISTROS --}}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" style="border: 1px solid #e9ecef;">
+          <thead class="text-center">
+            <tr>
+              <th class="fw-bold text-uppercase" style="width: 5%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">ID</th>
+              <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Nombre</th>
+              <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Isla</th>
+              <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Producto</th>
+              <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Lado</th>
+              <th class="pe-4 text-center fw-bold text-uppercase" style="width: 15%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="text-center">
+
+            {{-- Iterar sobre surtidores --}}
+            @forelse ($fuelpumps as $fuelpump)
+            <tr style="border-bottom: 1px solid #e9ecef;">
+              <td class="text-dark">{{ $fuelpump->id }}</td>
+              <td class="text-dark">{{ $fuelpump->name }}</td>
+              <td class="text-dark">{{ $fuelpump->isle->name ?? 'Sin isla' }}</td>
+              <td class="text-dark">{{ $fuelpump->product->name ?? 'Sin producto' }}</td>
+              <td class="text-dark">{{ $fuelpump->side }}</td>
+
+              <td class="pe-4 text-center">
+                {{-- Botón editar --}}
+                <button class="btn btn-sm btn-warning text-white me-1" style="border-radius: 4px; padding: 0.25rem 0.5rem;" data-bs-toggle="modal"
+                  data-bs-target="#editModal" data-id="{{ $fuelpump->id }}"
+                  data-name="{{ $fuelpump->name }}" data-isle="{{ $fuelpump->isle_id }}"
+                  data-product="{{ $fuelpump->product_id }}" data-side="{{ $fuelpump->side }}" title="Editar">
+                  <i class="bi bi-pencil-fill"></i>
+                </button>
+
+                {{-- Botón eliminar --}}
+                <button class="btn btn-sm btn-danger text-white" style="border-radius: 4px; padding: 0.25rem 0.5rem;" data-bs-toggle="modal"
+                  data-bs-target="#deleteModal" data-id="{{ $fuelpump->id }}" title="Eliminar">
+                  <i class="bi bi-trash-fill"></i>
+                </button>
+              </td>
+            </tr>
+            @empty
+            <tr>
+              <td colspan="6" class="text-center py-4">No hay surtidores registrados.</td>
+            </tr>
+            @endforelse
+
+          </tbody>
+        </table>
+        <div class="d-flex justify-content-center mt-3">
+          {{-- Paginación --}}
+          {{ $fuelpumps->links('pagination::bootstrap-4') }}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{-- MODAL CREAR --}}
+<div class="modal fade" id="createModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form id="createFuelPumpForm" action="{{ route('fuelpumps.store') }}" method="POST">
+        @csrf
+        <div class="modal-header">
+          <h5 class="modal-title text-dark fw-bold">Nuevo Surtidor</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body row">
           <div class="col-md-6 mb-3">
-            <label class="form-label">Isla</label>
+            <label class="form-label text-dark fw-bold">Nombre del Surtidor</label>
+            <input type="text" class="form-control" placeholder="Ingrese nombre" id="name" name="name" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-dark fw-bold">Isla</label>
             <select name="isle_id" id="isle_id" class="form-control" required>
               <option value="">-- Seleccione una isla --</option>
               @foreach ($isles as $isle)
@@ -35,19 +140,16 @@
               @endforeach
             </select>
           </div>
-
           <div class="col-md-6 mb-3">
-            <label class="form-label">Lado</label>
+            <label class="form-label text-dark fw-bold">Lado</label>
             <select name="side" id="side" class="form-control" required>
               <option value="">-- Seleccione un lado --</option>
               <option value="1">1</option>
               <option value="2">2</option>
             </select>
           </div>
-
-          {{-- Producto --}}
           <div class="col-md-6 mb-3">
-            <label class="form-label">Producto</label>
+            <label class="form-label text-dark fw-bold">Producto</label>
             <select name="product_id" id="product_id" class="form-control" required>
               <option value="">-- Seleccione un producto --</option>
               @foreach ($products as $product)
@@ -55,69 +157,12 @@
               @endforeach
             </select>
           </div>
-
         </div>
-
-        <div class="d-flex justify-content-end">
-          <button type="submit" class="btn btn-primary">Agregar surtidor</button>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary px-4">Guardar</button>
         </div>
-
       </form>
-
-      {{-- TABLA DE REGISTROS --}}
-      <div class="table-responsive mt-4">
-        <table class="table table-bordered table-striped">
-          <thead>
-            <tr>
-              <th>N°</th>
-              <th>Nombre</th>
-              <th>Isla</th>
-              <th>Producto</th>
-              <th>Lado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-
-            {{-- Iterar sobre surtidores --}}
-            @foreach ($fuelpumps as $fuelpump)
-            <tr>
-              <td>{{ ($fuelpumps->currentPage() - 1) * $fuelpumps->perPage() + $loop->iteration }}
-              </td>
-              <td>{{ $fuelpump->name }}</td>
-              <td>{{ $fuelpump->isle->name ?? 'Sin isla' }}</td>
-              <td>{{ $fuelpump->product->name }}</td>
-              <td>{{ $fuelpump->side }}</td>
-
-              <td>
-                {{-- Botón editar --}}
-                <button class="btn btn-sm btn-warning" data-bs-toggle="modal"
-                  data-bs-target="#editModal" data-id="{{ $fuelpump->id }}"
-                  data-name="{{ $fuelpump->name }}" data-isle="{{ $fuelpump->isle_id }}"
-                  data-product="{{ $fuelpump->product_id }}" data-side="{{ $fuelpump->side }}">
-                  <i class="bi bi-pencil"></i>
-                </button>
-
-                {{-- Botón eliminar --}}
-                <button class="btn btn-sm btn-danger" data-bs-toggle="modal"
-                  data-bs-target="#deleteModal" data-id="{{ $fuelpump->id }}">
-                  <i class="bi bi-trash"></i>
-                </button>
-              </td>
-            </tr>
-            @endforeach
-
-          </tbody>
-        </table>
-        <div class="d-flex justify-content-center mt-3">
-
-          {{-- Paginación --}}
-          {{ $fuelpumps->links('pagination::bootstrap-4') }}
-
-        </div>
-
-      </div>
-
     </div>
   </div>
 </div>

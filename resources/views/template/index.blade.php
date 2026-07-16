@@ -637,7 +637,7 @@
     <main class="main-content">
         <div class="position-relative iq-banner">
             <!--Nav Start-->
-            <nav class="nav navbar navbar-expand-lg navbar-light iq-navbar">
+            <nav class="nav navbar navbar-expand-lg navbar-dark bg-primary iq-navbar">
                 <div class="container-fluid navbar-inner">
                     <a href="" class="navbar-brand">
                         <!--Logo start-->
@@ -848,22 +848,22 @@
                             </li> --}}
                             <!-- Botones de Atajo (Alineados a la derecha) -->
                             <li class="nav-item d-none d-lg-flex me-2">
-                                <a href="{{ route('sales.index') }}" class="btn btn-primary btn-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; box-shadow: 0 2px 4px rgba(13, 110, 253, 0.2);" data-bs-toggle="tooltip" data-bs-placement="bottom" title="POS Ventas">
+                                <a href="{{ route('sales.index') }}" class="btn btn-light btn-sm rounded-circle d-flex align-items-center justify-content-center text-primary shadow-sm" style="width: 38px; height: 38px;" data-bs-toggle="tooltip" data-bs-placement="bottom" title="POS Ventas">
                                     <i class="bi bi-cart3 fs-5"></i>
                                 </a>
                             </li>
                             <li class="nav-item d-none d-lg-flex me-2">
-                                <a href="{{ route('clients.index') }}" class="btn btn-light btn-sm rounded-circle d-flex align-items-center justify-content-center border-0 text-primary" style="width: 38px; height: 38px; background-color: rgba(13, 110, 253, 0.08);" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Clientes">
+                                <a href="{{ route('clients.index') }}" class="btn btn-light btn-sm rounded-circle d-flex align-items-center justify-content-center text-primary shadow-sm" style="width: 38px; height: 38px;" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Clientes">
                                     <i class="bi bi-people fs-5"></i>
                                 </a>
                             </li>
                             <li class="nav-item d-none d-lg-flex me-3">
-                                <a href="{{ route('products.index') }}" class="btn btn-light btn-sm rounded-circle d-flex align-items-center justify-content-center border-0 text-primary" style="width: 38px; height: 38px; background-color: rgba(13, 110, 253, 0.08);" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Productos">
+                                <a href="{{ route('products.index') }}" class="btn btn-light btn-sm rounded-circle d-flex align-items-center justify-content-center text-primary shadow-sm" style="width: 38px; height: 38px;" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Productos">
                                     <i class="bi bi-box-seam fs-5"></i>
                                 </a>
                             </li>
                             <li class="nav-item d-none d-lg-flex me-3">
-                                <a href="{{ route('petty_cash.index') }}" class="btn btn-light btn-sm rounded-circle d-flex align-items-center justify-content-center border-0 text-primary" style="width: 38px; height: 38px; background-color: rgba(13, 110, 253, 0.08);" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Caja">
+                                <a href="{{ route('petty_cash.index') }}" class="btn btn-light btn-sm rounded-circle d-flex align-items-center justify-content-center text-primary shadow-sm" style="width: 38px; height: 38px;" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Caja">
                                     <i class="bi bi-cash-stack fs-5"></i>
                                 </a>
                             </li>
@@ -933,31 +933,15 @@
                     </div>
                 </div>
             </nav> <!-- Nav Header Component Start -->
-            <div class="iq-navbar-header" style="height: 180px;">
+            <div class="iq-navbar-header bg-transparent" style="padding: 0;">
                 <div class="container-fluid iq-container">
                     <div class="row">
                         <div class="col-md-12">
                             <div class="flex-wrap d-flex justify-content-between align-items-center">
-                                <div>
-                                    @yield('header')
-                                </div>
+                                @yield('header')
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="iq-header-img" style="height: 220px; border-radius: 0 !important;">
-                    <img src="{{ asset('assets/images/dashboard/top-header.png') }}" alt="header"
-                        class="theme-color-default-img img-fluid w-100 h-100 animated-scaleX">
-                    <img src="{{ asset('assets/images/dashboard/top-header1.png') }}" alt="header"
-                        class="theme-color-purple-img img-fluid w-100 h-100 animated-scaleX">
-                    <img src="{{ asset('assets/images/dashboard/top-header2.png') }}" alt="header"
-                        class="theme-color-blue-img img-fluid w-100 h-100 animated-scaleX">
-                    <img src="{{ asset('assets/images/dashboard/top-header3.png') }}" alt="header"
-                        class="theme-color-green-img img-fluid w-100 h-100 animated-scaleX">
-                    <img src="{{ asset('assets/images/dashboard/top-header4.png') }}" alt="header"
-                        class="theme-color-yellow-img img-fluid w-100 h-100 animated-scaleX">
-                    <img src="{{ asset('assets/images/dashboard/top-header5.png') }}" alt="header"
-                        class="theme-color-pink-img img-fluid w-100 h-100 animated-scaleX">
                 </div>
             </div> <!-- Nav Header Component End -->
             <!--Nav End-->

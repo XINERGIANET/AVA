@@ -8,7 +8,7 @@ use App\Models\Isle;
 
 class IsleController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         // Obtener solo las islas activas (deleted = 0) con sus ubicaciones relacionadas
         $isles = Isle::with('location')
@@ -16,6 +16,12 @@ class IsleController extends Controller
                 $query->whereHas('location', function ($q) {
                     $q->where('location_id', auth()->user()->location_id);
                 });
+            })
+            ->when($request->filled('location_id'), function ($query) use ($request) {
+                $query->where('location_id', $request->location_id);
+            })
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $query->where('name', 'like', '%' . $request->search . '%');
             })
             ->where('deleted', 0)
             ->paginate(15);

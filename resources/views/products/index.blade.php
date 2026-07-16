@@ -1,134 +1,160 @@
 @extends('template.index')
 
 @section('header')
-<h1>Productos</h1>
-<p>Lista de productos</p>
+    <div class="d-flex align-items-center">
+        <h4 class="mb-0 text-dark fw-bold"><i class="bi bi-box-seam me-2 text-primary"></i>Productos</h4>
+    </div>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0 bg-transparent p-0">
+            <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">Productos</li>
+        </ol>
+    </nav>
 @endsection
 
 @include('components.spinner')
 
 @section('content')
-<div class="container-fluid content-inner mt-0">
-    <div class="row">
-        <div class="col-sm-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between">
-                    <div class="header-title w-100">
-                        <form id="createProductForm" action="{{ route('products.store') }}" method="POST">
-                            @csrf
-                            <div class="mb-3 row">
-                                <label for="name" class="col-sm-3 col-form-label text-start">Producto</label>
-                                <div class="col-sm-3">
-                                    <input type="text" class="form-control border-dark" id="name" name="name" required>
-                                </div>
-
-                                <label for="category" class="col-sm-3 col-form-label text-start">Categoría</label>
-                                <div class="col-sm-3">
-                                    <select name="category" id="category" class="form-control border-dark" required>
-                                        <option value="">Seleccione una categoría</option>
-                                        <option>Combustible</option>
-                                        <option>Inv. interno</option>
-                                    </select>
-                                </div>
+<div class="container-fluid content-inner" style="padding-top: 1rem;">
+    <div class="card shadow-sm border-0" style="border-radius: 10px;">
+        <div class="card-body">
+            <!-- Toolbar superior de la tarjeta -->
+            <div class="row mb-3 align-items-center">
+                <div class="col-md-9">
+                    <form action="{{ route('products.index') }}" method="GET" id="filterForm">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-5">
+                                <label for="filter_search" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Buscar Nombre</label>
+                                <input type="text" name="search" id="filter_search" class="form-control form-control-sm" placeholder="Ej. Diésel..." value="{{ request('search') }}">
                             </div>
-
-                            <div class="mb-3 row align-items-center"> <!-- alineación vertical centrada -->
-								<div class="col-md-2 d-flex align-items-center justify-content-center">
-									<!-- Label centrado vertical y horizontalmente -->
-									<label for="unit_price" class="col-form-label text-center w-100">
-										Precio por Sede
-									</label>
-								</div>
-								<div class="col-md-10">
-									<div class="table-responsive">
-										<table class="table table-striped mb-0" id="productionTable">
-											<thead>
-												<tr>
-													<th>Sede</th>
-													<th>Precio</th>
-												</tr>
-											</thead>
-											<tbody>
-												@foreach ($locations as $location)
-												<tr>
-													<td>{{ $location->name }}</td>
-													<td>
-														<input type="number"
-															id="unit_price_{{ $location->id }}"
-															name="unit_price[{{ $location->id }}]"
-															class="form-control cantidad-input"
-															min="0.01"
-															step="0.01"
-															placeholder="0.00">
-													</td>
-												</tr>
-												@endforeach
-											</tbody>
-										</table>
-									</div>
-								</div>
-							</div>
-                            <div class="d-flex justify-content-end">
-                                <button type="submit" class="btn btn-primary">Guardar</button>
+                            <div class="col-md-3">
+                                <button type="submit" class="btn btn-secondary btn-sm w-100"><i class="bi bi-search me-1"></i>Filtrar</button>
                             </div>
-                        </form>
-                    </div>
+                        </div>
+                    </form>
                 </div>
-                <div class="card-body p-3">
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>N°</th>
-                                    <th>Producto</th>
-                                    <th>Marca</th>
-                                    <th>Tipo</th>
-                                    <th>Categoría</th>
-                                    <th>Und. Medida</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse ($products as $product)
-                                <tr>
-                                    <td>{{ ($products->currentPage() - 1) * $products->perPage() + $loop->iteration }}</td>
-                                    <td>{{ $product->name ?: '-' }}</td>
-                                    <td>{{ $product->brand ?: '-' }}</td>
-                                    <td>{{ $product->type ?: '-' }}</td>
-                                    <td>{{ $product->category ?: '-' }}</td>
-                                    <td>{{ $product->measurement_unit ?: '-' }}</td>
-                                    <td>
-                                        <!-- Botón para editar -->
-                                        <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editModal"
-                                        data-id="{{ $product->id }}"
-                                        data-name="{{ $product->name }}"
-                                        data-brand="{{ $product->brand }}"
-                                        data-type="{{ $product->type }}"
-                                        data-category="{{ $product->category }}"
-                                        data-measurement_unit="{{ $product->measurement_unit }}"
-                                        data-prices='@json($product->location_prices ? $product->location_prices->pluck("unit_price", "location_id") : [])'>
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-
-                                        <!-- Botón para eliminar -->
-                                        <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="{{ $product->id }}">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="8" class="text-center">No hay productos registrados.</td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="d-flex justify-content-center mt-3">
-                        {{ $products->links('pagination::bootstrap-4') }}
-                    </div>
+                <div class="col-md-3 text-end">
+                    <button type="button" class="btn btn-success px-3 fw-medium" data-bs-toggle="modal" data-bs-target="#createModal" style="border-radius: 6px;">
+                        <i class="bi bi-plus-lg me-1"></i> Nuevo Producto
+                    </button>
                 </div>
             </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" style="border: 1px solid #e9ecef;">
+                    <thead class="text-center">
+                        <tr>
+                            <th class="fw-bold text-uppercase" style="width: 5%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">N°</th>
+                            <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Producto</th>
+                            <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Marca</th>
+                            <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Tipo</th>
+                            <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Categoría</th>
+                            <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Und. Medida</th>
+                            <th class="pe-4 text-center fw-bold text-uppercase" style="width: 15%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-center">
+                        @forelse ($products as $product)
+                        <tr style="border-bottom: 1px solid #e9ecef;">
+                            <td class="text-dark">{{ ($products->currentPage() - 1) * $products->perPage() + $loop->iteration }}</td>
+                            <td class="text-dark">{{ $product->name ?: '-' }}</td>
+                            <td class="text-dark">{{ $product->brand ?: '-' }}</td>
+                            <td class="text-dark">{{ $product->type ?: '-' }}</td>
+                            <td class="text-dark">{{ $product->category ?: '-' }}</td>
+                            <td class="text-dark">{{ $product->measurement_unit ?: '-' }}</td>
+                            <td class="pe-4 text-center">
+                                <!-- Botón para editar -->
+                                <button class="btn btn-sm btn-warning text-white me-1" style="border-radius: 4px; padding: 0.25rem 0.5rem;" data-bs-toggle="modal" data-bs-target="#editModal"
+                                data-id="{{ $product->id }}"
+                                data-name="{{ $product->name }}"
+                                data-brand="{{ $product->brand }}"
+                                data-type="{{ $product->type }}"
+                                data-category="{{ $product->category }}"
+                                data-measurement_unit="{{ $product->measurement_unit }}"
+                                data-prices='@json($product->location_prices ? $product->location_prices->pluck("unit_price", "location_id") : [])' title="Editar">
+                                    <i class="bi bi-pencil-fill"></i>
+                                </button>
+
+                                <!-- Botón para eliminar -->
+                                <button class="btn btn-sm btn-danger text-white" style="border-radius: 4px; padding: 0.25rem 0.5rem;" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="{{ $product->id }}" title="Eliminar">
+                                    <i class="bi bi-trash-fill"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="7" class="text-center py-4">No hay productos registrados.</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            <div class="d-flex justify-content-center mt-3">
+                {{ $products->links('pagination::bootstrap-4') }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Crear -->
+<div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="createProductForm" action="{{ route('products.store') }}" method="POST">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title text-dark fw-bold">Nuevo Producto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body row">
+                    <div class="col-md-6 mb-3">
+                        <label for="name" class="form-label text-dark fw-bold">Producto</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="category" class="form-label text-dark fw-bold">Categoría</label>
+                        <select name="category" id="category" class="form-select" required>
+                            <option value="">Seleccione una categoría</option>
+                            <option>Combustible</option>
+                            <option>Inv. interno</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label text-dark fw-bold">Precio por Sede</label>
+                        <div class="table-responsive">
+                            <table class="table table-striped mb-0" id="productionTable">
+                                <thead>
+                                    <tr>
+                                        <th>Sede</th>
+                                        <th>Precio</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($locations as $location)
+                                    <tr>
+                                        <td class="align-middle">{{ $location->name }}</td>
+                                        <td>
+                                            <input type="number"
+                                                id="unit_price_{{ $location->id }}"
+                                                name="unit_price[{{ $location->id }}]"
+                                                class="form-control form-control-sm cantidad-input"
+                                                min="0.01"
+                                                step="0.01"
+                                                placeholder="0.00">
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary px-4">Guardar</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

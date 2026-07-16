@@ -1,150 +1,103 @@
 @extends('template.index')
 
 @section('header')
-    <h1>Tanques</h1>
-    <p>Lista de Tanques</p>
+    <div class="d-flex align-items-center">
+        <h4 class="mb-0 text-dark fw-bold"><i class="bi bi-droplet-half me-2 text-primary"></i>Tanques</h4>
+    </div>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0 bg-transparent p-0">
+            <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">Tanques</li>
+        </ol>
+    </nav>
 @endsection
 @section('content')
     @include('components.spinner')
 
-    <div class="container-fluid content-inner mt-0">
-        <!-- Card que contiene el formulario y la tabla -->
-        <div class="card shadow">
-            <!-- Cuerpo del Card -->
+    <div class="container-fluid content-inner" style="padding-top: 1rem;">
+        <div class="card shadow-sm border-0" style="border-radius: 10px;">
             <div class="card-body">
-                <!-- Formulario de Registro -->
-                <form id="createTanqueForm" class="mb-5" action="{{ route('tanques.store') }}" method="POST">
-                    @csrf
-                    <!-- Fila 1: Sede y Nombre -->
-                    <div class="row mb-3 align-items-center">
-                        <div class="col-md-6">
-                            <div class="row align-items-center">
-                                <div class="col-md-4">
-                                    <label for="location_id" class="form-label mb-0">Sede</label>
-                                </div>
-                                <div class="col-md-8">
-                                    <select class="form-control" id="location_id" name="location_id" required
-                                        {{ auth()->user()->role->nombre != 'master' ? 'readonly' : '' }}>
-                                        @if (auth()->user()->role->nombre == 'master')
-                                            <option value="" selected>Seleccione una sede</option>
-                                            @foreach ($sedes as $sede)
-                                                <option value="{{ $sede->id }}">{{ $sede->name }}</option>
-                                            @endforeach
-                                        @else
-                                            <option value="{{ auth()->user()->location_id }}" selected>
-                                                {{ auth()->user()->location->name }}</option>
-                                        @endif
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="row align-items-center">
-                                <div class="col-md-4">
-                                    <label for="name" class="form-label mb-0">Nombre</label>
-                                </div>
-                                <div class="col-md-8">
-                                    <input type="text" class="form-control" placeholder="Ingrese el nombre del tanque"
-                                        id="name" name="name" required>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Fila 2: Capacidad y Producto -->
-                    <div class="row mb-3 align-items-center">
-                        <!-- Capacidad -->
-                        <div class="col-md-6">
-                            <div class="row align-items-center">
-                                <div class="col-md-4">
-                                    <label for="capacity" class="form-label mb-0">Capacidad</label>
-                                </div>
-                                <div class="col-md-8">
-                                    <input type="number" class="form-control" placeholder="Ingrese la capacidad del tanque"
-                                        id="capacity" name="capacity" required step="1" min="0">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Producto -->
-                        <div class="col-md-6">
-                            <div class="row align-items-center">
-                                <div class="col-md-4">
-                                    <label for="product_id" class="form-label mb-0">Producto</label>
-                                </div>
-                                <div class="col-md-8">
-                                    <select class="form-control" id="product_id" name="product_id" required>
-                                        <option value="" selected>Seleccione un producto</option>
-                                        @foreach ($products as $product)
-                                            <option value="{{ $product->id }}">{{ $product->name }}</option>
+                <!-- Toolbar superior de la tarjeta -->
+                <div class="row mb-3 align-items-center">
+                    <div class="col-md-9">
+                        <form action="{{ route('tanques.index') }}" method="GET" id="filterForm">
+                            <div class="row g-2 align-items-end">
+                                @if (auth()->user()->role->nombre == 'master')
+                                <div class="col-md-3">
+                                    <label for="filter_location" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Sede</label>
+                                    <select name="location_id" id="filter_location" class="form-select form-select-sm">
+                                        <option value="">Todas</option>
+                                        @foreach ($sedes as $sede)
+                                            <option value="{{ $sede->id }}" {{ request('location_id') == $sede->id ? 'selected' : '' }}>{{ $sede->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-
-
-                    <!-- Es reserva -->
-                    <div class="col-md-6">
-                        <div class="row align-items-center">
-                            <div class="col-md-8">
-                                <!-- enviar 0 cuando no está marcado -->
-                                <input type="hidden" name="is_reserve" value="0">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="1" id="is_reserve"
-                                        name="is_reserve">
-                                    <label class="form-check-label" for="is_reserve">Reserva</label>
+                                @endif
+                                <div class="col-md-3">
+                                    <label for="filter_product" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Producto</label>
+                                    <select name="product_id" id="filter_product" class="form-select form-select-sm">
+                                        <option value="">Todos</option>
+                                        @foreach ($products as $product)
+                                            <option value="{{ $product->id }}" {{ request('product_id') == $product->id ? 'selected' : '' }}>{{ $product->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="filter_search" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Buscar Nombre</label>
+                                    <input type="text" name="search" id="filter_search" class="form-control form-control-sm" placeholder="Ej. Tanque A..." value="{{ request('search') }}">
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="submit" class="btn btn-secondary btn-sm w-100"><i class="bi bi-search me-1"></i>Filtrar</button>
                                 </div>
                             </div>
-                        </div>
+                        </form>
                     </div>
-
-
-                    <!-- Botón de Guardar (alineado a la derecha) -->
-                    <div class="row mb-3">
-                        <div class="d-flex justify-content-end">
-                            <button type="submit" class="btn btn-primary">Guardar</button>
-                        </div>
+                    <div class="col-md-3 text-end">
+                        <button type="button" class="btn btn-success px-3 fw-medium" data-bs-toggle="modal" data-bs-target="#createModal" style="border-radius: 6px;">
+                            <i class="bi bi-plus-lg me-1"></i> Nuevo Tanque
+                        </button>
                     </div>
-                </form>
+                </div>
 
-                <!-- Tabla de Registros -->
-                <div class="table-responsive mt-4">
-                    <table class="table table-bordered table-striped">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" style="border: 1px solid #e9ecef;">
                         <thead class="text-center">
                             <tr>
-                                <th>N°</th>
-                                <th>Sede</th>
-                                <th>Nombre</th>
-                                <th>Capacidad (galones)</th>
-                                <th>Producto</th>
-                                <th>Reserva</th>
-                                <th>Acciones</th>
+                                <th class="fw-bold text-uppercase" style="width: 5%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">ID</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Sede</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Nombre</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Capacidad (GL)</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Producto</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Reserva</th>
+                                <th class="pe-4 text-center fw-bold text-uppercase" style="width: 15%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Acciones</th>
                             </tr>
                         </thead>
                         <tbody class="text-center">
                             @forelse ($tanques as $tanque)
-                                <tr>
-                                    <td>{{ ($tanques->currentPage() - 1) * $tanques->perPage() + $loop->iteration }}</td>
-                                    <td>{{ $tanque->sede_nombre }}</td>
-                                    <td>{{ $tanque->name }}</td>
-                                    <td>{{ number_format($tanque->capacity) }}</td>
-                                    <td>{{ $tanque->producto_nombre ?? 'Sin producto' }}</td>
-                                    <td>{{ $tanque->is_reserve === 1 ? 'Si' : 'No' }}</td>
+                                <tr style="border-bottom: 1px solid #e9ecef;">
+                                    <td class="text-dark">{{ $tanque->id }}</td>
+                                    <td class="text-dark">{{ $tanque->sede_nombre }}</td>
+                                    <td class="text-dark">{{ $tanque->name }}</td>
+                                    <td class="text-dark">{{ number_format($tanque->capacity) }}</td>
+                                    <td class="text-dark">{{ $tanque->producto_nombre ?? 'Sin producto' }}</td>
                                     <td>
-                                        <button class="btn btn-sm btn-warning" data-bs-toggle="modal"
+                                        <span class="badge {{ $tanque->is_reserve === 1 ? 'bg-primary' : 'bg-secondary' }}">
+                                            {{ $tanque->is_reserve === 1 ? 'Si' : 'No' }}
+                                        </span>
+                                    </td>
+                                    <td class="pe-4 text-center">
+                                        <button class="btn btn-sm btn-warning text-white me-1" style="border-radius: 4px; padding: 0.25rem 0.5rem;" data-bs-toggle="modal"
                                             data-bs-target="#editModal" data-id="{{ $tanque->id }}"
                                             data-location_id="{{ $tanque->location_id }}" data-name="{{ $tanque->name }}"
                                             data-capacity="{{ $tanque->capacity }}"
                                             data-product_id="{{ $tanque->product_id }}"
                                             data-is_reserve="{{ $tanque->is_reserve }}"
-                                            data-estado="{{ $tanque->estado }}">
-                                            <i class="bi bi-pencil"></i>
+                                            data-estado="{{ $tanque->estado }}" title="Editar">
+                                            <i class="bi bi-pencil-fill"></i>
                                         </button>
-                                        <button class="btn btn-sm btn-danger" data-bs-toggle="modal"
-                                            data-bs-target="#deleteModal" data-id="{{ $tanque->id }}">
-                                            <i class="bi bi-trash"></i>
+                                        <button class="btn btn-sm btn-danger text-white" style="border-radius: 4px; padding: 0.25rem 0.5rem;" data-bs-toggle="modal"
+                                            data-bs-target="#deleteModal" data-id="{{ $tanque->id }}" title="Eliminar">
+                                            <i class="bi bi-trash-fill"></i>
                                         </button>
                                     </td>
                                 </tr>
@@ -161,59 +114,113 @@
         </div>
     </div>
 
+    <!-- Modal Crear -->
+    <div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg">
+                <form id="createTanqueForm" action="{{ route('tanques.store') }}" method="POST">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title text-dark fw-bold" id="createModalLabel"><i class="bi bi-droplet-half text-primary me-2"></i>Agregar Nuevo Tanque</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4 row">
+                        <div class="col-md-6 mb-3">
+                            <label for="location_id" class="form-label fw-bold text-dark">Sede</label>
+                            <select class="form-control form-control-lg" id="location_id" name="location_id" required
+                                {{ auth()->user()->role->nombre != 'master' ? 'readonly' : '' }}>
+                                @if (auth()->user()->role->nombre == 'master')
+                                    <option value="" selected>Seleccione una sede</option>
+                                    @foreach ($sedes as $sede)
+                                        <option value="{{ $sede->id }}">{{ $sede->name }}</option>
+                                    @endforeach
+                                @else
+                                    <option value="{{ auth()->user()->location_id }}" selected>
+                                        {{ auth()->user()->location->name }}</option>
+                                @endif
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label fw-bold text-dark">Nombre</label>
+                            <input type="text" class="form-control form-control-lg" placeholder="Ingrese el nombre del tanque" id="name" name="name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="capacity" class="form-label fw-bold text-dark">Capacidad</label>
+                            <input type="number" class="form-control form-control-lg" placeholder="Ingrese la capacidad del tanque" id="capacity" name="capacity" required step="1" min="0">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="product_id" class="form-label fw-bold text-dark">Producto</label>
+                            <select class="form-control form-control-lg" id="product_id" name="product_id" required>
+                                <option value="" selected>Seleccione un producto</option>
+                                @foreach ($products as $product)
+                                    <option value="{{ $product->id }}">{{ $product->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <input type="hidden" name="is_reserve" value="0">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="1" id="is_reserve" name="is_reserve">
+                                <label class="form-check-label fw-bold text-dark" for="is_reserve">Reserva</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary px-4">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Editar -->
     <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg">
                 <form id="editTanqueForm" method="POST">
                     @csrf
                     @method('PUT')
                     <div class="modal-header">
-                        <h5 class="modal-title">Editar Tanque</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <h5 class="modal-title text-dark fw-bold" id="editModalLabel"><i class="bi bi-pencil-square text-warning me-2"></i>Editar Tanque</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="modal-body row">
+                    <div class="modal-body p-4 row">
                         <div class="col-md-6 mb-3">
-                            <label for="edit_sede_id" class="form-label">Sede</label>
-                            <select class="form-control" id="edit_sede_id" name="location_id" required>
+                            <label for="edit_sede_id" class="form-label fw-bold text-dark">Sede</label>
+                            <select class="form-control form-control-lg" id="edit_sede_id" name="location_id" required>
                                 @foreach ($sedes as $sede)
                                     <option value="{{ $sede->id }}">{{ $sede->name }}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="edit_nombre" class="form-label">Nombre</label>
-                            <input type="text" class="form-control" id="edit_nombre" name="name" required>
+                            <label for="edit_nombre" class="form-label fw-bold text-dark">Nombre</label>
+                            <input type="text" class="form-control form-control-lg" id="edit_nombre" name="name" required>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="edit_capacidad" class="form-label">Capacidad</label>
-                            <input type="number" class="form-control" id="edit_capacidad" name="capacity" required>
+                            <label for="edit_capacidad" class="form-label fw-bold text-dark">Capacidad</label>
+                            <input type="number" class="form-control form-control-lg" id="edit_capacidad" name="capacity" required>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="edit_producto_id" class="form-label">Producto</label>
-                            <select class="form-control" id="edit_producto_id" name="product_id" required>
+                            <label for="edit_producto_id" class="form-label fw-bold text-dark">Producto</label>
+                            <select class="form-control form-control-lg" id="edit_producto_id" name="product_id" required>
                                 @foreach ($products as $producto)
                                     <option value="{{ $producto->id }}">{{ $producto->name }}</option>
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="row align-items-center">
-                                <div class="col-md-8">
-                                    <!-- enviar 0 cuando no está marcado -->
-                                    <input type="hidden" name="is_reserve" value="0">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" value="1"
-                                            id="edit_is_reserve" name="is_reserve">
-                                        <label class="form-check-label" for="edit_is_reserve">Reserva</label>
-                                    </div>
-                                </div>
+                        <div class="col-md-12 mb-3">
+                            <input type="hidden" name="is_reserve" value="0">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="1" id="edit_is_reserve" name="is_reserve">
+                                <label class="form-check-label fw-bold text-dark" for="edit_is_reserve">Reserva</label>
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer bg-light">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                        <button type="submit" class="btn btn-warning px-4 text-dark fw-bold">Guardar Cambios</button>
                     </div>
                 </form>
             </div>
@@ -222,21 +229,23 @@
 
     <!-- Modal Eliminar -->
     <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
                 <form id="deleteTanqueForm" method="POST">
                     @csrf
                     @method('DELETE')
                     <div class="modal-header">
-                        <h5 class="modal-title">Eliminar Tanque</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <h5 class="modal-title text-dark fw-bold" id="deleteModalLabel"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>Eliminar Tanque</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="modal-body">
-                        <p>¿Estás seguro de que deseas eliminar este tanque?</p>
+                    <div class="modal-body p-4 text-center">
+                        <i class="bi bi-trash text-danger mb-3" style="font-size: 3.5rem;"></i>
+                        <h4 class="mb-3 text-dark fw-bold">¿Estás seguro?</h4>
+                        <p class="text-dark mb-0">¿Deseas eliminar permanentemente este tanque? Esta acción no se puede deshacer.</p>
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer bg-light justify-content-center">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                        <button type="submit" class="btn btn-danger px-4">Sí, Eliminar</button>
                     </div>
                 </form>
             </div>

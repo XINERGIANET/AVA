@@ -9,12 +9,25 @@ use App\Models\Product;
 
 class TanqueController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $search = $request->get('search');
+        $location_id = $request->get('location_id');
+        $product_id = $request->get('product_id');
+
         // Obtener tanques activos con su sede y producto
         $tanques = Tank::where('tanks.deleted', 0)
             ->when(auth()->user()->role->nombre != 'master' && auth()->user()->location_id, function ($query) {
                 $query->where('tanks.location_id', auth()->user()->location_id);
+            })
+            ->when(auth()->user()->role->nombre == 'master' && $location_id, function ($query) use ($location_id) {
+                $query->where('tanks.location_id', $location_id);
+            })
+            ->when($search, function ($query) use ($search) {
+                $query->where('tanks.name', 'like', '%' . $search . '%');
+            })
+            ->when($product_id, function ($query) use ($product_id) {
+                $query->where('tanks.product_id', $product_id);
             })
             ->join('locations', 'tanks.location_id', '=', 'locations.id')
             ->leftJoin('products', 'tanks.product_id', '=', 'products.id')
@@ -23,7 +36,8 @@ class TanqueController extends Controller
                 'locations.name as sede_nombre',
                 'products.name as producto_nombre'
             )
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
         $sedes = Location::where('deleted', 0)->when(auth()->user()->role->nombre != 'master' && auth()->user()->location_id, function ($query) {
             $query->where('id', auth()->user()->location_id);
