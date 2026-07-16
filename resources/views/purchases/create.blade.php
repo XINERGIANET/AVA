@@ -635,45 +635,28 @@
                     return;
                 }
 
-                let firstProductId = selectedItems.first().data('product_id');
-                const mismatch = selectedItems.filter(function() {
-                    return String($(this).data('product_id')) !== String(firstProductId);
-                });
+                // Cada tanque trae su propio producto: se arma una fila por tanque
+                // con SU producto (ya no se exige que todos coincidan), porque una
+                // misma compra puede traer productos distintos para tanques distintos.
+                const invalidItems = [];
+                const rowsHtml = [];
 
-                if (mismatch.length > 0) {
-                    mismatch.find('.tank-checkbox').prop('checked', false);
-                    ToastError.fire({
-                        icon: 'warning',
-                        text: 'Todos los tanques seleccionados deben contener el mismo producto. Se desmarcaron los que no coinciden.'
-                    });
-                }
-
-                const validItems = getVisibleSelectedTanks();
-                if (validItems.length === 0) {
-                    updateTotal();
-                    return;
-                }
-
-                firstProductId = validItems.first().data('product_id');
-                const selectedProduct = newproducts.find(p => Number(p.id) === Number(firstProductId));
-                if (!selectedProduct) {
-                    validItems.find('.tank-checkbox').prop('checked', false);
-                    ToastError.fire({
-                        icon: 'error',
-                        text: 'El producto asociado a este tanque no está disponible o ha sido eliminado. Se desmarcó automáticamente.'
-                    });
-                    updateTotal();
-                    return;
-                }
-
-                validItems.each(function() {
+                selectedItems.each(function() {
                     const $item = $(this);
+                    const productId = $item.data('product_id');
+                    const product = newproducts.find(p => Number(p.id) === Number(productId));
+
+                    if (!product) {
+                        invalidItems.push($item);
+                        return;
+                    }
+
                     const tankId = $item.find('.tank-checkbox').val();
                     const tankName = $item.find('.tank-name').text();
-                    const newRow = `
-                        <tr data-product-id="${selectedProduct.id}" data-tank-id="${tankId}" data-unit="${selectedProduct.measurement_unit}">
-                            <td>${selectedProduct.name}</td>
-                            <td>${selectedProduct.measurement_unit}</td>
+                    rowsHtml.push(`
+                        <tr data-product-id="${product.id}" data-tank-id="${tankId}" data-unit="${product.measurement_unit}">
+                            <td>${product.name}</td>
+                            <td>${product.measurement_unit}</td>
                             <td><input type="number" class="form-control text-end unit_price" step="0.01" min="0"></td>
                             <td>
                                 <div class="d-flex align-items-center">
@@ -689,9 +672,23 @@
                                 </button>
                             </td>
                         </tr>
-                    `;
-                    $('#purchaseTable tbody').append(newRow);
+                    `);
                 });
+
+                if (invalidItems.length > 0) {
+                    invalidItems.forEach(function($item) {
+                        $item.find('.tank-checkbox').prop('checked', false).trigger('markchange');
+                    });
+                    ToastError.fire({
+                        icon: 'error',
+                        text: (invalidItems.length > 1 ?
+                                'El producto asociado a algunos tanques no está disponible o ha sido eliminado.' :
+                                'El producto asociado a ese tanque no está disponible o ha sido eliminado.') +
+                            ' Se ' + (invalidItems.length > 1 ? 'desmarcaron' : 'desmarcó') + ' automáticamente.'
+                    });
+                }
+
+                $('#purchaseTable tbody').append(rowsHtml.join(''));
 
                 attachEventsToRows();
                 updateTotal();
