@@ -83,7 +83,12 @@
                                     <td>{{ $trans->user->name }}</td>
                                     <td>{{ $trans->isle->name ?? 'N/A' }}</td>
                                     <td>{{ number_format($trans->amount, 2) }}</td>
-                                    <td>{{ $trans->type == 'eb' ? 'Entrada' : 'Salida' }}</td>
+                                    <td>
+                                        @if ($trans->type == 'eb') Entrada
+                                        @elseif ($trans->type == 'eg') Egreso{{ $trans->vault_destination ? ' a ' . $trans->vault_destination->name : '' }}
+                                        @else Salida
+                                        @endif
+                                    </td>
                                     <td>{{ $trans->date->format('d/m/Y') }}</td>
                                     <td>{{ $trans->description ?? '-' }}</td>
                                     <td><span

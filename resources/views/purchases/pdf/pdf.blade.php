@@ -166,13 +166,7 @@
                         <tbody>
                             @foreach($purchase->purchase_details as $detail)
                                 <tr>
-                                    <td>
-                                        @if($detail->product)
-                                            {{ $detail->product->name }}
-                                        @else
-                                            Producto eliminado
-                                        @endif
-                                    </td>
+                                    <td>{{ $detail->display_name }}</td>
                                     <td class="text-center">{{ $detail->quantity }}</td>
                                     <td class="text-right">S/ {{ number_format($detail->unit_price, 2) }}</td>
                                     <td class="text-right">S/ {{ number_format($detail->subtotal, 2) }}</td>

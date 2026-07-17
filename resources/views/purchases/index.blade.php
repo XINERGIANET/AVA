@@ -7,7 +7,7 @@
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb mb-0 bg-transparent p-0">
             <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}" class="text-decoration-none text-muted">Home</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('purchases.create') }}" class="text-decoration-none text-muted">Abastecimiento</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('purchases.index') }}" class="text-decoration-none text-muted">Abastecimiento</a></li>
             <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">Compras</li>
         </ol>
     </nav>
@@ -375,11 +375,14 @@
                     var html = '';
 
                     // Construir las filas de la tabla con los detalles
+                    // Nota: en compras de "Otros Gastos" la línea no tiene producto de
+                    // catálogo (product_id nulo), por eso se usa display_name en vez de
+                    // product.name.
                     data.details.forEach(function(detail) {
                         html += `
                             <tr>
-                                <td>${detail.product.name}</td>
-                                <td>${detail.quantity} ${detail.measurement_unit}</td>
+                                <td>${detail.display_name}</td>
+                                <td>${detail.quantity} ${detail.measurement_unit || ''}</td>
                                 <td>${detail.unit_price}</td>
                                 <td>${detail.subtotal}</td>
                             </tr>

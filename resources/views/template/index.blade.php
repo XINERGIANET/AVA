@@ -385,14 +385,7 @@
                             </a>
                             <ul class="sub-nav collapse {{ $supplyOpen ? 'show' : '' }}" id="sidebar-supply" data-bs-parent="#sidebar-menu">
                                 <li class="nav-item">
-                                    <a class="nav-link {{ request()->routeIs('purchases.create') ? 'active' : '' }}" href="{{ route('purchases.create') }}">
-                                        <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
-                                        <i class="sidenav-mini-icon"> RC </i>
-                                        <span class="item-name">Registrar Compra</span>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link {{ request()->routeIs('purchases.index') ? 'active' : '' }}" href="{{ route('purchases.index') }}">
+                                    <a class="nav-link {{ request()->routeIs('purchases.index') || request()->routeIs('purchases.create') ? 'active' : '' }}" href="{{ route('purchases.index') }}">
                                         <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
                                         <i class="sidenav-mini-icon"> HC </i>
                                         <span class="item-name">Compras</span>

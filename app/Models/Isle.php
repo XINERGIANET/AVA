@@ -21,7 +21,7 @@ class Isle extends Model
         'name',
         'location_id',
         'cash_amount',
-        'voult',
+        'vault',
         'deleted',
     ];
 

@@ -65,6 +65,8 @@ class PurchaseController extends Controller
             $query->where('id', auth()->user()->location_id);
         })->get();
 
+        $purchaseConcepts = PurchaseConcept::where('deleted', 0)->get();
+
         return view('purchases.index', [
             'tipo' => 'compra',
             'purchases' => $purchases,
@@ -73,7 +75,8 @@ class PurchaseController extends Controller
             'paymentMethods' => $paymentMethods,
             'products' => $products,
             'tanks' => $tanks,
-            'locations' => $locations
+            'locations' => $locations,
+            'purchaseConcepts' => $purchaseConcepts
         ]);
         
     }

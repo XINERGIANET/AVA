@@ -3,7 +3,7 @@
             width: 100px;
         }
 
-        /* Limita la altura del menÃº y aÃ±ade scroll vertical */
+        /* Limita la altura del menú y añade scroll vertical */
         .ui-autocomplete {
             max-height: 200px;
             /* ajusta la altura a tu gusto */
@@ -15,7 +15,7 @@
             z-index: 1000;
         }
 
-        /* Opcional: mejorar visibilidad de cada Ã­tem */
+        /* Opcional: mejorar visibilidad de cada ítem */
         .ui-menu-item-wrapper {
             white-space: nowrap;
             padding: 4px 8px;
@@ -113,7 +113,7 @@
                 attachEventsToRows();
             }
 
-            // Limpiar campo de bÃºsqueda
+            // Limpiar campo de búsqueda
             $('#search-product').val('');
         }
 
@@ -137,7 +137,7 @@
                     $('#supplier_id').val(ui.item.id); // Guardar el ID en campo oculto
                     //cargarProductosProveedor(ui.item.id); no hay productos por proveedor
                 },
-                appendTo: '.container-fluid'
+                appendTo: '#createPurchaseModal .modal-body'
             })
             .autocomplete("instance")._renderItem = function(ul, item) {
                 return $("<li>")
@@ -175,18 +175,23 @@
 
             $('#purchaseTable tbody tr').each(function() {
                 let row = $(this);
-                let productId = row.data('product-id');
+                let productId = row.data('product-id') || null;
                 let tankId = row.data('tank-id') || null;
+                let isManualRow = !!row.data('manual-row');
+                let description = isManualRow ? row.find('.description-input').val() : null;
+                let measurement_unit = isManualRow ? row.find('.unit-input').val() : row.data('unit');
                 let quantity = parseFloat(row.find('.quantity').val());
                 let subtotal = parseFloat(row.find('.subtotal').val());
                 let unit_price = parseFloat(row.find('.unit_price').val());
                 let waste = parseFloat(row.find('.waste').val());
-                let measurement_unit = row.data('unit');
 
-                if (productId && quantity >= 0.01 && subtotal >= 0 && unit_price >= 0) {
+                const hasIdentity = productId || (description && description.trim() !== '');
+
+                if (hasIdentity && quantity >= 0.01 && subtotal >= 0 && unit_price >= 0) {
                     const item = {
                         product_id: productId,
                         tank_id: tankId,
+                        description: description,
                         quantity: quantity,
                         unit_price: unit_price,
                         subtotal: subtotal,
@@ -222,6 +227,8 @@
                 voucher_type: $('#voucherType').val(),
                 invoice_number: $('#invoiceNumber').val(),
                 payment_method_id: $('#paymentMethod').val(),
+                purchase_concept_id: $('#purchaseConcept').val(),
+                glosa: $('#glosa').val(),
                 date: $('#purchaseDate').val(),
                 purchase_temp: $('#purchase_temp').val(),
                 real_temp: $('#real_temp').val(),
@@ -245,14 +252,14 @@
                     if (response.status) {
                         ToastMessage.fire({
                             icon: 'success',
-                            text: response.message || 'OperaciÃ³n exitosa'
+                            text: response.message || 'Operación exitosa'
                         }).then(() => {
                             location.reload();
                         });
                     } else {
                         // Error del backend
                         ToastError.fire({
-                            text: response.error || 'OcurriÃ³ un error'
+                            text: response.error || 'Ocurrió un error'
                         });
                     }
                 },
@@ -261,14 +268,14 @@
                     purchaseSpinner.classList.add('spinner-hidden');
                     purchaseSpinner.classList.remove('spinner-visible');
 
-                    console.log("Error en la peticiÃ³n:");
+                    console.log("Error en la petición:");
                     console.log("Products enviados:", productsCart);
                     console.log("Supplies enviados:", suppliesCart);
                     console.log("XHR Response:", xhr);
                     console.log("XHR Status:", status);
                     console.log("XHR Error:", error);
 
-                    let mensaje = 'OcurriÃ³ un error al procesar la compra';
+                    let mensaje = 'Ocurrió un error al procesar la compra';
 
                     if (xhr.responseJSON) {
                         if (xhr.responseJSON.error) {
@@ -319,7 +326,7 @@
             saveBtn.disabled = true;
 
             fetch('{{ route('suppliers.saveSupplier') }}', {
-                    method: 'POST', // o el mÃ©todo que necesites
+                    method: 'POST', // o el método que necesites
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
@@ -331,11 +338,11 @@
                     console.log('Respuesta:', data);
 
                     if (data.success) {
-                        // Mostrar mensaje de Ã©xito
+                        // Mostrar mensaje de éxito
                         ToastMessage.fire({
                             icon: 'success',
                             text: data.message ||
-                                'OperaciÃ³n exitosa' // Corregido: usar data.message en lugar de response.message
+                                'Operación exitosa' // Corregido: usar data.message en lugar de response.message
                         }).then(() => {
                             console.log(data.supplier);
                             suppliers.push(data.supplier);
@@ -362,7 +369,7 @@
                     alert('Error: ' + error.message);
                 })
                 .finally(() => {
-                    // Restaurar estado del botÃ³n
+                    // Restaurar estado del botón
                     saveBtn.innerHTML = originalText;
                     saveBtn.disabled = false;
                 });
@@ -372,11 +379,13 @@
             $('#busquedaProducto').on('keyup', function() {
                 var valor = $(this).val().toLowerCase();
                 $('#purchaseTable tbody tr').each(function() {
-                    var nombre = $(this).find('td:eq(0)').text().toLowerCase();
+                    var $row = $(this);
+                    var descripcionInput = $row.find('.description-input');
+                    var nombre = (descripcionInput.length ? descripcionInput.val() : $row.find('td:eq(0)').text()).toLowerCase();
                     if (nombre.includes(valor) || valor === '') {
-                        $(this).show();
+                        $row.show();
                     } else {
-                        $(this).hide();
+                        $row.hide();
                     }
                 });
             });
@@ -391,6 +400,7 @@
         $(function() {
             const tankList = $('#tankList');
             const searchInput = $('#tankSearch');
+            let manualRowCounter = 0;
 
             function getVisibleSelectedTanks() {
                 return tankList.find('.tank-checkbox:checked').closest('.tank-item').filter(function() {
@@ -454,9 +464,9 @@
                     ToastError.fire({
                         icon: 'error',
                         text: (invalidItems.length > 1 ?
-                                'El producto asociado a algunos tanques no estÃ¡ disponible o ha sido eliminado.' :
-                                'El producto asociado a ese tanque no estÃ¡ disponible o ha sido eliminado.') +
-                            ' Se ' + (invalidItems.length > 1 ? 'desmarcaron' : 'desmarcÃ³') + ' automÃ¡ticamente.'
+                                'El producto asociado a algunos tanques no está disponible o ha sido eliminado.' :
+                                'El producto asociado a ese tanque no está disponible o ha sido eliminado.') +
+                            ' Se ' + (invalidItems.length > 1 ? 'desmarcaron' : 'desmarcó') + ' automáticamente.'
                     });
                 }
 
@@ -465,6 +475,52 @@
                 attachEventsToRows();
                 updateTotal();
             }
+
+            function addManualPurchaseRow() {
+                manualRowCounter++;
+                const rowId = 'manual-' + manualRowCounter;
+                const newRow = `
+                    <tr data-product-id="" data-tank-id="" data-unit="" data-manual-row="${rowId}">
+                        <td><input type="text" class="form-control text-start description-input" placeholder="Describe el ítem..."></td>
+                        <td><input type="text" class="form-control text-start unit-input" placeholder="unidad"></td>
+                        <td><input type="number" class="form-control text-end unit_price" step="0.01" min="0"></td>
+                        <td><input type="number" class="form-control text-end quantity cantidad-input" min="0.001" step="0.001"></td>
+                        <td><input type="number" class="form-control text-end subtotal" min="0.001" step="0.001" disabled></td>
+                        <td><input type="number" class="form-control text-end waste" step="0.001" value="0" disabled></td>
+                        <td>
+                            <button type="button" class="btn btn-danger btn-sm delete-row">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                $('#purchaseTable tbody').append(newRow);
+                attachEventsToRows();
+                updateTotal();
+            }
+
+            function toggleConceptSections() {
+                const isFuel = $('#purchaseConcept option:selected').data('is-fuel') == 1;
+
+                $('.fuel-only-field').toggle(isFuel);
+                $('#glosaSection').toggle(!isFuel);
+
+                if (!isFuel) {
+                    $('#purchase_temp, #real_temp').val('');
+                } else {
+                    $('#glosa').val('');
+                }
+
+                // Al cambiar de concepto se limpia la selección anterior para no mezclar
+                // tanques (combustible) con líneas manuales (otros gastos).
+                $('#purchaseTable tbody').empty();
+                tankList.find('.tank-checkbox').prop('checked', false).trigger('markchange');
+                updateTotal();
+            }
+
+            $('#purchaseConcept').on('change', toggleConceptSections);
+            $('#addManualRow').on('click', addManualPurchaseRow);
+            toggleConceptSections();
 
             function applyTankFilters() {
                 const locationId = String($('#location_id').val() || '');
@@ -502,7 +558,7 @@
                 applyTankFilters();
             }
         });
-        // BÃºsqueda de documento (DNI/RUC) mediante API
+        // Búsqueda de documento (DNI/RUC) mediante API
         function searchDocumentApi() {
             const doc = $('#document').val().trim();
 
@@ -510,11 +566,11 @@
 
             if (!/^\d{8}$|^\d{11}$/.test(doc)) {
                 if (typeof ToastError !== 'undefined') {
-                    ToastError.fire({ text: 'El documento debe tener 8 dÃ­gitos para DNI o 11 dÃ­gitos para RUC.' });
+                    ToastError.fire({ text: 'El documento debe tener 8 dígitos para DNI o 11 dígitos para RUC.' });
                 } else if (typeof Swal !== 'undefined') {
-                    Swal.fire('Error', 'El documento debe tener 8 dÃ­gitos para DNI o 11 dÃ­gitos para RUC.', 'error');
+                    Swal.fire('Error', 'El documento debe tener 8 dígitos para DNI o 11 dígitos para RUC.', 'error');
                 } else {
-                    alert('El documento debe tener 8 dÃ­gitos para DNI o 11 dÃ­gitos para RUC.');
+                    alert('El documento debe tener 8 dígitos para DNI o 11 dígitos para RUC.');
                 }
                 return;
             }
@@ -550,9 +606,9 @@
                         $('#company_name').val(data.name || '');
                     } else {
                         if (typeof ToastError !== 'undefined') {
-                            ToastError.fire({ text: response.message || 'No se encontrÃ³ informaciÃ³n para ese documento.' });
+                            ToastError.fire({ text: response.message || 'No se encontró información para ese documento.' });
                         } else {
-                            alert(response.message || 'No se encontrÃ³ informaciÃ³n para ese documento.');
+                            alert(response.message || 'No se encontró información para ese documento.');
                         }
                     }
                 },

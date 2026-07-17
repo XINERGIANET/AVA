@@ -27,6 +27,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\MaintenanceController;
 use App\Http\Controllers\RecalibrationController;
 use App\Http\Controllers\VaultController;
+use App\Http\Controllers\VaultDestinationController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\FlowMeterController;
 use App\Http\Controllers\MermaController;
@@ -98,7 +99,7 @@ Route::group(['middleware' => 'auth'], function () {
 
     Route::resource('users', UserController::class);
     Route::resource('maintenances', MaintenanceController::class);
-    Route::resource('contracts', ContractController::class);
+    Route::resource('contracts', ContractController::class)->except(['create', 'edit']);
     Route::group(['prefix' => 'contracts'], function () {
         Route::get('{id}/orders', [ContractController::class, 'getOrders'])->name('contracts.orders');
         Route::get('products/{locationId}', [ContractController::class, 'getProductsByLocation'])->name('contracts.products');
@@ -174,7 +175,9 @@ Route::group(['middleware' => 'auth'], function () {
     Route::resource('sides', SideController::class);
     Route::post('vault/from-cash-close', [VaultController::class, 'storeVaultFromCashClose'])->name('vault.from_cash_close');
     Route::put('vault/approve/{id}', [VaultController::class, 'approve'])->name('vault.approve');
+    Route::post('vault/movement', [VaultController::class, 'storeMovement'])->name('vault.movement.store');
     Route::resource('vault', VaultController::class);
+    Route::resource('vault-destinations', VaultDestinationController::class)->only(['index', 'store', 'destroy']);
     // Endpoint para transferir desde caja a bóveda (usado por AJAX en la vista de ventas)
 
     Route::resource('areas', AreaController::class);

@@ -60,11 +60,12 @@ class ContractController extends Controller
             ->get();
 
         $areas = Location::all();
+        $products = Product::all();
         $paymentMethods = PaymentMethod::where('deleted', 0)->orderBy('name')->get();
         $isles = Isle::where('deleted', 0)->orderBy('name')->get();
         $nextContractNumber = $this->generateNextContractNumber();
 
-        return view('contracts.index', compact('contracts', 'locations', 'areas', 'paymentMethods', 'isles', 'nextContractNumber'));
+        return view('contracts.index', compact('contracts', 'locations', 'areas', 'products', 'paymentMethods', 'isles', 'nextContractNumber'));
     }
     public function excel(Request $request)
     {
@@ -294,31 +295,6 @@ class ContractController extends Controller
      *
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
      */
-    public function create()
-    {
-        $agreements = Agreement::with(['agreement_details.product', 'orders.order_details.product', 'client'])
-            ->where('type', 'contract')
-            ->paginate(10);
-        $products = Product::all();
-        $areas = Location::all();
-        $clients = Client::all();
-        $paymentMethods = PaymentMethod::where('deleted', 0)->orderBy('name')->get();
-        $isles = Isle::where('deleted', 0)->orderBy('name')->get();
-        $nextContractNumber = $this->generateNextContractNumber();
-        return view(
-            'contracts.create',
-            compact(
-                'agreements',
-                'products',
-                'clients',
-                'areas',
-                'paymentMethods',
-                'isles',
-                'nextContractNumber'
-            )
-        );
-    }
-
     private function generateNextContractNumber(bool $lock = false): string
     {
         $query = Agreement::where('type', 'contract');
@@ -641,17 +617,6 @@ class ContractController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  Agreement  $agreement
-     * @return \Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
-     */
-    public function edit(Agreement $agreement)
-    {
-        return view('contracts.edit', compact('agreement'));
     }
 
     /**

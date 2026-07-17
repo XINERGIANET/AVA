@@ -8,6 +8,7 @@ use App\Models\Location;
 use App\Models\User;
 use App\Models\Isle;
 use App\Models\Product;
+use App\Models\VaultDestination;
 use Illuminate\Support\Facades\DB;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\Auth;
@@ -19,8 +20,8 @@ class VaultController extends Controller
     public function index(Request $request)
     {
         // 1. Agregamos 'isle' al with() para optimizar la consulta
-        $transactionsQuery = Transaction::with(['user', 'location', 'isle'])
-            ->whereIn('type', ['eb', 'sb'])
+        $transactionsQuery = Transaction::with(['user', 'location', 'isle', 'vault_destination'])
+            ->whereIn('type', ['eb', 'sb', 'eg'])
             ->when(auth()->user()->role->nombre != 'master' && auth()->user()->location_id, function ($query) {
                 return $query->where('location_id', auth()->user()->location_id);
             });
@@ -78,14 +79,44 @@ class VaultController extends Controller
             ? Isle::where('location_id', $currentLocationId)->where('deleted', 0)->sum('vault')
             : 0;
 
-        return view('vault.index', compact('transactions', 'locations', 'users', 'isles', 'currentLocation', 'vaultAccumulated'));
+        // Destinos de egreso: catálogo editable + cuánto se ha enviado a cada uno
+        // (solo egresos aprobados/efectivos). Es una suma en vivo sobre el
+        // historial de movimientos, no un saldo/sub-libro que se mantenga aparte.
+        $vaultDestinations = VaultDestination::where('deleted', 0)->orderBy('name')->get();
+        $egresosPorDestino = Transaction::where('type', 'eg')
+            ->where('status', 1)
+            ->when($currentLocationId, function ($q) use ($currentLocationId) {
+                $q->where('location_id', $currentLocationId);
+            })
+            ->selectRaw('vault_destination_id, SUM(amount) as total')
+            ->groupBy('vault_destination_id')
+            ->pluck('total', 'vault_destination_id');
+
+        // Total de bóveda por sede (suma en vivo de sus islas), para "Generar
+        // Movimiento": la bóveda es un solo pozo por sede, no por isla.
+        $locationVaultTotals = Isle::where('deleted', 0)
+            ->selectRaw('location_id, SUM(vault) as total')
+            ->groupBy('location_id')
+            ->pluck('total', 'location_id');
+
+        return view('vault.index', compact(
+            'transactions',
+            'locations',
+            'users',
+            'isles',
+            'currentLocation',
+            'vaultAccumulated',
+            'vaultDestinations',
+            'egresosPorDestino',
+            'locationVaultTotals'
+        ));
     }
 
     public function create(Request $request)
     {
         $user = auth()->user();
-        $transactionsBaseQuery = Transaction::with(['user', 'location', 'isle'])
-            ->whereIn('type', ['eb', 'sb'])
+        $transactionsBaseQuery = Transaction::with(['user', 'location', 'isle', 'vault_destination'])
+            ->whereIn('type', ['eb', 'sb', 'eg'])
             ->when($user->role->nombre != 'master' || $user->location_id, function ($query) use ($user) {
                 return $query->where('location_id', $user->location_id);
             });
@@ -211,6 +242,135 @@ class VaultController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withInput()->withErrors(['error' => 'Error al registrar: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * "Generar Movimiento": Ingreso (aporte externo, ej. el dueño mete plata) o
+     * Egreso (a un destino del catálogo: Banco, Dueño, Otra Bóveda, etc.).
+     *
+     * La bóveda es un solo pozo por SEDE, no por isla: el tope/saldo disponible
+     * es la suma en vivo de Isle.vault de esa sede (igual que la tarjeta
+     * "Acumulado en bóveda"), sin mantener un campo aparte que se pueda
+     * desincronizar. Si una sola isla no alcanza para el egreso, se descuenta
+     * de la que tenga más saldo primero y se continúa con la siguiente hasta
+     * cubrir el monto, dejando una fila de transacción por cada isla tocada
+     * para que el historial muestre transparentemente de dónde salió cada sol.
+     *
+     * Solo registra el movimiento, no un sub-libro acumulado por destino (ese
+     * acumulado se calcula en vivo sumando estos movimientos).
+     */
+    public function storeMovement(Request $request)
+    {
+        $validated = $request->validate([
+            'location_id'           => 'required|integer|exists:locations,id',
+            'movement_type'         => 'required|string|in:ingreso,egreso',
+            'vault_destination_id'  => 'required_if:movement_type,egreso|nullable|integer|exists:vault_destinations,id',
+            'description'           => 'nullable|string|max:500',
+            'amount'                => 'required|numeric|min:0.01',
+            'date'                  => 'required|date',
+        ]);
+
+        $user = auth()->user();
+        $isWorker = ($user->role->nombre === 'worker');
+        $locationId = $validated['location_id'];
+        $amount = floatval($validated['amount']);
+
+        DB::beginTransaction();
+        try {
+            if ($validated['movement_type'] === 'egreso') {
+                $islas = Isle::where('location_id', $locationId)
+                    ->where('deleted', 0)
+                    ->orderByDesc('vault')
+                    ->lockForUpdate()
+                    ->get();
+
+                $totalVault = $islas->sum('vault');
+
+                if ($totalVault < $amount) {
+                    DB::rollBack();
+                    return back()->withInput()->withErrors([
+                        'amount' => 'Saldo insuficiente en la bóveda de la sede. Disponible: S/ ' . number_format($totalVault, 2)
+                    ]);
+                }
+
+                $destination = VaultDestination::find($validated['vault_destination_id']);
+                $status = $isWorker ? 0 : 1;
+                $remaining = $amount;
+                $userDescription = $validated['description'];
+
+                foreach ($islas as $isla) {
+                    if ($remaining <= 0) {
+                        break;
+                    }
+
+                    $take = min(floatval($isla->vault), $remaining);
+                    if ($take <= 0) {
+                        continue;
+                    }
+
+                    if (!$isWorker) {
+                        $isla->decrement('vault', $take);
+                    }
+
+                    $autoDescription = 'Egreso de bóveda hacia ' . $destination->name . ' (S/ ' . number_format($take, 2) . ' desde ' . $isla->name . ')';
+
+                    Transaction::create([
+                        'user_id'              => $user->id,
+                        'location_id'          => $locationId,
+                        'isle_id'              => $isla->id,
+                        'type'                 => 'eg',
+                        'vault_destination_id' => $destination->id,
+                        'amount'               => $take,
+                        'date'                 => $validated['date'],
+                        'description'          => $userDescription ? $userDescription . ' — ' . $autoDescription : $autoDescription,
+                        'status'               => $status,
+                    ]);
+
+                    $remaining -= $take;
+                }
+            } else {
+                // Ingreso manual (aporte externo, ej. el dueño mete plata): se
+                // acredita a la primera isla activa de la sede, igual criterio
+                // que ya usa la transferencia de cierre de caja entre sedes.
+                $isla = Isle::where('location_id', $locationId)
+                    ->where('deleted', 0)
+                    ->orderBy('id')
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$isla) {
+                    DB::rollBack();
+                    return back()->withInput()->withErrors(['error' => 'La sede seleccionada no tiene islas activas.']);
+                }
+
+                $status = $isWorker ? 0 : 1;
+
+                if (!$isWorker) {
+                    $isla->increment('vault', $amount);
+                }
+
+                $autoDescription = 'Ingreso manual a bóveda (acreditado a ' . $isla->name . ')';
+
+                Transaction::create([
+                    'user_id'     => $user->id,
+                    'location_id' => $locationId,
+                    'isle_id'     => $isla->id,
+                    'type'        => 'eb',
+                    'amount'      => $amount,
+                    'date'        => $validated['date'],
+                    'description' => $validated['description'] ? $validated['description'] . ' — ' . $autoDescription : $autoDescription,
+                    'status'      => $status,
+                ]);
+            }
+
+            DB::commit();
+
+            return redirect()->route('vault.index')->with('success', 'Movimiento registrado correctamente.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withInput()->withErrors(['error' => 'Error al registrar el movimiento: ' . $e->getMessage()]);
         }
     }
 
@@ -344,8 +504,8 @@ class VaultController extends Controller
             return redirect()->back()->with('error', 'El movimiento no está pendiente de aprobación.');
         }
 
-        if ($transaction->type != 'eb') {
-            return redirect()->back()->with('error', 'El movimiento no es una entrada.');
+        if (!in_array($transaction->type, ['eb', 'eg'], true)) {
+            return redirect()->back()->with('error', 'Este movimiento no requiere aprobación.');
         }
 
         if ($user->location_id != $transaction->location_id) {
@@ -353,18 +513,33 @@ class VaultController extends Controller
         }
         $rol = $user->role->nombre;
         if ($rol !== 'admin' && $rol !== 'master') {
-            return redirect()->back()->with('error', 'Solo los administradores pueden aprobar retiros.');
+            return redirect()->back()->with('error', 'Solo los administradores pueden aprobar movimientos.');
         }
 
         DB::beginTransaction();
         try {
+            // El saldo de bóveda se lleva por isla (Isle.vault), no por sede.
+            $isle = $transaction->isle_id ? Isle::lockForUpdate()->find($transaction->isle_id) : null;
+            if (!$isle) {
+                DB::rollBack();
+                return redirect()->back()->with('error', 'No se encontró la isla asociada al movimiento.');
+            }
+
+            if ($transaction->type === 'eg') {
+                $currentVault = floatval($isle->vault ?? 0);
+                if ($currentVault < $transaction->amount) {
+                    DB::rollBack();
+                    return redirect()->back()->with('error', 'Saldo insuficiente en la bóveda de la isla para aprobar este egreso.');
+                }
+                $isle->decrement('vault', $transaction->amount);
+            } else {
+                $isle->increment('vault', $transaction->amount);
+            }
+
             $transaction->update(['status' => 1]);
-            $location = $transaction->location;
-            $location->increment('vault', $transaction->amount);
             DB::commit();
 
-            return redirect()->route('vault.create')
-                ->with('success', 'Retiro aprobado y bóveda actualizada exitosamente.');
+            return redirect()->back()->with('success', 'Movimiento aprobado y bóveda actualizada exitosamente.');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Error al aprobar: ' . $e->getMessage());
@@ -441,7 +616,7 @@ class VaultController extends Controller
             return redirect()->back()->with('error', 'No puedes eliminar movimientos de otra sede.');
         }
 
-        if (!in_array($transaction->type, ['eb', 'sb'], true)) {
+        if (!in_array($transaction->type, ['eb', 'sb', 'eg'], true)) {
             return redirect()->back()->with('error', 'Solo se pueden eliminar movimientos de bóveda.');
         }
 
@@ -521,6 +696,20 @@ class VaultController extends Controller
                         $isle->decrement('vault', $amount);
                     }
                 }
+            }
+
+            if ($transaction->type === 'eg') {
+                if ($isApproved) {
+                    if (!$isle) {
+                        DB::rollBack();
+                        return redirect()->back()->with('error', 'No se encontró la isla asociada al movimiento.');
+                    }
+
+                    // El egreso ya aprobado había restado de la bóveda de la isla:
+                    // al eliminarlo, se le devuelve ese monto.
+                    $isle->increment('vault', $amount);
+                }
+                // Si estaba pendiente, no se había descontado nada aún; no hay saldo que revertir.
             }
 
             $transaction->delete();

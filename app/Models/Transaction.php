@@ -19,6 +19,7 @@ class Transaction extends Model
         'user_id',
         'location_id',
         'isle_id',
+        'vault_destination_id',
         'type',
         'description',
         'amount',
@@ -45,5 +46,10 @@ class Transaction extends Model
     public function isle()
     {
         return $this->belongsTo(Isle::class, 'isle_id');
+    }
+
+    public function vault_destination()
+    {
+        return $this->belongsTo(VaultDestination::class);
     }
 }

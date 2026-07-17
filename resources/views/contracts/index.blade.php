@@ -1,29 +1,18 @@
 @extends('template.index')
 
 @section('header')
-    <div class="d-flex justify-content-between align-items-center w-100">
-        <div>
-            <div class="d-flex align-items-center">
-                <h4 class="mb-0 text-dark fw-bold">
-                    <i class="bi bi-file-earmark-text me-2 text-primary"></i>Histórico de Contratos
-                </h4>
-            </div>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0 bg-transparent p-0">
-                    <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}" class="text-decoration-none text-muted">Home</a></li>
-                    <li class="breadcrumb-item"><a href="#" class="text-decoration-none text-muted">Clientes y Crédito</a></li>
-                    <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">Contratos</li>
-                </ol>
-            </nav>
-        </div>
-        @if (auth()->user()->role->nombre != 'admin')
-        <div>
-            <a href="{{ route('contracts.create') }}" class="btn btn-primary shadow-sm d-flex align-items-center rounded-pill">
-                <i class="bi bi-plus-circle me-2"></i> Registrar Contrato
-            </a>
-        </div>
-        @endif
+    <div class="d-flex align-items-center">
+        <h4 class="mb-0 text-dark fw-bold">
+            <i class="bi bi-file-earmark-text me-2 text-primary"></i>Histórico de Contratos
+        </h4>
     </div>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0 bg-transparent p-0">
+            <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item"><a href="#" class="text-decoration-none text-muted">Clientes y Crédito</a></li>
+            <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">Contratos</li>
+        </ol>
+    </nav>
 @endsection
 
 @section('content')
@@ -32,12 +21,8 @@
             <div class="col-sm-12">
                 <div class="card shadow-sm border-0" style="border-radius: 10px;">
                     <div class="card-body">
-                        <!-- Boton de modal -->
-<div class="d-flex justify-content-end mb-3">
-<button type="button" class="btn btn-primary fw-medium px-4" data-bs-toggle="modal" data-bs-target="#modalRegistrarContrato" style="border-radius: 8px;"><i class="bi bi-plus-circle me-2"></i>Registrar Contrato</button>
-</div>
 <form action="" id="fromFilter">
-                            <div class="row g-2 align-items-end mb-4">
+                            <div class="row g-2 align-items-end mb-3">
                                 <div class="col-md-2">
                                     <label for="start_date" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Fecha Inicial</label>
                                     <input type="date" class="form-control form-control-sm" name="start_date" id="start_date" value="{{ request()->start_date ? request()->start_date : '' }}">
@@ -62,26 +47,32 @@
                                     <input type="text" id="search-client" class="form-control form-control-sm" value="{{ request()->client_name ?? '' }}">
                                     <input type="hidden" id="client_id" name="client_id" value="{{ request()->client_id ?? '' }}">
                                 </div>
-                                <div class="col-md-3 text-end d-flex justify-content-end gap-1">
-                                    <button type="submit" class="btn btn-primary btn-sm px-3 fw-medium" id="btnFiltrar" style="border-radius: 6px;">
-                                        <i class="bi bi-funnel me-1"></i>Filtrar
-                                    </button>
-                                    <a href="{{ route('contracts.index') }}" class="btn btn-secondary btn-sm px-3 fw-medium" id="btnLimpiar" style="border-radius: 6px;">
-                                        <i class="bi bi-eraser me-1"></i>Limpiar
-                                    </a>
-                                    <button id="btnExcel" type="button" class="btn btn-success btn-sm px-2" style="border-radius: 6px;" title="Exportar Excel">
-                                        <i class="bi bi-file-earmark-excel"></i>
-                                    </button>
-                                    <button id="btnPdf" type="button" class="btn btn-danger btn-sm px-2" style="border-radius: 6px;" title="Exportar PDF">
-                                        <i class="bi bi-file-earmark-pdf"></i>
+                                <div class="col-md-3 text-end">
+                                    <button type="button" class="btn btn-primary fw-medium px-4" data-bs-toggle="modal" data-bs-target="#modalRegistrarContrato" style="border-radius: 8px;">
+                                        <i class="bi bi-plus-circle me-2"></i>Registrar Contrato
                                     </button>
                                 </div>
+                            </div>
+                            <div class="d-flex gap-2 mb-4">
+                                <button type="submit" class="btn btn-primary btn-sm fw-medium" id="btnFiltrar" style="border-radius: 6px;">
+                                    <i class="bi bi-funnel me-1"></i>Filtrar
+                                </button>
+                                <a href="{{ route('contracts.index') }}" class="btn btn-secondary btn-sm fw-medium" id="btnLimpiar" style="border-radius: 6px;">
+                                    <i class="bi bi-eraser me-1"></i>Limpiar
+                                </a>
+                                <button id="btnPdf" type="button" class="btn btn-danger btn-sm fw-medium" style="border-radius: 6px;">
+                                    <i class="bi bi-file-earmark-pdf-fill me-1"></i>Informes PDF
+                                </button>
+                                <button id="btnExcel" type="button" class="btn btn-success btn-sm fw-medium" style="border-radius: 6px;">
+                                    <i class="bi bi-file-earmark-excel-fill me-1"></i>Excel
+                                </button>
                             </div>
                         </form>
 <div class="table-responsive">
                             <table id="datatable" class="table table-hover align-middle mb-0" style="border: 1px solid #e9ecef;">
                                 <thead class="text-center">
                                     <tr>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">N° de Contrato</th>
                                         <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Documento</th>
                                         <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Cliente</th>
                                         <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Productos</th>
@@ -95,6 +86,7 @@
                                 <tbody class="text-center">
                                     @foreach ($contracts as $contract)
                                         <tr>
+                                            <td>{{ $contract->number }}</td>
                                             <td>{{ $contract->client->document }}</td>
                                             <td>{{ $contract->client->commercial_name ?? $contract->client->business_name ?? $contract->client->contact_name ?? 'N/A' }}</td>
                                             <td>
@@ -115,6 +107,15 @@
                                             <td>{{ $contract->location->name }}</td>
                                             <td>{{ $contract->paid == 0 ? 'No Pagado' : 'Pagado' }}</td>
                                             <td>
+                                                <button type="button" class="btn btn-sm btn-info" onclick="verOrdenes({{ $contract->id }})" title="Ver Órdenes">
+                                                    <i class="bi bi-clipboard-data"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-secondary" onclick="verDetalles({{ $contract->id }})" title="Ver Detalles">
+                                                    <i class="bi bi-bar-chart-steps"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-warning" onclick="editarOrden({{ $contract->id }})" title="Editar contrato">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
                                                 <button class="btn btn-sm btn-success"
                                                     onclick="openPaymentsModal({{ $contract->id }})"
                                                     title="Gestionar Pagos">
@@ -161,8 +162,8 @@
                                     </div>
                                     <div class="col-md-7">
                                         <!-- Input para mostrar el nombre del cliente -->
-                                        <input type="text" id="search-client" class="form-control" placeholder="Buscar cliente...">
-                                        <input type="hidden" id="client_id" name="client_id">
+                                        <input type="text" id="contract-client-search" class="form-control" placeholder="Buscar cliente...">
+                                        <input type="hidden" id="contract_client_id" name="client_id">
                                     </div>
                                     <div class="col-md-2">
                                         <a class="btn btn-primary" id="addClient" data-bs-toggle="modal" data-bs-target="#clientModal">
@@ -285,6 +286,228 @@
                     </div>
                 </div>
             </div>
+
+<div class="modal fade" id="clientModal" tabindex="-1" aria-labelledby="clientModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light border-bottom-0">
+                <h5 class="modal-title fw-bold text-dark" id="clientModalLabel"><i class="bi bi-person-plus me-2 text-primary"></i>Agregar Cliente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="providerForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="document" class="form-label text-dark fw-bold small">Documento <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="document" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="business_name" class="form-label text-dark fw-bold small">Nombre / Razón Social <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="business_name">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-top-0 bg-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" id="saveClient">
+                    <i class="bi bi-save me-1"></i> Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Ver Órdenes -->
+<div class="modal fade" id="modalOrdenes" tabindex="-1" aria-labelledby="modalOrdenesLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light border-bottom-0">
+                <h5 class="modal-title fw-bold text-dark" id="modalOrdenesLabel"><i class="bi bi-card-list me-2 text-primary"></i>Órdenes del Contrato</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Contenedor de productos para órdenes -->
+                <div id="contenedorProductosOrden" class="mb-4">
+                    <!-- Se llena dinámicamente con JS -->
+                </div>
+                <input type="hidden" id="contratoId">
+
+                <!-- Botón de Agregar Orden -->
+                <div class="row mb-3">
+                    <div class="col-md-12 d-flex justify-content-end">
+                        <button type="button" class="btn btn-primary btn-sm" id="btnAgregarOrden">Agregar Orden</button>
+                    </div>
+                </div>
+
+                <!-- Tabla de Órdenes -->
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>N°</th>
+                                @foreach ($products as $product)
+                                <th>{{ $product->name }}</th>
+                                @endforeach
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaOrdenes">
+                            <!-- Datos dinámicos de órdenes -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Ver Áreas -->
+<div class="modal fade" id="modalAreas" tabindex="-1" aria-labelledby="modalAreasLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light border-bottom-0">
+                <h5 class="modal-title fw-bold text-dark" id="modalAreasLabel"><i class="bi bi-geo-alt me-2 text-primary"></i>Áreas de la Orden</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Contenedor de áreas -->
+                <div id="contenedorAreasOrden" class="mb-4">
+                    <!-- Campo Área -->
+                    <div class="row mb-3 align-items-center">
+                        <div class="col-md-4">
+                            <label class="form-label mb-0">Área</label>
+                        </div>
+                        <div class="col-md-8">
+                            <input type="text" class="form-control" id="area">
+                        </div>
+                    </div>
+
+                    <!-- Productos dinámicos (se llenan con JS) -->
+                    <div id="productosAreaContainer">
+                        <!-- Se llena dinámicamente -->
+                    </div>
+                </div>
+                <input type="hidden" id="ordenId">
+
+                <!-- Botón de Agregar Detalle -->
+                <div class="row mb-3">
+                    <div class="col-md-12 d-flex justify-content-end">
+                        <button type="button" class="btn btn-primary btn-sm" id="btnAgregarDetalle">Agregar Detalle con Área</button>
+                    </div>
+                </div>
+
+                <!-- Tabla de Detalles con Áreas -->
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Área</th>
+                                <th>Producto</th>
+                                <th>Cantidad</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaAreas">
+                            <!-- Datos dinámicos de detalles con áreas -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Agregar Productos a Orden -->
+<div class="modal fade" id="modalAgregarProductos" tabindex="-1" aria-labelledby="modalAgregarProductosLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light border-bottom-0">
+                <h5 class="modal-title fw-bold text-dark" id="modalAgregarProductosLabel"><i class="bi bi-box me-2 text-primary"></i>Agregar Productos a Orden</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body" id="contenedorProductosAgregar">
+                <!-- Aquí se insertan los inputs de productos por JS -->
+            </div>
+            <input type="hidden" id="agregar_order_id">
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="btnGuardarProductos">Guardar</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade modal-lg" id="modalEditarContrato" tabindex="-1" aria-labelledby="modalEditarContratoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form id="editContractForm" class="modal-content border-0 shadow">
+            @csrf
+            <input type="hidden" id="editContractId" name="contract_id">
+            <div class="modal-header bg-light border-bottom-0">
+                <h5 class="modal-title fw-bold text-dark" id="modalEditarContratoLabel"><i class="bi bi-pencil-square me-2 text-primary"></i>Editar Contrato</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Cliente</label>
+                    <input type="text" id="search_edit_client" class="form-control">
+                    <input type="hidden" id="edit_client_id" name="client_id">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Sede</label>
+                    <select id="edit_location_id" name="location_id" class="form-select">
+                        <option value="">Seleccione una sede</option>
+                        @foreach($areas as $area)
+                            <option value="{{ $area->id }}">{{ $area->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div id="edit_productos_container" class="mb-3">
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Guardar cambios</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="contractModalContainer"></div>
+
+<div class="modal fade" id="eliminarModal" tabindex="-1" aria-labelledby="eliminarModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-dark fw-bold" id="eliminarModalLabel">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-dark">¿Estás seguro de que deseas eliminar este contrato?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger px-4" id="btnEliminarcontracto">Eliminar Contrato</button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section("scripts")
@@ -295,11 +518,11 @@
     var productosContratoActual = [];
 
     let clientSearchTimeout = null;
-    $('#search-client').autocomplete({
+    $('#contract-client-search').autocomplete({
         source: function(request, response) {
             clearTimeout(clientSearchTimeout);
             clientSearchTimeout = setTimeout(function() {
-                let currentTerm = $('#search-client').val();
+                let currentTerm = $('#contract-client-search').val();
                 // Solo buscar si hay al menos una letra
                 if (currentTerm && currentTerm.length > 0) {
                     $.ajax({
@@ -326,7 +549,7 @@
         },
         appendTo: '#modalRegistrarContrato',
         select: function(event, ui) {
-            $('#client_id').val(ui.item.id);
+            $('#contract_client_id').val(ui.item.id);
         },
     }).autocomplete("instance")._renderItem = function(ul, item) {
         return $("<li>")
@@ -639,7 +862,7 @@
         $('#global-spinner').removeClass('spinner-hidden').addClass('spinner-visible');
 
         // Validar que hay cliente seleccionado
-        if (!$('#client_id').val()) {
+        if (!$('#contract_client_id').val()) {
             $('#global-spinner').removeClass('spinner-visible').addClass('spinner-hidden');
             ToastError.fire({ text: 'Por favor selecciona un cliente' });
             return false;
@@ -1727,48 +1950,6 @@
         });
     };
 
-
-        let clientSearchTimeout = null;
-        $('#search-client').autocomplete({
-            source: function(request, response) {
-                clearTimeout(clientSearchTimeout);
-                clientSearchTimeout = setTimeout(function() {
-                    let currentTerm = $('#search-client').val();
-                    // Solo buscar si hay al menos una letra
-                    if (currentTerm && currentTerm.length > 0) {
-                        $.ajax({
-                            url: '{{ route('clients.search') }}',
-                            method: 'get',
-                            data: {
-                                query: currentTerm
-                            },
-                            success: function(data) {
-                            response($.map(data, function(item) {
-                                const clientName = item.commercial_name || item.business_name || item.contact_name || '';
-                                return {
-                                    label: clientName,
-                                    value: clientName,
-                                    id: item.id,
-                                };
-                            }));
-                            }
-                        });
-                    } else {
-                        // Si no hay letras, limpia el autocomplete
-                        response([]);
-                    }
-                }, 1500);
-            },
-            appendTo: '.container-fluid',
-            select: function(event, ui) {
-                $('#client_id').val(ui.item.id);
-            },
-        }).autocomplete("instance")._renderItem = function(ul, item) {
-            return $("<li>")
-                .append(`<div class="d-flex justify-content-between"><span>${item.label}</span></div>`)
-                .appendTo(ul);
-        };
-
         let contractoAEliminar = null;
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -1791,7 +1972,7 @@
                     success: function(response) {
                         $('#eliminarModal').modal('hide');
                         ToastMessage.fire({
-                            text: "Crédito eliminado correctamente"
+                            text: "Contrato eliminado correctamente"
                         }).then(() => {
                             location.reload();
                         });
@@ -1799,7 +1980,7 @@
                     error: function() {
                         $('#eliminarModal').modal('hide');
                         ToastError.fire({
-                            text: "Ocurrió un error al eliminar el crédito"
+                            text: "Ocurrió un error al eliminar el contrato"
                         });
                     }
                 });

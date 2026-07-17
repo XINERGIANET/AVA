@@ -1,4 +1,4 @@
-﻿
+
 <div class="modal fade" id="createPurchaseModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
@@ -9,35 +9,45 @@
             <div class="modal-body p-4 bg-light">
                             <form id="purchaseForm">
                                 @csrf
-                                
-                                <!-- SECCIÃ“N: DATOS GENERALES -->
+
+                                <!-- SECCIÓN: DATOS GENERALES -->
                                 <h5 class="mb-3 text-primary" style="font-weight: 600; font-size: 1.1rem; color: #465fff !important;">
                                     <i class="bi bi-truck me-2"></i>Datos Generales
                                 </h5>
-                                
+
                                 <div class="row g-3 mb-4">
                                     <div class="col-md-6">
                                         <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">
                                             <i class="bi bi-building me-1 text-secondary"></i>Proveedor:
                                         </label>
                                         <div class="input-group">
-                                            <input type="text" id="search-supplier" class="form-control" placeholder="Buscar proveedor por RUC o RazÃ³n Social...">
+                                            <input type="text" id="search-supplier" class="form-control" placeholder="Buscar proveedor por RUC o Razón Social...">
                                             <input type="hidden" id="supplier_id" name="supplier_id">
                                             <button type="button" class="btn btn-success text-white" id="openProviderModal" data-bs-toggle="modal" data-bs-target="#providerModal" data-bs-toggle="tooltip" title="Agregar nuevo proveedor">
                                                 <i class="bi bi-plus-lg"></i>
                                             </button>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="col-md-3">
                                         <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">
                                             <i class="bi bi-calendar3 me-1 text-secondary"></i>Fecha de Compra
                                         </label>
                                         <input type="date" class="form-control" id="purchaseDate" name="date" required>
                                     </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">
+                                            <i class="bi bi-tag me-1 text-secondary"></i>Concepto
+                                        </label>
+                                        <select class="form-select" id="purchaseConcept" name="purchase_concept_id" required>
+                                            @foreach ($purchaseConcepts as $concept)
+                                                <option value="{{ $concept->id }}" data-is-fuel="{{ $concept->is_fuel ? '1' : '0' }}" {{ $concept->is_fuel ? 'selected' : '' }}>{{ $concept->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
                                 </div>
 
-                                <!-- SECCIÃ“N: DETALLE DE COMPRA -->
+                                <!-- SECCIÓN: DETALLE DE COMPRA -->
                                 <h5 class="mb-3 mt-4 text-primary border-top pt-4" style="font-weight: 600; font-size: 1.1rem; color: #465fff !important;">
                                     <i class="bi bi-receipt-cutoff me-2"></i>Detalle del Comprobante y Almacenamiento
                                 </h5>
@@ -56,11 +66,11 @@
                                                 </select>
                                             </div>
                                             <div class="col-md-4">
-                                                <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">NÂ° Comprobante (*)</label>
+                                                <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">N° Comprobante (*)</label>
                                                 <input type="text" class="form-control" id="invoiceNumber" name="invoice_number" placeholder="Ej. F001-000123">
                                             </div>
                                             <div class="col-md-4">
-                                                <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">CondiciÃ³n</label>
+                                                <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">Condición</label>
                                                 <div class="form-control bg-light text-muted d-flex align-items-center text-nowrap overflow-hidden" style="min-height: 42px;" title="Se registra como Cuenta por Pagar">
                                                     <i class="bi bi-journal-check me-2 flex-shrink-0"></i>Cuenta por Pagar
                                                 </div>
@@ -68,18 +78,18 @@
                                             </div>
                                         </div>
                                         <div class="row g-3 mt-0">
-                                            <div class="col-md-4" style="min-width: 0;">
-                                                <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">TÂ° de Compra</label>
+                                            <div class="col-md-4 fuel-only-field" style="min-width: 0;">
+                                                <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">T° de Compra</label>
                                                 <div class="input-group">
                                                     <input type="number" step="0.01" class="form-control" id="purchase_temp" name="purchase_temp" placeholder="0.00">
-                                                    <span class="input-group-text">Â°C</span>
+                                                    <span class="input-group-text">°C</span>
                                                 </div>
                                             </div>
-                                            <div class="col-md-4" style="min-width: 0;">
-                                                <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">TÂ° de Llegada</label>
+                                            <div class="col-md-4 fuel-only-field" style="min-width: 0;">
+                                                <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">T° de Llegada</label>
                                                 <div class="input-group">
                                                     <input type="number" step="0.01" class="form-control" id="real_temp" name="real_temp" placeholder="0.00">
-                                                    <span class="input-group-text">Â°C</span>
+                                                    <span class="input-group-text">°C</span>
                                                 </div>
                                             </div>
                                             <div class="col-md-4" style="min-width: 0;">
@@ -98,9 +108,18 @@
                                                     @endif
                                                 </select>
                                             </div>
+                                            <div class="col-md-8" id="glosaSection" style="display: none;">
+                                                <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">Glosa</label>
+                                                <div class="d-flex gap-2">
+                                                    <textarea class="form-control" id="glosa" name="glosa" rows="1" placeholder="Describe el gasto (ej. reparación de bomba, papelería de oficina)..."></textarea>
+                                                    <button type="button" class="btn btn-outline-primary text-nowrap" id="addManualRow">
+                                                        <i class="bi bi-plus-lg me-1"></i>Agregar línea
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-3" style="min-width: 0;">
+                                    <div class="col-md-3 fuel-only-field" id="tankSection" style="min-width: 0;">
                                         <label class="form-label mb-1" style="font-weight: 500; color: #4b5563;">
                                             <i class="bi bi-database me-1 text-secondary"></i>Tanque(s)
                                         </label>
@@ -117,7 +136,7 @@
                                     </div>
                                 </div>
 
-                                <!-- SECCIÃ“N: PRODUCTOS -->
+                                <!-- SECCIÓN: PRODUCTOS -->
                                 <div class="p-3 mt-4 mb-4" style="background-color: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
                                     <div class="row align-items-end g-3">
                                         <div class="col-md-4">
@@ -150,7 +169,7 @@
                                                 <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Cantidad</th>
                                                 <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Subtotal</th>
                                                 <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Merma</th>
-                                                <th class="pe-4 text-center fw-bold text-uppercase" style="width: 10%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">AcciÃ³n</th>
+                                                <th class="pe-4 text-center fw-bold text-uppercase" style="width: 10%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Acción</th>
                                             </tr>
                                         </thead>
                                         <tbody class="text-center align-middle"></tbody>
@@ -181,7 +200,7 @@
                                 </div>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="company_name" class="form-label text-dark fw-bold">RazÃ³n Social</label>
+                                <label for="company_name" class="form-label text-dark fw-bold">Razón Social</label>
                                 <input type="text" class="form-control" id="company_name" name="company_name" required>
                             </div>
                         </div>
