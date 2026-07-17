@@ -1,109 +1,115 @@
 @extends('template.index')
 
 @section('header')
-    <h1>Histórico de Créditos</h1>
-    <p>Lista de créditos</p>
+    <div class="d-flex align-items-center">
+        <h4 class="mb-0 text-dark fw-bold">
+            <i class="bi bi-credit-card me-2 text-primary"></i>Histórico de Créditos
+        </h4>
+    </div>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0 bg-transparent p-0">
+            <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item"><a href="#" class="text-decoration-none text-muted">Clientes y Crédito</a></li>
+            <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">Créditos</li>
+        </ol>
+    </nav>
 @endsection
 
 @section('content')
-    <div class="container-fluid content-inner mt-0">
+    <div class="container-fluid content-inner" style="padding-top: 1rem;">
         <div class="row">
             <div class="col-sm-12">
-                <div class="card">
-                    <div class="card-body border-bottom">
+                <div class="card shadow-sm border-0" style="border-radius: 10px;">
+                    <div class="card-body">
                         <form action="{{ route('credits.index') }}" method="GET" id="fromFilter">
-                            <div class="row d-flex">
+                            <div class="row g-2 align-items-end mb-4">
                                 <div class="col-md-2">
-                                    <label for="start_date" class="form-label small">Fecha Inicial</label>
-                                    <input type="date" class="form-control" name="start_date" id="start_date"
-                                        value="{{ request()->start_date ? request()->start_date : '' }}">
+                                    <label for="start_date" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Fecha Inicial</label>
+                                    <input type="date" class="form-control form-control-sm" name="start_date" id="start_date" value="{{ request()->start_date ? request()->start_date : '' }}">
                                 </div>
-                                <!-- Fecha final -->
                                 <div class="col-md-2">
-                                    <label for="end_date" class="form-label small">Fecha Final</label>
-                                    <input type="date" class="form-control" name="end_date" id="end_date"
-                                        value="{{ request()->end_date ? request()->end_date : '' }}">
+                                    <label for="end_date" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Fecha Final</label>
+                                    <input type="date" class="form-control form-control-sm" name="end_date" id="end_date" value="{{ request()->end_date ? request()->end_date : '' }}">
                                 </div>
-
-                                <div class="col-md-3">
-                                    <div class="mb-3">
-                                        <label class="form-label">Sede</label>
-                                        <select class="form-select" id="location_id" name="location_id">
-                                            <option value="">Todas las sedes</option>
-                                            @foreach ($locations ?? [] as $location)
-                                                <option value="{{ $location->id }}"
-                                                    {{ request()->location_id == $location->id ? 'selected' : '' }}>
-                                                    {{ $location->name }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
+                                <div class="col-md-2">
+                                    <label class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Sede</label>
+                                    <select class="form-select form-select-sm" id="location_id" name="location_id">
+                                        <option value="">Todas las sedes</option>
+                                        @foreach ($locations ?? [] as $location)
+                                            <option value="{{ $location->id }}" {{ request()->location_id == $location->id ? 'selected' : '' }}>
+                                                {{ $location->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
                                 </div>
-
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Cliente</label>
-                                    <input type="text" id="search-client" class="form-control"
-                                        value="{{ request()->client_name ?? '' }}">
-                                    <input type="hidden" id="client_id" name="client_id"
-                                        value="{{ request()->client_id ?? '' }}">
+                                <div class="col-md-2">
+                                    <label class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Estado</label>
+                                    <select class="form-select form-select-sm" id="status" name="status">
+                                        <option value="" {{ request()->has('status') && request()->status == '' ? 'selected' : '' }}>Todos</option>
+                                        <option value="pending" {{ (!request()->has('status') || request()->status == 'pending') ? 'selected' : '' }}>No Pagado / Pendiente</option>
+                                        <option value="paid" {{ request()->status == 'paid' ? 'selected' : '' }}>Pagado</option>
+                                    </select>
                                 </div>
-
-                                <div class="col d-flex align-items-end mb-3">
-                                    <div class=" w-50s me-2">
-                                        <button type="submit" class="btn btn-primary w-100"
-                                            id="btnFiltrar">Filtrar</button>
-                                    </div>
-                                    <div class="w-50s me-2">
-                                        <button class="btn btn-danger btn-pdf">PDF</button>
-                                    </div>
-                                    <div class="w-50s me-2">
-                                        <button id="btnExcel" class="btn btn-success">Excel</button>
-                                    </div>
-                                    <div class=" w-50s me-2">
-                                        <a href="{{ route('credits.index') }}" class="btn btn-warning w-100"
-                                            id="btnLimpiar">Limpiar</a>
-                                    </div>
+                                <div class="col-md-2">
+                                    <label class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Cliente</label>
+                                    <input type="text" id="search-client" class="form-control form-control-sm" value="{{ request()->client_name ?? '' }}">
+                                    <input type="hidden" id="client_id" name="client_id" value="{{ request()->client_id ?? '' }}">
                                 </div>
-
-                                <div class="col-12 mt-4">
-                                    <div class="d-flex justify-content-end">
-                                        <div>
-                                            <h5>
-                                                <strong>Total vendido: S/ {{ number_format($totalCreditosPagados, 2, '.', ',') }}</strong>
-                                            </h5>
-                                        </div>
-                                    </div>
+                                <div class="col-md-4 text-end d-flex justify-content-end gap-1">
+                                    <button type="submit" class="btn btn-primary btn-sm px-3 fw-medium" id="btnFiltrar" style="border-radius: 6px;">
+                                        <i class="bi bi-funnel me-1"></i>Filtrar
+                                    </button>
+                                    <a href="{{ route('credits.index') }}" class="btn btn-secondary btn-sm px-3 fw-medium" id="btnLimpiar" style="border-radius: 6px;">
+                                        <i class="bi bi-eraser me-1"></i>Limpiar
+                                    </a>
+                                    <button id="btnExcel" type="button" class="btn btn-success btn-sm px-2" style="border-radius: 6px;" title="Exportar Excel">
+                                        <i class="bi bi-file-earmark-excel"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-danger btn-pdf btn-sm px-2" style="border-radius: 6px;" title="Exportar PDF">
+                                        <i class="bi bi-file-earmark-pdf"></i>
+                                    </button>
                                 </div>
                             </div>
                         </form>
-                    </div>
+                        
+                        <div class="d-flex justify-content-end mb-3">
+                            <h6 class="mb-0 text-muted fw-bold">Total vendido: <span class="text-primary">S/ {{ number_format($totalCreditosPagados, 2, '.', ',') }}</span></h6>
+                        </div>
 
-
-                    <div class="card-body p-3">
                         <div class="table-responsive">
-                            <table id="datatable" class="table table-striped">
-                                <thead>
+                            <table id="datatable" class="table table-hover align-middle mb-0" style="border: 1px solid #e9ecef;">
+                                <thead class="text-center">
                                     <tr>
-                                        <th>Documento</th>
-                                        <th>Cliente</th>
-                                        <th>Productos</th>
-                                        <th>Código Vale</th>
-                                        <th>Responsable</th>
-                                        <th>Detalle</th>
-                                        <th>Fecha Generación</th>
-                                        <th>Total</th>
-                                        <th>Fecha Pago</th>
-                                        <th>Sede</th>
-                                        <th>Estado</th>
-                                        <th>Acciones</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important; width: 150px;">Documento</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Cliente</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Productos</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Fecha Generación</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Total</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Fecha Pago</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Sede</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Estado</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Acciones</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody class="text-center">
                                     @foreach ($credits as $credit)
                                         <tr>
-                                            <td>{{ $credit->client ? $credit->client->document : 'N/A' }}</td>
-                                            <td>{{ $credit->client_name ? $credit->client_name : 'Sin cliente' }}</td>
-                                            <td>
+                                            <td class="text-start">
+                                                <div class="d-flex align-items-center gap-2 justify-content-center">
+                                                    <button class="btn btn-primary p-0 d-flex align-items-center justify-content-center" 
+                                                            style="width: 22px; height: 22px; border-radius: 50%;" 
+                                                            data-bs-toggle="collapse" 
+                                                            data-bs-target="#row-{{ $credit->id }}" 
+                                                            title="Ver más detalles">
+                                                        <i class="bi bi-plus text-white" style="font-size: 16px; line-height: 1;"></i>
+                                                    </button>
+                                                    <span class="fw-medium">{{ $credit->client ? $credit->client->document : 'N/A' }}</span>
+                                                </div>
+                                            </td>
+                                            <td style="white-space: normal; word-break: break-word; min-width: 250px; max-width: 350px;">
+                                                {{ $credit->client_name ? $credit->client_name : 'Sin cliente' }}
+                                            </td>
+                                            <td class="text-start">
                                                 @php
                                                     // Determinar si es de sale o agreement
                                                     if ($credit->sale && $credit->sale->sale_details) {
@@ -134,15 +140,6 @@
                                                 @endif
                                             </td>
                                             <td>
-                                                {{ $credit->sale && $credit->sale->voucher_code ? $credit->sale->voucher_code : 'N/A' }}
-                                            </td>
-                                            <td>
-                                                {{ $credit->sale && $credit->sale->responsible ? $credit->sale->responsible->name . ' ' . $credit->sale->responsible->last_name : 'N/A' }}
-                                            </td>
-                                            <td>
-                                                {{ $credit->sale && $credit->sale->detail ? $credit->sale->detail : 'N/A' }}
-                                            </td>
-                                            <td>
                                                 @if ($credit->sale)
                                                     {{ $credit->sale->date ? $credit->sale->date->format('d/m/Y') : 'N/A' }}
                                                 @elseif ($credit->agreement)
@@ -151,13 +148,13 @@
                                                     N/A
                                                 @endif
                                             </td>
-                                            <td>
+                                            <td class="fw-bold">
                                                 @if ($credit->sale)
-                                                    {{ $credit->sale->total }}
+                                                    S/ {{ $credit->sale->total }}
                                                 @elseif ($credit->agreement)
-                                                    {{ $credit->agreement->total }}
+                                                    S/ {{ $credit->agreement->total }}
                                                 @else
-                                                    {{ $credit->amount }}
+                                                    S/ {{ $credit->amount }}
                                                 @endif
                                             </td>
                                             <td>{{ $credit->date ? $credit->date->format('d/m/Y') : 'N/A' }}</td>
@@ -172,12 +169,38 @@
                                             </td>
                                             <td>{{ $credit->status == 'paid' ? 'Pagado' : 'No Pagado' }}</td>
                                             <td>
-                                                <button class="btn btn-danger btn-sm btn-eliminar"
-                                                    data-id="{{ $credit->id }}" data-bs-toggle="modal"
-                                                    data-bs-target="#eliminarModal" title="Eliminar">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-
+                                                <div class="d-flex justify-content-center gap-1">
+                                                    @if ($credit->status != 'paid')
+                                                        <button class="btn btn-sm btn-success"
+                                                            onclick="openPaymentsModal({{ $credit->id }})" title="Gestionar Pagos">
+                                                            <i class="bi bi-currency-dollar"></i>
+                                                        </button>
+                                                    @endif
+                                                    <button class="btn btn-danger btn-sm btn-eliminar"
+                                                        data-id="{{ $credit->id }}" data-bs-toggle="modal"
+                                                        data-bs-target="#eliminarModal" title="Eliminar">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <!-- Fila colapsable de Ver más -->
+                                        <tr id="row-{{ $credit->id }}" class="collapse bg-light">
+                                            <td colspan="10" class="text-start p-3">
+                                                <div class="row w-100">
+                                                    <div class="col-md-4">
+                                                        <strong class="text-muted"><i class="bi bi-ticket-detailed me-1"></i> Código Vale:</strong> 
+                                                        <span class="ms-1">{{ $credit->sale && $credit->sale->voucher_code ? $credit->sale->voucher_code : 'N/A' }}</span>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <strong class="text-muted"><i class="bi bi-person-badge me-1"></i> Responsable:</strong>
+                                                        <span class="ms-1">{{ $credit->sale && $credit->sale->responsible ? $credit->sale->responsible->name . ' ' . $credit->sale->responsible->last_name : 'N/A' }}</span>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <strong class="text-muted"><i class="bi bi-card-text me-1"></i> Detalle:</strong>
+                                                        <span class="ms-1">{{ $credit->sale && $credit->sale->detail ? $credit->sale->detail : 'N/A' }}</span>
+                                                    </div>
+                                                </div>
                                             </td>
                                         </tr>
                                     @endforeach
@@ -193,21 +216,19 @@
             </div>
         </div>
     </div>
-    <div class="modal fade modal-lg" id="eliminarModal" tabindex="-1" aria-labelledby="eliminarModalLabel"
-        aria-hidden="true">
+    <div class="modal fade" id="eliminarModal" tabindex="-1" aria-labelledby="eliminarModalLabel" aria-hidden="true">
         <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header text-white">
-                    <h5 class="modal-title" id="eliminarModalLabel">Confirmar Eliminación</h5>
-                    <button type="button" class="btn-close text-white" data-bs-dismiss="modal"
-                        aria-label="Cerrar"></button>
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-light border-bottom-0">
+                    <h5 class="modal-title fw-bold text-dark" id="eliminarModalLabel"><i class="bi bi-trash me-2 text-danger"></i>Confirmar Eliminación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body">
-                    <p>¿Estás seguro de que deseas anular este crédito?</p>
+                    <p class="mb-0 text-muted">¿Estás seguro de que deseas anular este crédito?</p>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer border-top-0 bg-light">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-danger" id="btnEliminarCredito">Eliminar</button>
+                    <button type="button" class="btn btn-danger px-4" id="btnEliminarCredito">Eliminar</button>
                 </div>
             </div>
         </div>

@@ -29,6 +29,30 @@
     <!-- Customizer Css -->
     <link rel="stylesheet" href="{{ asset('assets/css/customizer.min.css') }}" />
 
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Evitar que los menús padres tengan fondo azul al estar expandidos o activos */
+        .sidebar-list .nav-item > .nav-link[data-bs-toggle="collapse"][aria-expanded="true"],
+        .sidebar-list .nav-item > .nav-link[data-bs-toggle="collapse"].active,
+        .iq-main-menu .nav-item > .nav-link[data-bs-toggle="collapse"][aria-expanded="true"],
+        .iq-main-menu .nav-item > .nav-link[data-bs-toggle="collapse"].active {
+            background-color: transparent !important;
+            color: var(--bs-body-color) !important;
+            box-shadow: none !important;
+        }
+        /* Hover normal para padres */
+        .sidebar-list .nav-item > .nav-link[data-bs-toggle="collapse"]:hover {
+            background-color: rgba(0,0,0,0.05) !important;
+        }
+        /* Mantener color primario solo en el ítem final (hoja) que sí es active */
+        .sidebar-list .nav-item > .nav-link:not([data-bs-toggle="collapse"]).active {
+            background-color: var(--bs-primary) !important;
+            color: white !important;
+        }
+    </style>
+
     <!-- RTL Css -->
     <link rel="stylesheet" href="{{ asset('assets/css/rtl.min.css') }}" />
 
@@ -160,7 +184,7 @@
                     <!--logo End-->
                     <h4 class="logo-title">Ava</h4>
                 </a>
-                <div class="sidebar-toggle" data-toggle="sidebar" data-active="true" style="cursor: pointer; position: absolute; right: -40px;">
+                <div class="sidebar-toggle" data-toggle="sidebar" data-active="true" style="cursor: pointer; position: absolute; right: -25px; top: 15px; background: var(--bs-primary); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1050;">
                     <i class="icon">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -425,17 +449,17 @@
                             </a>
                             <ul class="sub-nav collapse {{ $salesOpen ? 'show' : '' }}" id="sidebar-sales" data-bs-parent="#sidebar-menu">
                                 <li class="nav-item">
-                                    <a class="nav-link {{ request()->routeIs('sales.index') ? 'active' : '' }}" href="{{ route('sales.index') }}">
+                                    <a class="nav-link {{ request()->routeIs('sales.historico') ? 'active' : '' }}" href="{{ route('sales.historico') }}">
                                         <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
-                                        <i class="sidenav-mini-icon"> VT </i>
-                                        <span class="item-name">Registrar Ventas</span>
+                                        <i class="sidenav-mini-icon"><i class="bi bi-dash"></i></i>
+                                        <span class="item-name">Ventas</span>
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link {{ request()->routeIs('flowmeters.create') ? 'active' : '' }}" href="{{ route('flowmeters.create') }}">
+                                    <a class="nav-link {{ request()->routeIs('flowmeters.historico') ? 'active' : '' }}" href="{{ route('flowmeters.historico') }}">
                                         <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
-                                        <i class="sidenav-mini-icon"> CT </i>
-                                        <span class="item-name">Contómetro</span>
+                                        <i class="sidenav-mini-icon"><i class="bi bi-dash"></i></i>
+                                        <span class="item-name">Contómetros</span>
                                     </a>
                                 </li>
                                 <li class="nav-item">
@@ -495,15 +519,7 @@
                                 </i>
                             </a>
                             <ul class="sub-nav collapse {{ $creditOpen ? 'show' : '' }}" id="sidebar-credit" data-bs-parent="#sidebar-menu">
-                                @if (auth()->user()->role->nombre != 'admin')
-                                    <li class="nav-item">
-                                        <a class="nav-link {{ request()->routeIs('contracts.create') ? 'active' : '' }}" href="{{ route('contracts.create') }}">
-                                            <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
-                                            <i class="sidenav-mini-icon"> RT </i>
-                                            <span class="item-name">Registrar Contrato</span>
-                                        </a>
-                                    </li>
-                                @endif
+
                                 <li class="nav-item">
                                     <a class="nav-link {{ request()->routeIs('contracts.index') ? 'active' : '' }}" href="{{ route('contracts.index') }}">
                                         <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
@@ -511,13 +527,7 @@
                                         <span class="item-name">Contratos</span>
                                     </a>
                                 </li>
-                                <li class="nav-item">
-                                    <a class="nav-link {{ request()->routeIs('credits.create') ? 'active' : '' }}" href="{{ route('credits.create') }}">
-                                        <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
-                                        <i class="sidenav-mini-icon"> GC </i>
-                                        <span class="item-name">Registrar Crédito</span>
-                                    </a>
-                                </li>
+
                                 <li class="nav-item">
                                     <a class="nav-link {{ request()->routeIs('credits.index') ? 'active' : '' }}" href="{{ route('credits.index') }}">
                                         <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
@@ -605,13 +615,7 @@
                                 </i>
                             </a>
                             <ul class="sub-nav collapse {{ $reportsOpen ? 'show' : '' }}" id="sidebar-reports" data-bs-parent="#sidebar-menu">
-                                <li class="nav-item">
-                                    <a class="nav-link {{ request()->routeIs('sales.historico') ? 'active' : '' }}" href="{{ route('sales.historico') }}">
-                                        <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
-                                        <i class="sidenav-mini-icon"> HV </i>
-                                        <span class="item-name">Ventas</span>
-                                    </a>
-                                </li>
+
                                 <li class="nav-item">
                                     <a class="nav-link {{ request()->routeIs('transfers.historico') ? 'active' : '' }}" href="{{ route('transfers.historico') }}">
                                         <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
@@ -619,13 +623,7 @@
                                         <span class="item-name">Traspasos</span>
                                     </a>
                                 </li>
-                                <li class="nav-item">
-                                    <a class="nav-link {{ request()->routeIs('flowmeters.historico') ? 'active' : '' }}" href="{{ route('flowmeters.historico') }}">
-                                        <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
-                                        <i class="sidenav-mini-icon"> HM </i>
-                                        <span class="item-name">Contómetros</span>
-                                    </a>
-                                </li>
+
                                 <li class="nav-item">
                                     <a class="nav-link {{ request()->routeIs('expenses.historico') ? 'active' : '' }}" href="{{ route('expenses.historico') }}">
                                         <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>

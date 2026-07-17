@@ -13,9 +13,11 @@ class AddVehiclePlateToSalesTable extends Migration
      */
     public function up()
     {
-        Schema::table('sales', function (Blueprint $table) {
-            $table->string('vehicle_plate')->nullable()->after('client_name');
-        });
+        if (!Schema::hasColumn('sales', 'vehicle_plate')) {
+            Schema::table('sales', function (Blueprint $table) {
+                $table->string('vehicle_plate')->nullable()->after('client_name');
+            });
+        }
     }
 
     /**

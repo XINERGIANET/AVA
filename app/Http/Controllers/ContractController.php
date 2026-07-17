@@ -59,7 +59,12 @@ class ContractController extends Controller
         $locations = Location::where('deleted', 0)
             ->get();
 
-        return view('contracts.index', compact('contracts', 'locations'));
+        $areas = Location::all();
+        $paymentMethods = PaymentMethod::where('deleted', 0)->orderBy('name')->get();
+        $isles = Isle::where('deleted', 0)->orderBy('name')->get();
+        $nextContractNumber = $this->generateNextContractNumber();
+
+        return view('contracts.index', compact('contracts', 'locations', 'areas', 'paymentMethods', 'isles', 'nextContractNumber'));
     }
     public function excel(Request $request)
     {

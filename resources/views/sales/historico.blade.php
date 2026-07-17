@@ -1,76 +1,86 @@
 @extends('template.index')
 
 @section('header')
-    <h1>Histórico de Ventas</h1>
-    <p>Lista de ventas</p>
+    <div class="d-flex justify-content-between align-items-center w-100">
+        <div>
+            <div class="d-flex align-items-center">
+                <h4 class="mb-0 text-dark fw-bold">
+                    <i class="bi bi-cart-check me-2 text-primary"></i>Histórico de Ventas
+                </h4>
+            </div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0 bg-transparent p-0">
+                    <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}" class="text-decoration-none text-muted">Home</a></li>
+                    <li class="breadcrumb-item"><a href="#" class="text-decoration-none text-muted">Reportes</a></li>
+                    <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">Ventas</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <a href="{{ route('sales.index') }}" class="btn btn-primary shadow-sm d-flex align-items-center rounded-pill">
+                <i class="bi bi-plus-circle me-2"></i> Registrar Venta
+            </a>
+        </div>
+    </div>
 @endsection
 
 @section('content')
-    <div class="container-fluid content-inner mt-0">
+    <div class="container-fluid content-inner" style="padding-top: 1rem;">
         <div class="row">
             <div class="col-sm-12">
-                <div class="card">
+                <div class="card shadow-sm border-0" style="border-radius: 10px;">
                     <div class="card-body border-bottom">
                         <form action="" id="fromFilter">
-                            <div class="row d-flex">
-                                <div class="col-md-3">
-                                    <div class="mb-3">
-                                        <label class="form-label">Fecha inicial</label>
-                                        <input type="date" class="form-control" id="start_date" name="start_date"
-                                            value="{{ request()->start_date ?? '' }}">
-                                    </div>
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-2">
+                                    <label class="form-label text-dark fw-bold small mb-1">Fecha inicial</label>
+                                    <input type="date" class="form-control form-control-sm" id="start_date" name="start_date"
+                                        value="{{ request()->start_date ?? '' }}">
                                 </div>
-                                <div class="col-md-3">
-                                    <div class="mb-3">
-                                        <label class="form-label">Fecha final</label>
-                                        <input type="date" id="end_date" class="form-control" name="end_date"
-                                            value="{{ request()->end_date ?? '' }}">
-                                    </div>
+                                <div class="col-md-2">
+                                    <label class="form-label text-dark fw-bold small mb-1">Fecha final</label>
+                                    <input type="date" id="end_date" class="form-control form-control-sm" name="end_date"
+                                        value="{{ request()->end_date ?? '' }}">
                                 </div>
 
                                 @if($isMaster)
-                                <div class="col-md-3">
-                                    <div class="mb-3">
-                                        <label class="form-label">Sede</label>
-                                        <select class="form-select" id="location_id" name="location_id">
-                                            <option value="">Todos</option>
-                                            @foreach ($locations as $location)
-                                                <option value="{{ $location->id }}"
-                                                    {{ request()->location_id == $location->id ? 'selected' : '' }}>
-                                                    {{ $location->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
+                                <div class="col-md-2">
+                                    <label class="form-label text-dark fw-bold small mb-1">Sede</label>
+                                    <select class="form-select form-select-sm" id="location_id" name="location_id">
+                                        <option value="">Todos</option>
+                                        @foreach ($locations as $location)
+                                            <option value="{{ $location->id }}"
+                                                {{ request()->location_id == $location->id ? 'selected' : '' }}>
+                                                {{ $location->name }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
                                 @endif
 
-                                <div class="col-md-3">
-                                    <label class="form-label">N° Comprobante</label>
-                                    <input type="number" id="num_comprobante" name="number" class="form-control"
+                                <div class="col-md-2">
+                                    <label class="form-label text-dark fw-bold small mb-1">N° Comprobante</label>
+                                    <input type="number" id="num_comprobante" name="number" class="form-control form-control-sm"
                                         value="{{ request()->number ?? '' }}">
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Cliente</label>
+                                <div class="col-md-2">
+                                    <label class="form-label text-dark fw-bold small mb-1">Cliente</label>
                                     <input type="hidden" id="client_id" name="client_id"
                                         value="{{ request()->client_id ?? '' }}">
-                                    <input type="text" id="search-client" class="form-control"
+                                    <input type="text" id="search-client" class="form-control form-control-sm"
                                         value="{{ request()->client_name ?? '' }}">
                                 </div>
 
-                                <div class="col-md-3">
-                                    <label class="form-label">Tipo de Comprobante</label>
-                                    <select class="form-select" id="voucher_type" name="voucher_type">
+                                <div class="col-md-2">
+                                    <label class="form-label text-dark fw-bold small mb-1">Comprobante</label>
+                                    <select class="form-select form-select-sm" id="voucher_type" name="voucher_type">
                                         <option value="">Todos</option>
-                                        <option value="Boleta" {{ request()->voucher_type == 'Boleta' ? 'selected' : '' }}>
-                                            Boleta</option>
-                                        <option value="Factura"
-                                            {{ request()->voucher_type == 'Factura' ? 'selected' : '' }}>
-                                            Factura</option>
+                                        <option value="Boleta" {{ request()->voucher_type == 'Boleta' ? 'selected' : '' }}>Boleta</option>
+                                        <option value="Factura" {{ request()->voucher_type == 'Factura' ? 'selected' : '' }}>Factura</option>
                                     </select>
                                 </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">Método de Pago</label>
-                                    <select class="form-select" id="payment_method_id" name="payment_method_id">
+                                <div class="col-md-2">
+                                    <label class="form-label text-dark fw-bold small mb-1">Método de Pago</label>
+                                    <select class="form-select form-select-sm" id="payment_method_id" name="payment_method_id">
                                         <option value="">Todos</option>
                                         @foreach ($paymentMethods as $pm)
                                             <option value="{{ $pm->id }}"
@@ -79,20 +89,18 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">Tipo de venta</label>
-                                    <select class="form-select" id="type_sale" name="type_sale">
+                                <div class="col-md-2">
+                                    <label class="form-label text-dark fw-bold small mb-1">Tipo de venta</label>
+                                    <select class="form-select form-select-sm" id="type_sale" name="type_sale">
                                         <option value="">Todos</option>
-                                        <option value="0" {{ request()->type_sale === '0' ? 'selected' : '' }}>Directa
-                                        </option>
-                                        <option value="2" {{ request()->type_sale === '2' ? 'selected' : '' }}>Crédito
-                                        </option>
+                                        <option value="0" {{ request()->type_sale === '0' ? 'selected' : '' }}>Directa</option>
+                                        <option value="2" {{ request()->type_sale === '2' ? 'selected' : '' }}>Crédito</option>
                                     </select>
                                 </div>
-                                @if($isMaster || !empty($users) && $users->count() > 0)
-                                <div class="col-md-3">
-                                    <label class="form-label">Usuario de venta</label>
-                                    <select class="form-select" id="user_id" name="user_id">
+                                @if($isMaster || (!empty($users) && $users->count() > 0))
+                                <div class="col-md-2">
+                                    <label class="form-label text-dark fw-bold small mb-1">Usuario de venta</label>
+                                    <select class="form-select form-select-sm" id="user_id" name="user_id">
                                         <option value="">Todos</option>
                                         @foreach ($users as $user)
                                             <option value="{{ $user->id }}"
@@ -104,35 +112,23 @@
                                 </div>
                                 @endif
 
-                                <div class="col d-flex align-items-end mt-3">
-                                    <div class=" w-50s me-2">
-                                        <button type="submit" class="btn btn-primary w-100"
-                                            id="btnFiltrar">Filtrar</button>
-                                    </div>
-                                    {{-- <div class="w-50s me-2">
-                                        <button type="button" class="btn btn-danger btn-pdf w-100">
-                                            PDF
-                                        </button>
-                                    </div>
-                                    <div class=" w-50s me-2">
-                                        <button type="button" class="btn btn-success w-100" id="btnExcel">Excel</button>
-                                    </div> --}}
-                                    <div class=" w-50s me-2">
-                                        <button type="button" class="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#importSaleModal">
-                                            <i class="bi bi-file-earmark-excel"></i> Importar Excel
-                                        </button>
-                                    </div>
-                                    <div class=" w-50s me-2">
-                                        <a href="{{ route('sales.historico') }}" class="btn btn-warning w-100"
-                                            id="btnLimpiar">Limpiar</a>
-                                    </div>
+                                <div class="col-md-auto ms-auto d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary btn-sm fw-medium px-3" id="btnFiltrar" style="border-radius: 6px;">
+                                        <i class="bi bi-funnel me-1"></i>Filtrar
+                                    </button>
+                                    <button type="button" class="btn btn-success btn-sm fw-medium px-3" data-bs-toggle="modal" data-bs-target="#importSaleModal" style="border-radius: 6px;">
+                                        <i class="bi bi-file-earmark-excel me-1"></i>Importar
+                                    </button>
+                                    <a href="{{ route('sales.historico') }}" class="btn btn-light btn-sm fw-medium px-3" id="btnLimpiar" style="border-radius: 6px;">
+                                        <i class="bi bi-arrow-counterclockwise me-1"></i>Limpiar
+                                    </a>
                                 </div>
-                                <div class="col-12 mt-4">
+                                <div class="col-12 mt-3">
                                     <div class="d-flex justify-content-end">
-                                        <div>
-                                            <h5>
+                                        <div class="bg-light px-3 py-2 rounded border">
+                                            <h6 class="mb-0 text-dark">
                                                 <strong>Total vendido: S/ {{ number_format($total, 2, '.', ',') }}</strong>
-                                            </h5>
+                                            </h6>
                                         </div>
                                     </div>
                                 </div>
@@ -143,21 +139,21 @@
 
                     <div class="card-body p-3">
                         <div class="table-responsive">
-                            <table class="table table-striped">
-                                <thead>
+                            <table class="table table-hover align-middle mb-0" style="border: 1px solid #e9ecef;">
+                                <thead class="text-center">
                                     <tr>
-                                        <th>N° comprobante</th>
-                                        <th>Tipo</th>
-                                        <th>Cliente</th>
-                                        <th>Placa</th>
-                                        <th>Fecha</th>
-                                        <th>Total</th>
-                                        <th>Método de pago</th>
-                                        <th>Sede</th>
-                                        <th>Acciones</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">N° comprobante</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Tipo</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Cliente</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Placa</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Fecha</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Total</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Método de pago</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Sede</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Acciones</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody class="text-center">
                                     @foreach ($sales as $sale)
                                         <tr data-sale-id="{{ $sale->id }}" data-sale-date="{{ $sale->date->format('Y-m-d') }}">
                                             <td>{{ $sale->payments->pluck('number')->first() ?? 'N/A' }}</td>
@@ -245,22 +241,23 @@
     <div class="modal fade" id="saleDetailsModal" tabindex="-1" aria-labelledby="saleDetailsModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="saleDetailsModalLabel">Productos de la Venta #<span
-                            id="sale-number"></span></h5>
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-light border-bottom-0">
+                    <h5 class="modal-title fw-bold text-dark" id="saleDetailsModalLabel">
+                        <i class="bi bi-list-task me-2 text-primary"></i>Productos de la Venta #<span id="sale-number"></span>
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead>
+                        <table class="table table-hover align-middle mb-0" style="border: 1px solid #e9ecef;">
+                            <thead class="text-center">
                                 <tr>
-                                    <th>Producto</th>
-                                    <th>Cantidad</th>
-                                    <th>Precio Tablero</th>
-                                    <th>Precio Vendido</th>
-                                    <th>Subtotal</th>
+                                    <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Producto</th>
+                                    <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Cantidad</th>
+                                    <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Precio Tablero</th>
+                                    <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Precio Vendido</th>
+                                    <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Subtotal</th>
                                 </tr>
                             </thead>
                             <tbody id="detail-productos">
@@ -280,8 +277,8 @@
                         </p>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <div class="modal-footer border-top-0 bg-light">
+                    <button type="button" class="btn btn-secondary px-4 btn-sm" data-bs-dismiss="modal"><i class="bi bi-x-circle me-1"></i> Cerrar</button>
                 </div>
             </div>
         </div>
@@ -290,20 +287,20 @@
     <!-- Modal para confirmar eliminación de venta -->
     <div class="modal fade" id="deleteSaleModal" tabindex="-1" aria-labelledby="deleteSaleModalLabel"
         aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="deleteSaleModalLabel">Confirmar Eliminación</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-danger text-white border-bottom-0">
+                    <h5 class="modal-title fw-bold text-white" id="deleteSaleModalLabel"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirmar Eliminación</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <p>¿Estás seguro de que deseas eliminar esta venta? Esta acción no se puede deshacer.</p>
-                    <p><strong>N° Comprobante:</strong> <span id="delete-sale-number"></span></p>
+                <div class="modal-body text-center py-4">
+                    <p class="mb-3">¿Estás seguro de que deseas eliminar esta venta? Esta acción no se puede deshacer.</p>
+                    <p class="mb-0 text-muted"><strong>N° Comprobante:</strong> <span id="delete-sale-number"></span></p>
                     <input type="hidden" id="delete-sale-id" value="">
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Eliminar Venta</button>
+                <div class="modal-footer border-top-0 bg-light justify-content-center">
+                    <button type="button" class="btn btn-secondary btn-sm px-3" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger btn-sm px-4 fw-medium" id="confirmDeleteBtn">Eliminar Venta</button>
                 </div>
             </div>
         </div>
@@ -313,23 +310,23 @@
     <div class="modal fade" id="editSaleDateModal" tabindex="-1" aria-labelledby="editSaleDateModalLabel"
         aria-hidden="true">
         <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editSaleDateModalLabel">Editar fecha de venta</h5>
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-light border-bottom-0">
+                    <h5 class="modal-title fw-bold text-dark" id="editSaleDateModalLabel"><i class="bi bi-calendar-event me-2 text-primary"></i>Editar fecha de venta</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p><strong>N° Comprobante:</strong> <span id="edit-sale-number"></span></p>
+                    <p class="text-muted"><strong>N° Comprobante:</strong> <span id="edit-sale-number"></span></p>
                     <input type="hidden" id="edit-sale-id" value="">
                     <div class="mb-3">
-                        <label for="edit-sale-date" class="form-label">Fecha</label>
+                        <label for="edit-sale-date" class="form-label text-dark fw-bold mb-1">Fecha</label>
                         <input type="date" class="form-control" id="edit-sale-date">
                     </div>
                     <div class="alert alert-danger d-none" id="edit-sale-date-error"></div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="confirmEditDateBtn">Guardar</button>
+                <div class="modal-footer border-top-0 bg-light">
+                    <button type="button" class="btn btn-secondary px-3 btn-sm" data-bs-dismiss="modal"><i class="bi bi-x-circle me-1"></i> Cancelar</button>
+                    <button type="button" class="btn btn-primary px-4 fw-medium btn-sm" id="confirmEditDateBtn"><i class="bi bi-save me-1"></i> Guardar</button>
                 </div>
             </div>
         </div>
@@ -338,32 +335,32 @@
     <div class="modal fade" id="importSaleModal" tabindex="-1" aria-labelledby="importSaleModalLabel"
         aria-hidden="true">
         <div class="modal-dialog">
-            <div class="modal-content">
+            <div class="modal-content border-0 shadow">
                 <form id="formImportExcel" action="{{ route('sales.importExcel') }}" method="POST" enctype="multipart/form-data">
                     @csrf
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="importSaleModalLabel">Importar Ventas de Excel</h5>
+                    <div class="modal-header bg-light border-bottom-0">
+                        <h5 class="modal-title fw-bold text-dark" id="importSaleModalLabel"><i class="bi bi-file-earmark-excel me-2 text-success"></i>Importar Ventas de Excel</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <p>Aquí puedes subir el archivo Excel para importar las ventas. Asegúrate de respetar el formato de la plantilla.</p>
+                        <p class="text-muted">Aquí puedes subir el archivo Excel para importar las ventas. Asegúrate de respetar el formato de la plantilla.</p>
                         
                         <div class="mb-4 text-center">
-                            <a href="{{ route('sales.template') }}" class="btn btn-outline-success">
+                            <a href="{{ route('sales.template') }}" class="btn btn-outline-success btn-sm fw-medium">
                                 <i class="bi bi-download"></i> Descargar Plantilla Modelo
                             </a>
                         </div>
 
                         <div class="mb-3">
-                            <label for="excelFile" class="form-label">Archivo Excel (.xlsx, .xls)</label>
+                            <label for="excelFile" class="form-label text-dark fw-bold mb-1">Archivo Excel (.xlsx, .xls)</label>
                             <input class="form-control" type="file" id="excelFile" name="file" accept=".xlsx, .xls" required>
                         </div>
                         <div class="alert alert-danger d-none" id="import-sale-error"></div>
                         <div class="alert alert-success d-none" id="import-sale-success"></div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary" id="btnProcesarImport">Importar</button>
+                    <div class="modal-footer border-top-0 bg-light">
+                        <button type="button" class="btn btn-secondary px-3 btn-sm" data-bs-dismiss="modal"><i class="bi bi-x-circle me-1"></i> Cancelar</button>
+                        <button type="submit" class="btn btn-success px-4 fw-medium btn-sm" id="btnProcesarImport"><i class="bi bi-upload me-1"></i> Importar</button>
                     </div>
                 </form>
             </div>

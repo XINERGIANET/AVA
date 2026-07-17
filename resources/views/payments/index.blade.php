@@ -1,118 +1,95 @@
 @extends('template.index')
 
 @section('header')
-    <h1>Histórico de Pagos</h1>
-    <p>Lista de ventas</p>
+    <div class="d-flex align-items-center">
+        <h4 class="mb-0 text-dark fw-bold">
+            <i class="bi bi-wallet2 me-2 text-primary"></i>Histórico de Pagos
+        </h4>
+    </div>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0 bg-transparent p-0">
+            <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item"><a href="#" class="text-decoration-none text-muted">Clientes y Crédito</a></li>
+            <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">Pagos</li>
+        </ol>
+    </nav>
 @endsection
 
 @section('content')
-    <div class="container-fluid content-inner mt-0">
+    <div class="container-fluid content-inner" style="padding-top: 1rem;">
         <div class="row">
             <div class="col-sm-12">
-                <div class="card">
-                    <div class="card-body border-bottom">
+                <div class="card shadow-sm border-0" style="border-radius: 10px;">
+                    <div class="card-body">
                         <form action="" id="fromFilter">
-                            <div class="row d-flex">
-                                <div class="col-md-3">
-                                    <div class="mb-3">
-                                        <label class="form-label">Fecha inicial</label>
-                                        <input type="date" id="start_date" class="form-control" name="start_date"
-                                            value="{{ request()->start_date ? request()->start_date : '' }}">
-                                    </div>
+                            <div class="row g-2 align-items-end mb-4">
+                                <div class="col-md-2">
+                                    <label for="start_date" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Fecha Inicial</label>
+                                    <input type="date" class="form-control form-control-sm" name="start_date" id="start_date" value="{{ request()->start_date ? request()->start_date : '' }}">
                                 </div>
-                                <div class="col-md-3">
-                                    <div class="mb-3">
-                                        <label class="form-label">Fecha final</label>
-                                        <input type="date" id="end_date" class="form-control" name="end_date"
-                                            value="{{ request()->end_date ? request()->end_date : '' }}">
-                                    </div>
+                                <div class="col-md-2">
+                                    <label for="end_date" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Fecha Final</label>
+                                    <input type="date" class="form-control form-control-sm" name="end_date" id="end_date" value="{{ request()->end_date ? request()->end_date : '' }}">
                                 </div>
-
-                                <div class="col-md-3">
-                                    <label class="form-label">N° Comprobante</label>
-                                    <input type="number" name="number" id="num_comprobante" class="form-control"
-                                        value="{{ request()->number ? request()->number : '' }}">
+                                <div class="col-md-2">
+                                    <label class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">N° Comprobante</label>
+                                    <input type="number" name="number" id="num_comprobante" class="form-control form-control-sm" value="{{ request()->number ? request()->number : '' }}">
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Cliente</label>
-                                    <input type="hidden" id="client_id" name="client_id"
-                                        value="{{ request()->client_id ?? '' }}">
-                                    <input type="text" id="search-client" class="form-control"
-                                        value="{{ request()->client_name ?? '' }}">
+                                <div class="col-md-2">
+                                    <label class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Cliente</label>
+                                    <input type="hidden" id="client_id" name="client_id" value="{{ request()->client_id ?? '' }}">
+                                    <input type="text" id="search-client" class="form-control form-control-sm" value="{{ request()->client_name ?? '' }}">
                                 </div>
-
-                                <div class="col-md-3">
-                                    <label class="form-label">Tipo de Comprobante</label>
-                                    <select name="voucher_type" id="voucher_types" class="form-select">
+                                <div class="col-md-2">
+                                    <label class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Tipo de Comprobante</label>
+                                    <select name="voucher_type" id="voucher_types" class="form-select form-select-sm">
                                         <option value="">Todos</option>
-                                        <option value="Boleta" {{ request('voucher_type') == 'Boleta' ? 'selected' : '' }}>
-                                            Boleta</option>
-                                        <option value="Factura"
-                                            {{ request('voucher_type') == 'Factura' ? 'selected' : '' }}>Factura</option>
+                                        <option value="Boleta" {{ request('voucher_type') == 'Boleta' ? 'selected' : '' }}>Boleta</option>
+                                        <option value="Factura" {{ request('voucher_type') == 'Factura' ? 'selected' : '' }}>Factura</option>
                                     </select>
                                 </div>
-
-                                <div class="col-md-3">
-                                    <label class="form-label">Método de Pago</label>
-                                    <select name="payment_method_id" id="payment_method_id" class="form-select">
+                                <div class="col-md-2">
+                                    <label class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Método de Pago</label>
+                                    <select name="payment_method_id" id="payment_method_id" class="form-select form-select-sm">
                                         <option value="">Todos</option>
                                         @foreach ($payment_methods as $method)
-                                            <option value="{{ $method->id }}"
-                                                {{ request('payment_method_id') == $method->id ? 'selected' : '' }}>
+                                            <option value="{{ $method->id }}" {{ request('payment_method_id') == $method->id ? 'selected' : '' }}>
                                                 {{ $method->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
-
-                                <div class="col d-flex align-items-end">
-                                    <div class=" w-50s me-2">
-                                        <button type="submit" class="btn btn-primary w-100"
-                                            id="btnFiltrar">Filtrar</button>
-                                    </div>
-                                    <div class="w-50s me-2">
-                                        <button type="button" class="btn btn-danger w-100 btn-pdf">PDF</button>
-                                    </div>
-                                    <div class=" w-50s me-2">
-                                        <button type="button" class="btn btn-success w-100" id="btnExcel">Excel</button>
-                                    </div>
-                                    <div class=" w-50s me-2">
-                                        <a href="{{ route('payments.index') }}" class="btn btn-warning w-100"
-                                            id="btnLimpiar">Limpiar</a>
-                                    </div>
+                                <div class="col-md-12 text-end d-flex justify-content-end gap-1 mt-3">
+                                    <button type="submit" class="btn btn-primary btn-sm px-3 fw-medium" id="btnFiltrar" style="border-radius: 6px;">
+                                        <i class="bi bi-funnel me-1"></i>Filtrar
+                                    </button>
+                                    <a href="{{ route('payments.index') }}" class="btn btn-secondary btn-sm px-3 fw-medium" id="btnLimpiar" style="border-radius: 6px;">
+                                        <i class="bi bi-eraser me-1"></i>Limpiar
+                                    </a>
+                                    <button id="btnExcel" type="button" class="btn btn-success btn-sm px-2" style="border-radius: 6px;" title="Exportar Excel">
+                                        <i class="bi bi-file-earmark-excel"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-danger btn-pdf btn-sm px-2" style="border-radius: 6px;" title="Exportar PDF">
+                                        <i class="bi bi-file-earmark-pdf"></i>
+                                    </button>
                                 </div>
-                                <!-- <div class="col-12 mt-4">
-                                    <div class="d-flex justify-content-end">
-                                        <div>
-                                            <h5>
-                                                <strong>Total vendido: S/ 0.00</strong>
-                                            </h5>
-                                            <h6>
-                                                Total pagado: S/ 0.00
-                                            </h6>
-                                        </div>
-                                    </div>
-                                </div> -->
                             </div>
                         </form>
-                    </div>
-
-
-                    <div class="card-body p-3">
+                        
                         <div class="table-responsive">
-                            <table class="table table-striped">
-                                <thead>
+                            <table class="table table-hover align-middle mb-0" style="border: 1px solid #e9ecef;">
+                                <thead class="text-center">
                                     <tr>
-                                        <th>N° comprobante</th>
-                                        <th>Tipo</th>
-                                        <th>Método de pago</th>
-                                        <th>Cliente</th>
-                                        <th>Fecha</th>
-                                        <th>Total</th>
-                                        <th>Estado</th>
-                                        <th>Acciones</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">N° comprobante</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Tipo</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Método de pago</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Cliente</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Fecha</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Total</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Estado</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Acciones</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody class="text-center">
                                     @foreach ($payments as $payment)
                                         <tr>
                                             <td>{{ $payment->number ?? 'N/A' }}</td>

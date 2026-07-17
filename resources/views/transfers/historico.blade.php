@@ -12,90 +12,77 @@
     </nav>
 @endsection
 @section('content')
-    <div class="container-fluid content-inner mt-0">
+    <div class="container-fluid content-inner" style="padding-top: 1rem;">
         <div class="row">
             <div class="col-sm-12">
-                <div class="card">
+                <div class="card shadow-sm border-0" style="border-radius: 10px;">
                     <!--Card body-->
-                    <div class="card-body">
-                        <div class="row">
-                            <form id="fromFilter">
-                                <div class="row">
-                                    <div class="col-md-2">
-                                        <label for="from_date" class="form-label small">Fecha Inicial</label>
-                                        <input id="from_date" type="date" class="form-control" value="{{ request()->from_date ?? '' }}"
-                                            name="from_date">
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label for="to_date" class="form-label small">Fecha Final</label>
-                                        <input type="date" class="form-control" value="{{ request()->to_date ?? '' }}"
-                                            name="to_date" id="to_date">
-                                    </div>
-                                    <!--Filtros de sede y tanque origen-->
-                                    <div class="col-md-2">
-                                        <label for="from_location_id" class="form-label small">Sede origen</label>
-                                        <select class="form-control" name="from_location_id" id="from_location_id">
-                                            <option value="" disabled selected>
-                                                Seleccione una Sede
-                                            </option>
-                                            @foreach ($locations as $location)
-                                                <option value="{{ $location->id }}"
-                                                    {{ request()->from_location_id == $location->id ? 'selected' : '' }}>
-                                                    {{ $location->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <!--Filtros de sede y tanque destino-->
-                                    <div class="col-md-2">
-                                        <label for="from_tank_id" class="form-label small">Tanque origen</label>
-                                        <select class="form-control" name="from_tank_id" id="from_tank_id">
-                                            <option value="">
-                                                Seleccione un tanque
-                                            </option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label for="to_location_id" class="form-label small">Sede destino</label>
-                                        <select class="form-control" name="to_location_id" id="to_location_id">
-                                            <option value="" disabled selected>
-                                                Seleccione una Sede
-                                            </option>
-                                            @foreach ($locations as $location)
-                                                <option value="{{ $location->id }}"
-                                                    {{ request()->to_location_id == $location->id ? 'selected' : '' }}>
-                                                    {{ $location->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label for="to_tank_id" class="form-label small">Tanque destino</label>
-                                        <select class="form-control" name="to_tank_id" id="to_tank_id">
-                                            <option value="" disabled>
-                                                Seleccione un tanque
-                                            </option>
-                                        </select>
-                                    </div>
+                    <div class="card-body border-bottom">
+                        <form id="fromFilter">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-2">
+                                    <label for="from_date" class="form-label text-dark fw-bold small mb-1">Fecha Inicial</label>
+                                    <input id="from_date" type="date" class="form-control form-control-sm" value="{{ request()->from_date ?? '' }}"
+                                        name="from_date">
                                 </div>
-                                <!--Botones-->
-                                <div class="row mt-3">
-                                    <div class="col d-flex align-items-end mb-3">
-                                        <div class="w-50s me-2">
-                                            <button type="submit" id="btnFiltrar" class="btn btn-primary">Filtrar</button>
-                                        </div>
-                                        <div class="w-50s me-2">
-                                            <button id="btnExcel" class="btn btn-success">Excel</button>
-                                        </div>
-                                        <div class="w-50s me-2">
-                                            <button id="btnPdf" class="btn btn-danger">PDF</button>
-                                        </div>
-                                        <div class="w-50 me-2">
-                                            <a href="{{ route('transfers.historico') }}" class="btn btn-warning"
-                                                id="btnLimpiar">Limpiar</a>
-                                        </div>
-                                    </div>
+                                <div class="col-md-2">
+                                    <label for="to_date" class="form-label text-dark fw-bold small mb-1">Fecha Final</label>
+                                    <input type="date" class="form-control form-control-sm" value="{{ request()->to_date ?? '' }}"
+                                        name="to_date" id="to_date">
                                 </div>
-                            </form>
-                        </div>
+                                <!--Filtros de sede y tanque origen-->
+                                <div class="col-md-2">
+                                    <label for="from_location_id" class="form-label text-dark fw-bold small mb-1">Sede origen</label>
+                                    <select class="form-select form-select-sm" name="from_location_id" id="from_location_id">
+                                        <option value="" disabled selected>Seleccione una Sede</option>
+                                        @foreach ($locations as $location)
+                                            <option value="{{ $location->id }}"
+                                                {{ request()->from_location_id == $location->id ? 'selected' : '' }}>
+                                                {{ $location->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <!--Filtros de sede y tanque destino-->
+                                <div class="col-md-2">
+                                    <label for="from_tank_id" class="form-label text-dark fw-bold small mb-1">Tanque origen</label>
+                                    <select class="form-select form-select-sm" name="from_tank_id" id="from_tank_id">
+                                        <option value="">Seleccione un tanque</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="to_location_id" class="form-label text-dark fw-bold small mb-1">Sede destino</label>
+                                    <select class="form-select form-select-sm" name="to_location_id" id="to_location_id">
+                                        <option value="" disabled selected>Seleccione una Sede</option>
+                                        @foreach ($locations as $location)
+                                            <option value="{{ $location->id }}"
+                                                {{ request()->to_location_id == $location->id ? 'selected' : '' }}>
+                                                {{ $location->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="to_tank_id" class="form-label text-dark fw-bold small mb-1">Tanque destino</label>
+                                    <select class="form-select form-select-sm" name="to_tank_id" id="to_tank_id">
+                                        <option value="" disabled>Seleccione un tanque</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-auto ms-auto d-flex gap-2 mt-3">
+                                    <button type="submit" id="btnFiltrar" class="btn btn-primary btn-sm fw-medium px-3" style="border-radius: 6px;">
+                                        <i class="bi bi-funnel me-1"></i>Filtrar
+                                    </button>
+                                    <button type="button" id="btnExcel" class="btn btn-success btn-sm fw-medium px-3" style="border-radius: 6px;">
+                                        <i class="bi bi-file-earmark-excel me-1"></i>Excel
+                                    </button>
+                                    <button type="button" id="btnPdf" class="btn btn-danger btn-sm fw-medium px-3" style="border-radius: 6px;">
+                                        <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+                                    </button>
+                                    <a href="{{ route('transfers.historico') }}" class="btn btn-light btn-sm fw-medium px-3" id="btnLimpiar" style="border-radius: 6px;">
+                                        <i class="bi bi-arrow-counterclockwise me-1"></i>Limpiar
+                                    </a>
+                                </div>
+                            </div>
+                        </form>
                     </div>
 
                     <div class="card-body p-3">

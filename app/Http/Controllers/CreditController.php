@@ -27,6 +27,7 @@ class CreditController extends Controller
         $end_date = $request->end_date;
         $client_id = $request->client_id;
         $location_id = $request->location_id;
+        $status = $request->has('status') ? $request->status : 'pending';
 
         $client = Client::find($client_id);
         if ($client) {
@@ -44,6 +45,7 @@ class CreditController extends Controller
         ])
             ->whereIn('status', ['paid', 'pending'])
             ->where('deleted', 0)
+            ->when($status, fn($q) => $q->where('status', $status))
             ->when($start_date, fn($q) => $q->whereDate('date', '>=', $start_date))
             ->when($end_date, fn($q) => $q->whereDate('date', '<=', $end_date))
             ->when($client_id, fn($q) => $q->where('client_id', $client_id))
@@ -54,7 +56,7 @@ class CreditController extends Controller
                 });
             })
             ->orderBy('date', 'desc')
-            ->paginate(10);
+            ->paginate(10)->appends($request->query());
         
         // Calcular total de créditos pagados con los mismos filtros
         $totalQuery = Payment::whereIn('status', ['paid', 'pending'])

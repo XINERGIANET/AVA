@@ -1,32 +1,39 @@
 @extends('template.index')
 
 @section('header')
-    <h1>Gestión de Créditos</h1>
-    <p>Administración de créditos</p>
+    <div class="d-flex align-items-center">
+        <h4 class="mb-0 text-dark fw-bold">
+            <i class="bi bi-journal-plus me-2 text-primary"></i>Gestión de Créditos
+        </h4>
+    </div>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0 bg-transparent p-0">
+            <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item"><a href="#" class="text-decoration-none text-muted">Clientes y Crédito</a></li>
+            <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">Registrar Crédito</li>
+        </ol>
+    </nav>
 @endsection
 
 
 @section('content')
-    <div class="container-fluid content-inner mt-0">
-        <!-- Card que contiene el formulario y la tabla -->
-        <div class="card shadow">
-            <!-- Cuerpo del Card -->
-            <div class="card-body border-bottom">
+    <div class="container-fluid content-inner" style="padding-top: 1rem;">
+        <div class="card shadow-sm border-0" style="border-radius: 10px;">
+            <div class="card-body">
                 <form id="formFiltros" method="GET" action="{{ route('credits.create') }}">
-                    <div class="row d-flex">
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label">Cliente</label>
-                            <input type="text" id="search-client-filter" class="form-control" placeholder="Buscar cliente..." value="{{ $client ? ($client->business_name ?? $client->contact_name) : '' }}">
+                    <div class="row g-2 align-items-end mb-4">
+                        <div class="col-md-3">
+                            <label class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Cliente</label>
+                            <input type="text" id="search-client-filter" class="form-control form-control-sm" placeholder="Buscar cliente..." value="{{ $client ? ($client->business_name ?? $client->contact_name) : '' }}">
                             <input type="hidden" id="client_id_filter" name="client_id" value="{{ request()->client_id ?? '' }}">
                         </div>
-                        <!-- Numero de credito -->
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label">N° de Crédito</label>
-                            <input type="text" id="number_filter" name="number" class="form-control" placeholder="Buscar crédito..." value="{{ request()->number ?? '' }}">
+                        <div class="col-md-3">
+                            <label class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">N° de Crédito</label>
+                            <input type="text" id="number_filter" name="number" class="form-control form-control-sm" placeholder="Buscar crédito..." value="{{ request()->number ?? '' }}">
                         </div>
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label">Sede</label>
-                            <select class="form-select" id="sedeSelectFilter" name="location_id">
+                        <div class="col-md-3">
+                            <label class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Sede</label>
+                            <select class="form-select form-select-sm" id="sedeSelectFilter" name="location_id">
                                 <option value="">Todas las sedes</option>
                                 @foreach ($areas as $area)
                                     <option value="{{ $area->id }}" {{ request()->location_id == $area->id ? 'selected' : '' }}>
@@ -35,41 +42,36 @@
                                 @endforeach
                             </select>
                         </div>
-
                         <div class="col-md-2">
-                            <label for="payment_date_filter" class="form-label small">Fecha de Pago</label>
-                            <input type="date" class="form-control" name="payment_date" id="payment_date_filter" value="{{ request()->payment_date ?? '' }}">
+                            <label for="payment_date_filter" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Fecha de Pago</label>
+                            <input type="date" class="form-control form-control-sm" name="payment_date" id="payment_date_filter" value="{{ request()->payment_date ?? '' }}">
                         </div>
-                    </div>
-                    
-                    <div class="row mt-3">
-                        <div class="col-md-12">
-                            <div class="d-flex gap-2">
-                                <button type="submit" class="btn btn-primary" id="btnFiltrar">Filtrar</button>
-                                <a href="{{ route('credits.create') }}" class="btn btn-warning" id="btnLimpiar">Limpiar</a>
-                            </div>
+                        <div class="col-md-1 d-flex gap-1 justify-content-end">
+                            <button type="submit" class="btn btn-primary btn-sm px-3 fw-medium w-100" id="btnFiltrar" style="border-radius: 6px;">
+                                <i class="bi bi-funnel"></i>
+                            </button>
+                            <a href="{{ route('credits.create') }}" class="btn btn-secondary btn-sm px-3 fw-medium w-100" id="btnLimpiar" style="border-radius: 6px;" title="Limpiar">
+                                <i class="bi bi-eraser"></i>
+                            </a>
                         </div>
                     </div>
                 </form>
-            </div>
 
-            <div class="card-body p-3">
-                <!-- Tabla de créditos -->
                 <div class="table-responsive">
-                    <table id="datatable" class="table table-striped">
-                        <thead>
+                    <table id="datatable" class="table table-hover align-middle mb-0" style="border: 1px solid #e9ecef;">
+                        <thead class="text-center">
                             <tr>
-                                <th>Cliente</th>
-                                <th>N° de Crédito</th>
-                                <th>Productos</th>
-                                <th>Total</th>
-                                <th>Fecha Pago</th>
-                                <th>Sede</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Cliente</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">N° de Crédito</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Productos</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Total</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Fecha Pago</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Sede</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Estado</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="text-center">
                             @foreach ($credits as $credit)
                                 <tr>
                                     <td>{{ $credit->client ? ($credit->client->business_name ?? $credit->client->contact_name) : ($credit->client_name ?? $credit->client ?? 'Sin cliente') }}</td>
@@ -139,9 +141,9 @@
 
     <div class="modal fade" id="clientModal" tabindex="-1" aria-labelledby="clientModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="clientModalLabel">Agregar Cliente</h5>
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-light border-bottom-0">
+                    <h5 class="modal-title fw-bold text-dark" id="clientModalLabel"><i class="bi bi-person-plus me-2 text-primary"></i>Agregar Cliente</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -149,48 +151,44 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="document" class="form-label">Documento <span
-                                            class="text-danger">*</span></label>
+                                    <label for="document" class="form-label text-dark fw-bold small">Documento <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="document" required>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="business_name" class="form-label">Nombre / Razón Social <span
-                                            class="text-danger">*</span></label>
+                                    <label for="business_name" class="form-label text-dark fw-bold small">Nombre / Razón Social <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="business_name">
                                 </div>
                             </div>
                         </div>
                     </form>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer border-top-0 bg-light">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times"></i> Cancelar
+                        <i class="bi bi-x-circle me-1"></i> Cancelar
                     </button>
                     <button type="button" class="btn btn-primary" id="saveClient">
-                        <i class="fas fa-save"></i> Guardar
+                        <i class="bi bi-save me-1"></i> Guardar
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="modal fade modal-lg" id="eliminarModal" tabindex="-1" aria-labelledby="eliminarModalLabel"
-        aria-hidden="true">
+    <div class="modal fade" id="eliminarModal" tabindex="-1" aria-labelledby="eliminarModalLabel" aria-hidden="true">
         <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header text-white">
-                    <h5 class="modal-title" id="eliminarModalLabel">Confirmar Eliminación</h5>
-                    <button type="button" class="btn-close text-white" data-bs-dismiss="modal"
-                        aria-label="Cerrar"></button>
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-light border-bottom-0">
+                    <h5 class="modal-title fw-bold text-dark" id="eliminarModalLabel"><i class="bi bi-trash me-2 text-danger"></i>Confirmar Eliminación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body">
-                    <p>¿Estás seguro de que deseas anular este crédito?</p>
+                    <p class="mb-0 text-muted">¿Estás seguro de que deseas anular este crédito?</p>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer border-top-0 bg-light">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-danger" id="btnEliminarCredito">Eliminar</button>
+                    <button type="button" class="btn btn-danger px-4" id="btnEliminarCredito">Eliminar</button>
                 </div>
             </div>
         </div>

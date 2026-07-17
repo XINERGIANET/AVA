@@ -1,12 +1,18 @@
 @extends('template.index')
 
 @section('header')
-<div class="d-flex align-items-center mt-2 mb-4">
-    <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center me-3" style="width:64px;height:64px">
-        <i class="bi bi-cash-stack fs-1 text-white"></i>
+    <div class="d-flex align-items-center">
+        <h4 class="mb-0 text-dark fw-bold">
+            <i class="bi bi-cash-stack me-2 text-primary"></i>Caja Chica
+        </h4>
     </div>
-    <div><h2 class="mb-1 fw-bold text-white">Caja chica</h2><p class="mb-0 text-white-50">Aperturas, movimientos y cierres por isla</p></div>
-</div>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0 bg-transparent p-0">
+            <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('sales.index') }}" class="text-decoration-none text-muted">Ventas y Caja</a></li>
+            <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">Caja Chica</li>
+        </ol>
+    </nav>
 @endsection
 
 @section('content')

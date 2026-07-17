@@ -1,15 +1,25 @@
 @extends('template.index')
 
 @section('header')
-    <h1>Mediciones de Sede</h1>
-    <p>Registro de mediciones de sede</p>
+    <div class="d-flex align-items-center">
+        <h4 class="mb-0 text-dark fw-bold">
+            <i class="bi bi-rulers me-2 text-primary"></i>Mediciones de Sede
+        </h4>
+    </div>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0 bg-transparent p-0">
+            <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('sales.index') }}" class="text-decoration-none text-muted">Ventas y Caja</a></li>
+            <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">Mediciones de Sede</li>
+        </ol>
+    </nav>
 @endsection
 
 @section('content')
     @include('components.spinner')
 
-    <div class="container-fluid content-inner mt-0">
-        <div class="card shadow">
+    <div class="container-fluid content-inner" style="padding-top: 1rem;">
+        <div class="card shadow-sm border-0" style="border-radius: 10px;">
             <div class="card-body">
 
                 {{-- FORMULARIO DE REGISTRO --}}
@@ -80,23 +90,23 @@
                 </form> --}}
 
                 {{-- TABLA DE REGISTROS --}}
-                <div class="table-responsive mt-4">
-                    <table class="table table-bordered table-striped">
-                        <thead>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" style="border: 1px solid #e9ecef;">
+                        <thead class="text-center">
                             <tr>
-                                <th>N°</th>
-                                <th>Sede</th>
-                                <th>Surtidor</th>
-                                <th>Galones Inicial</th>
-                                <th>Galones Final</th>
-                                <th>Galones Teórico</th>
-                                <th>Diferencia (Gal)</th>
-                                <th>Fecha</th>
-                                <th>Descripción</th>
-                                <th>Acciones</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">N°</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Sede</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Surtidor</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Galones Inicial</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Galones Final</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Galones Teórico</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Diferencia (Gal)</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Fecha</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Descripción</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="text-center">
 
                             {{-- Iterar sobre mediciones --}}
                             @foreach ($measurements as $measurement)

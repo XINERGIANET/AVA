@@ -1,4 +1,4 @@
-﻿    <style>
+    <style>
         .cantidad-input {
             width: 100px;
         }
@@ -33,8 +33,6 @@
             color: #3a57e8;
         }
     </style>
-@endsection
-@section('scripts')
     <script src="{{ asset('assets/js/jquery-ui.min.js') }}"></script>
 
     <script>
@@ -573,4 +571,3 @@
             });
         }
     </script>
-@endsection

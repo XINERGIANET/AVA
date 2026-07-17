@@ -1,458 +1,8 @@
-@extends('template.index')
-
-@section('header')
-    <div class="d-flex align-items-center">
-        <h4 class="mb-0 text-dark fw-bold">
-            <i class="bi bi-file-earmark-plus me-2 text-primary"></i>Gestión de Contratos
-        </h4>
-    </div>
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-0 bg-transparent p-0">
-            <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}" class="text-decoration-none text-muted">Home</a></li>
-            <li class="breadcrumb-item"><a href="#" class="text-decoration-none text-muted">Clientes y Crédito</a></li>
-            <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">Registrar Contrato</li>
-        </ol>
-    </nav>
-@endsection
-
-@section('content')
-<div class="container-fluid content-inner" style="padding-top: 1rem;">
-    <!-- Card que contiene el formulario y la tabla -->
-    <div class="card shadow-sm border-0" style="border-radius: 10px;">
-        <!-- Cuerpo del Card -->
-        <div class="card-body">
-            <!-- Botón para abrir modal de registro -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h5 class="mb-0 text-dark fw-bold">Lista de Contratos</h5>
-                <button type="button" class="btn btn-primary fw-medium px-4" data-bs-toggle="modal" data-bs-target="#modalRegistrarContrato" style="border-radius: 8px;">
-                    <i class="bi bi-plus-circle me-2"></i>Registrar Contrato
-                </button>
-            </div>
-            
-            <!-- Modal de Registro de Contrato -->
-            <div class="modal fade" id="modalRegistrarContrato" tabindex="-1" aria-labelledby="modalRegistrarContratoLabel" aria-hidden="true">
-                <div class="modal-dialog modal-xl">
-                    <div class="modal-content border-0 shadow">
-                        <div class="modal-header bg-light border-bottom-0">
-                            <h5 class="modal-title fw-bold text-dark" id="modalRegistrarContratoLabel"><i class="bi bi-file-earmark-plus me-2 text-primary"></i>Registrar Contrato</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                        </div>
-                        <form id="formContrato" method="POST" action="{{ route('contracts.store') }}">
-                            <div class="modal-body">
-                                @csrf
-                                <!-- Fila 1: Cliente, búsqueda y botón -->
-                                <div class="row mb-3 align-items-center">
-                                    <div class="col-md-3">
-                                        <label class="form-label text-dark fw-bold small">Cliente</label>
-                                    </div>
-                                    <div class="col-md-7">
-                                        <!-- Input para mostrar el nombre del cliente -->
-                                        <input type="text" id="search-client" class="form-control" placeholder="Buscar cliente...">
-                                        <input type="hidden" id="client_id" name="client_id">
-                                    </div>
-                                    <div class="col-md-2">
-                                        <a class="btn btn-primary" id="addClient" data-bs-toggle="modal" data-bs-target="#clientModal">
-                                            <i class="bi bi-person-add"></i>
-                                        </a>
-                                    </div>
-                                </div>
-                
-                                <div class="row mb-3 align-items-center">
-                                    <div class="col-md-3">
-                                        <label class="form-label text-dark fw-bold small">N° de Contrato</label>
-                                    </div>
-                                    <div class="col-md-7">
-                                        <input type="text" id="number" class="form-control" value="{{ $nextContractNumber }}" readonly>
-                                    </div>
-                                </div>
-                                <div class="row mb-3 align-items-center">
-                                    <div class="col-md-3">
-                                        <label class="form-label text-dark fw-bold small">Fecha</label>
-                                    </div>
-                                    <div class="col-md-7">
-                                        <input type="date" id="contract_date" name="date" class="form-control" value="{{ now()->toDateString() }}">
-                                    </div>
-                                </div>
-                
-                                <!-- Fila 2: Sede del contrato -->
-                                <div class="row mb-3 align-items-center">
-                                    <div class="col-md-3">
-                                        <label class="form-label text-dark fw-bold small">Sede</label>
-                                    </div>
-                                    <div class="col-md-7">
-                                        <select id="sedeSelect" class="form-select" name="location_id">
-                                            <option value="">Seleccione una Sede</option>
-                                            @foreach ($areas as $area)
-                                            <option value="{{ $area->id }}">{{ $area->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
-                
-                                <!-- Contenedor de productos que se llenará dinámicamente -->
-                                <div id="productos-container">
-                                    <div class="row mb-3 align-items-center">
-                                        <div class="col-md-12 text-center text-muted">
-                                            <i class="bi bi-info-circle"></i> Seleccione una sede para ver los productos disponibles
-                                        </div>
-                                    </div>
-                                </div>
-                
-                                <div class="row mb-3 align-items-center">
-                                    <div class="col-md-3">
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" id="checkOrdenes" name="generate_orders" value="1">
-                                            <label class="form-check-label text-dark fw-bold small" for="checkOrdenes">Generar Órdenes</label>
-                                            <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="Esto generará un número de órdenes automáticas según el número ingresado."></i>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <input type="number" id="ordenesInput" name="number_of_orders" class="form-control border-dark"
-                                            placeholder="N° Órdenes" disabled min="1">
-                                    </div>
-                                </div>
-                
-                                <div class="row mb-3 align-items-center">
-                                    <div class="col-md-3">
-                                        <label class="form-label text-dark fw-bold small">Pago</label>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <select id="paymentType" name="payment_type" class="form-select">
-                                            <option value="contado">Al contado</option>
-                                            <option value="credito">Al credito</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-3" id="contractPaidGroup">
-                                        <select id="contractPaid" name="contract_paid" class="form-select">
-                                            <option value="0">No pagado</option>
-                                            <option value="1">Ya pagado</option>
-                                        </select>
-                                    </div>
-                                </div>
-                
-                                <div class="row mb-3 align-items-center d-none" id="paymentDetailsGroup">
-                                    <div class="col-md-3">
-                                        <label class="form-label text-dark fw-bold small">Medio de pago</label>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <select id="paymentMethod" name="payment_method_id" class="form-select">
-                                            <option value="">Seleccione</option>
-                                            @foreach($paymentMethods as $method)
-                                                <option value="{{ $method->id }}" data-name="{{ strtolower(trim($method->name)) }}">{{ $method->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="col-md-3 d-none" id="paymentIsleGroup">
-                                        <select id="paymentIsle" name="payment_isle_id" class="form-select">
-                                            <option value="">Caja de isla</option>
-                                            @foreach($isles as $isle)
-                                                <option value="{{ $isle->id }}" data-location="{{ $isle->location_id }}">{{ $isle->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="modal-footer border-top-0 bg-light">
-                                <!-- Botón de Guardar Contrato -->
-                                <div class="w-100 d-flex justify-content-end align-items-center gap-3">
-                                    <div class="d-flex align-items-center">
-                                        <label for="totalContrato" class="form-label mb-0 me-2 fw-bold text-dark">Total S/:</label>
-                                        <input type="number" id="totalContrato" class="form-control form-control-sm text-end fw-bold text-primary" style="width: 120px;" name="total"
-                                            placeholder="0.00" readonly step="0.01">
-                                    </div>
-                                    <div>
-                                        <button type="button" class="btn btn-secondary btn-sm px-3" data-bs-dismiss="modal">Cancelar</button>
-                                        <button type="submit" class="btn btn-primary btn-sm px-4 fw-medium"><i class="bi bi-save me-1"></i> Guardar</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tabla de Contratos -->
-            <div class="table-responsive mt-4">
-                <table class="table table-hover align-middle mb-0" id="tablaContratos" style="border: 1px solid #e9ecef;">
-                    <thead class="text-center">
-                        <tr>
-                            <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">ID</th>
-                            <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">N° de Contrato</th>
-                            <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">N° Documento</th>
-                            <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Cliente</th>
-                            <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Productos</th>
-                            <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Total S/.</th>
-                            <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody class="text-center">
-                        @foreach ($agreements as $oac)
-                        <tr>
-                            <td>{{ $oac->id }}</td>
-                            <td>{{ $oac->number }}</td>
-                            <td>{{ $oac->client->document }}</td>
-                            <td>{{ $oac->client->commercial_name ?? $oac->client->business_name ?? $oac->client->contact_name ?? 'N/A' }}</td>
-                            <td>
-                                <ul>
-                                    @php
-                                    $productos = $oac->totalProductos();
-                                    @endphp
-                                    @if(count($productos) > 0)
-                                    @foreach($productos as $producto)
-                                    <li>{{ $producto['product_name'] }}: {{ $producto['total_quantity'] }}</li>
-                                    @endforeach
-                                    @else
-                                    <li>No hay productos</li>
-                                    @endif
-                                </ul>
-                            </td>
-                            <td>{{ $oac->total }}</td>
-                            <td>
-                                <button type="button" class="btn btn-sm btn-info" onclick="verOrdenes({{ $oac->id }})" title="Ver Órdenes">
-                                    <i class="bi bi-clipboard-data"></i>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-secondary" onclick="verDetalles({{ $oac->id }})" title="Ver Detalles">
-                                    <i class="bi bi-bar-chart-steps"></i>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-warning" onclick="editarOrden({{ $oac->id }})" title="Editar contrato">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <button class="btn btn-sm btn-success" onclick="openPaymentsModal({{ $oac->id }})" title="Gestionar Pagos">
-                                    <i class="bi bi-currency-dollar"></i>
-                                </button>
-                                <form action="{{ route('contracts.destroy', $oac->id) }}" method="POST" style="display:inline;">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="button" class="btn btn-sm btn-danger" title="Eliminar" onclick="if(confirm('¿Está seguro de eliminar este contrato?')) this.form.submit();">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="clientModal" tabindex="-1" aria-labelledby="clientModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-light border-bottom-0">
-                <h5 class="modal-title fw-bold text-dark" id="clientModalLabel"><i class="bi bi-person-plus me-2 text-primary"></i>Agregar Cliente</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="providerForm">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="document" class="form-label text-dark fw-bold small">Documento <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="document" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="business_name" class="form-label text-dark fw-bold small">Nombre / Razón Social <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="business_name">
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer border-top-0 bg-light">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x-circle me-1"></i> Cancelar
-                </button>
-                <button type="button" class="btn btn-primary" id="saveClient">
-                    <i class="bi bi-save me-1"></i> Guardar
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal para Ver Órdenes -->
-<div class="modal fade" id="modalOrdenes" tabindex="-1" aria-labelledby="modalOrdenesLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-light border-bottom-0">
-                <h5 class="modal-title fw-bold text-dark" id="modalOrdenesLabel"><i class="bi bi-card-list me-2 text-primary"></i>Órdenes del Contrato</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <!-- Contenedor de productos para órdenes -->
-                <div id="contenedorProductosOrden" class="mb-4">
-                    <!-- Se llena dinámicamente con JS -->
-                </div>
-                <input type="hidden" id="contratoId">
-
-                <!-- Botón de Agregar Orden -->
-                <div class="row mb-3">
-                    <div class="col-md-12 d-flex justify-content-end">
-                        <button type="button" class="btn btn-primary btn-sm" id="btnAgregarOrden">Agregar Orden</button>
-                    </div>
-                </div>
-
-                <!-- Tabla de Órdenes -->
-                <div class="table-responsive">
-                    <table class="table table-bordered table-striped">
-                        <thead>
-                            <tr>
-                                <th>N°</th>
-                                @foreach ($products as $product)
-                                <th>{{ $product->name }}</th>
-                                @endforeach
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tablaOrdenes">
-                            <!-- Datos dinámicos de órdenes -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal para Ver Áreas -->
-<div class="modal fade" id="modalAreas" tabindex="-1" aria-labelledby="modalAreasLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-light border-bottom-0">
-                <h5 class="modal-title fw-bold text-dark" id="modalAreasLabel"><i class="bi bi-geo-alt me-2 text-primary"></i>Áreas de la Orden</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <!-- Contenedor de áreas -->
-                <div id="contenedorAreasOrden" class="mb-4">
-                    <!-- Campo Área -->
-                    <div class="row mb-3 align-items-center">
-                        <div class="col-md-4">
-                            <label class="form-label mb-0">Área</label>
-                        </div>
-                        <div class="col-md-8">
-                            <input type="text" class="form-control" id="area">
-                        </div>
-                    </div>
-
-                    <!-- Productos dinámicos (se llenan con JS) -->
-                    <div id="productosAreaContainer">
-                        <!-- Se llena dinámicamente -->
-                    </div>
-                </div>
-                <input type="hidden" id="ordenId">
-
-                <!-- Botón de Agregar Detalle -->
-                <div class="row mb-3">
-                    <div class="col-md-12 d-flex justify-content-end">
-                        <button type="button" class="btn btn-primary btn-sm" id="btnAgregarDetalle">Agregar Detalle con Área</button>
-                    </div>
-                </div>
-
-                <!-- Tabla de Detalles con Áreas -->
-                <div class="table-responsive">
-                    <table class="table table-bordered table-striped">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Área</th>
-                                <th>Producto</th>
-                                <th>Cantidad</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tablaAreas">
-                            <!-- Datos dinámicos de detalles con áreas -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Agregar Productos a Orden -->
-<div class="modal fade" id="modalAgregarProductos" tabindex="-1" aria-labelledby="modalAgregarProductosLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-light border-bottom-0">
-                <h5 class="modal-title fw-bold text-dark" id="modalAgregarProductosLabel"><i class="bi bi-box me-2 text-primary"></i>Agregar Productos a Orden</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body" id="contenedorProductosAgregar">
-                <!-- Aquí se insertan los inputs de productos por JS -->
-            </div>
-            <input type="hidden" id="agregar_order_id">
-            <div class="modal-footer">
-                <button type="button" class="btn btn-success" id="btnGuardarProductos">Guardar</button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade modal-lg" id="modalEditarContrato" tabindex="-1" aria-labelledby="modalEditarContratoLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <form id="editContractForm" class="modal-content border-0 shadow">
-            @csrf
-            <input type="hidden" id="editContractId" name="contract_id">
-            <div class="modal-header bg-light border-bottom-0">
-                <h5 class="modal-title fw-bold text-dark" id="modalEditarContratoLabel"><i class="bi bi-pencil-square me-2 text-primary"></i>Editar Contrato</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label">Cliente</label>
-                    <input type="text" id="search_edit_client" class="form-control">
-                    <input type="hidden" id="edit_client_id" name="client_id">
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Sede</label>
-                    <select id="edit_location_id" name="location_id" class="form-select">
-                        <option value="">Seleccione una sede</option>
-                        @foreach($areas as $area)
-                            <option value="{{ $area->id }}">{{ $area->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <!-- <div class="mb-3">
-                    <label class="form-label">Total</label>
-                    <input type="number" id="edit_total" name="total" class="form-control" step="0.01">
-                </div> -->
-
-                <div id="edit_productos_container" class="mb-3">
-                </div>
-
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                <button type="submit" class="btn btn-primary">Guardar cambios</button>
-            </div>
-        </form>
-    </div>
-</div>
 
 
-<div id="contractModalContainer"></div>
-@endsection
 
-@section('scripts')
-<x-payments-modal />
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
+
+
     var productosContratoActual = [];
 
     let clientSearchTimeout = null;
@@ -464,7 +14,7 @@
                 // Solo buscar si hay al menos una letra
                 if (currentTerm && currentTerm.length > 0) {
                     $.ajax({
-                        url: '{{ route('clients.search') }}',
+                        url: '"DUMMY"',
                         method: 'get',
                         data: {
                             query: currentTerm
@@ -503,7 +53,7 @@
                 // Solo buscar si hay al menos una letra
                 if (currentTerm && currentTerm.length > 0) {
                     $.ajax({
-                        url: '{{ route('clients.search') }}',
+                        url: '"DUMMY"',
                         method: 'get',
                         data: {
                             query: currentTerm
@@ -553,11 +103,11 @@
         saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
         saveBtn.disabled = true;
 
-        fetch("{{ route('clients.save') }}", {
-                    method: 'POST', // o el método que necesites
+        fetch("DUMMY", {
+                    method: 'POST', // o el mÃ©todo que necesites
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        'X-CSRF-TOKEN': '"DUMMY"'
                     },
                     body: JSON.stringify(data),
                 })
@@ -566,10 +116,10 @@
                 console.log('Respuesta:', data);
 
                 if (data.success) {
-                    // Mostrar mensaje de éxito
+                    // Mostrar mensaje de Ã©xito
                     ToastMessage.fire({
                         icon: 'success',
-                        text: data.message || 'Operación exitosa' // Corregido: usar data.message en lugar de response.message
+                        text: data.message || 'OperaciÃ³n exitosa' // Corregido: usar data.message en lugar de response.message
                     }).then(() => {
                         console.log(data.client);
                         clients.push(data.client);
@@ -591,7 +141,7 @@
                 alert('Error: ' + error.message);
             })
             .finally(() => {
-                // Restaurar estado del botón
+                // Restaurar estado del botÃ³n
                 saveBtn.innerHTML = originalText;
                 saveBtn.disabled = false;
             });
@@ -641,12 +191,12 @@
         $('#paymentType, #contractPaid, #paymentMethod').on('change', togglePaymentFields);
         togglePaymentFields();
         // Mejor manejo de backdrops para evitar quitar el fondo cuando queda
-        // otro modal abierto y evitar backdrops huérfanos.
+        // otro modal abierto y evitar backdrops huÃ©rfanos.
         // - Al ocultar un modal, solo eliminar el backdrop si no quedan modales abiertos.
         // - Al mostrar un modal, asegurar que exista la clase `modal-open` en el body
-        //   y limpiar backdrops extra si Bootstrap dejó más de uno.
+        //   y limpiar backdrops extra si Bootstrap dejÃ³ mÃ¡s de uno.
         $(document).on('hidden.bs.modal', '.modal', function () {
-            // Esperar un poco para que Bootstrap complete la transición
+            // Esperar un poco para que Bootstrap complete la transiciÃ³n
             setTimeout(function() {
                 // Si no hay otros modales visibles, retirar el backdrop y restablecer body
                 if ($('.modal.show').length === 0) {
@@ -659,7 +209,7 @@
                         $('body').addClass('modal-open');
                         $('body').css('overflow', 'hidden');
                     }
-                    // Si por alguna razón hay más de un backdrop, dejar solo uno
+                    // Si por alguna razÃ³n hay mÃ¡s de un backdrop, dejar solo uno
                     if ($('.modal-backdrop').length > 1) {
                         $('.modal-backdrop').slice(1).remove();
                     }
@@ -674,13 +224,13 @@
                 $('body').addClass('modal-open');
             }
 
-            // Quitar backdrops extra si existen más de uno
+            // Quitar backdrops extra si existen mÃ¡s de uno
             if ($('.modal-backdrop').length > 1) {
                 $('.modal-backdrop').slice(1).remove();
             }
         });
 
-        // Cuando cambie la selección de sede
+        // Cuando cambie la selecciÃ³n de sede
         $('#sedeSelect').change(function() {
             const locationId = $(this).val();
             const productosContainer = $('#productos-container');
@@ -696,9 +246,9 @@
                     </div>
                 `);
 
-                // Hacer petición AJAX
+                // Hacer peticiÃ³n AJAX
                 $.ajax({
-                    url: "{{ route('contracts.products', ':id') }}".replace(':id', locationId),
+                    url: "DUMMY".replace(':id', locationId),
                     method: 'GET',
                     success: function(products) {
                         if (products.length > 0) {
@@ -843,10 +393,10 @@
             const precio = parseFloat($(this).find('.precio-input').val()) || 0;
 
             if (cantidad > 0 && precio <= 0) {
-                errores.push(`${productName}: Debe ingresar un precio válido`);
+                errores.push(`${productName}: Debe ingresar un precio vÃ¡lido`);
             }
             if (precio > 0 && cantidad <= 0) {
-                errores.push(`${productName}: Debe ingresar una cantidad válida`);
+                errores.push(`${productName}: Debe ingresar una cantidad vÃ¡lida`);
             }
             if (cantidad > 0 && precio > 0) {
                 hasProducts = true;
@@ -861,7 +411,7 @@
 
         if (!hasProducts) {
             $('#global-spinner').removeClass('spinner-visible').addClass('spinner-hidden');
-            ToastError.fire({ text: 'Por favor ingresa al menos un producto con precio y cantidad válidos' });
+            ToastError.fire({ text: 'Por favor ingresa al menos un producto con precio y cantidad vÃ¡lidos' });
             return false;
         }
 
@@ -879,13 +429,13 @@
             success: function(response) {
                 $('#global-spinner').removeClass('spinner-visible').addClass('spinner-hidden');
 
-                // Mostrar feedback y opcional redirección
+                // Mostrar feedback y opcional redirecciÃ³n
                 if (response.success) {
                     ToastMessage.fire({ text: response.message || 'Contrato guardado correctamente' });
                     location.reload();
                     
                 } else {
-                    // backend devolvió success:false
+                    // backend devolviÃ³ success:false
                     ToastError.fire({ text: response.message || 'Error al guardar el contrato' });
                     console.error('Response error:', response);
                 }
@@ -898,7 +448,7 @@
 
                 let mensaje = 'Error al guardar el contrato.';
                 if (xhr.responseJSON) {
-                    // Validación 422
+                    // ValidaciÃ³n 422
                     if (xhr.status === 422 && xhr.responseJSON.errors) {
                         const errors = xhr.responseJSON.errors;
                         // aplanar mensajes
@@ -925,10 +475,10 @@
         return false;
     });
 
-    function verOrdenes(contratoId) {
+    window.verOrdenes = function(contratoId) {
         $('#contratoId').val(contratoId);
         $.ajax({
-            url: "{{ route('contracts.orders', ':id') }}".replace(':id', contratoId),
+            url: "DUMMY".replace(':id', contratoId),
             method: 'GET',
             success: function(data) {
                 productosContratoActual = data.products;
@@ -941,10 +491,10 @@
                     productosFormHtml = `
                         <div class="alert alert-warning" role="alert">
                             <i class="bi bi-exclamation-triangle"></i> 
-                            No hay productos disponibles para crear nuevas órdenes. Todos los productos han alcanzado su límite del contrato.
+                            No hay productos disponibles para crear nuevas Ã³rdenes. Todos los productos han alcanzado su lÃ­mite del contrato.
                         </div>
                     `;
-                    // Deshabilitar el botón de agregar orden
+                    // Deshabilitar el botÃ³n de agregar orden
                     $('#btnAgregarOrden').prop('disabled', true).text('Sin productos disponibles');
                 } else {
                     data.products.forEach(function(product) {
@@ -972,13 +522,13 @@
                             </div>
                         `;
                     });
-                    // Habilitar el botón de agregar orden
+                    // Habilitar el botÃ³n de agregar orden
                     $('#btnAgregarOrden').prop('disabled', false).text('Agregar Orden');
                 }
                 
                 $('#contenedorProductosOrden').html(productosFormHtml);
 
-                let tableHeader = `<th>N°</th>`;
+                let tableHeader = `<th>NÂ°</th>`;
                 data.products.forEach(function(product) {
                     tableHeader += `<th>${product.name}</th>`;
                 });
@@ -1044,14 +594,14 @@
                                 <td colspan="${data.products.length + 2}" class="p-0">
                                     <div class="p-3 m-2 border rounded shadow-sm bg-white border-info" style="border-left: 4px solid #0dcaf0 !important;">
                                         <div class="d-flex justify-content-between align-items-center mb-3">
-                                            <h6 class="text-info mb-0"><i class="bi bi-diagram-3"></i> Áreas de la orden <b>${orden.number}</b></h6>
+                                            <h6 class="text-info mb-0"><i class="bi bi-diagram-3"></i> Ãreas de la orden <b>${orden.number}</b></h6>
                                             <button type="button" class="btn-close" onclick="toggleAreas(${orden.id})"></button>
                                         </div>
                                         
                                         <div class="row mb-3">
                                             <div class="col-md-3 mb-3">
-                                                <label class="form-label small fw-bold text-dark mb-1">Nombre del Área</label>
-                                                <input type="text" class="form-control form-control-sm border-info" id="area-input-${orden.id}" placeholder="Ej: Limpieza Pública">
+                                                <label class="form-label small fw-bold text-dark mb-1">Nombre del Ãrea</label>
+                                                <input type="text" class="form-control form-control-sm border-info" id="area-input-${orden.id}" placeholder="Ej: Limpieza PÃºblica">
                                             </div>
                                             <div class="col-md-9">
                                                 <div class="row" id="productos-area-${orden.id}">
@@ -1061,7 +611,7 @@
                                         </div>
                                         <div class="d-flex justify-content-end mb-3">
                                             <button type="button" class="btn btn-sm btn-info text-white shadow-sm" onclick="guardarAreasInline(${orden.id})">
-                                                <i class="bi bi-plus-circle"></i> Agregar Detalle con Área
+                                                <i class="bi bi-plus-circle"></i> Agregar Detalle con Ãrea
                                             </button>
                                         </div>
 
@@ -1070,7 +620,7 @@
                                                 <thead class="table-light">
                                                     <tr>
                                                         <th>ID</th>
-                                                        <th>Área</th>
+                                                        <th>Ãrea</th>
                                                         <th>Producto</th>
                                                         <th>Cantidad</th>
                                                         <th>Acciones</th>
@@ -1090,7 +640,7 @@
                     tablaOrdenes.innerHTML = `
                         <tr>
                             <td colspan="${data.products.length + 2}" class="text-center text-muted">
-                                <i class="bi bi-inbox"></i> No hay órdenes para este contrato
+                                <i class="bi bi-inbox"></i> No hay Ã³rdenes para este contrato
                             </td>
                         </tr>
                     `;
@@ -1100,7 +650,7 @@
                 $('#modalOrdenes').modal('show');
             },
             error: function(xhr, status, error) {
-                ToastError.fire({text: 'Error al obtener las órdenes del contrato.'});
+                ToastError.fire({text: 'Error al obtener las Ã³rdenes del contrato.'});
             }
         });
     }
@@ -1154,7 +704,7 @@
             
             if (quantity > 0) {
                 if (quantity > maxQuantity) {
-                    errores.push(`${productName}: No puede agregar ${quantity}, máximo permitido: ${maxQuantity}`);
+                    errores.push(`${productName}: No puede agregar ${quantity}, mÃ¡ximo permitido: ${maxQuantity}`);
                     return;
                 }
                 
@@ -1177,18 +727,18 @@
         
         if (!hasValidData) {
             $('#global-spinner').removeClass('spinner-visible').addClass('spinner-hidden');
-            ToastError.fire({text: 'Por favor ingrese al menos una cantidad válida'});
+            ToastError.fire({text: 'Por favor ingrese al menos una cantidad vÃ¡lida'});
             return;
         }
         
         $.ajax({
-            url: "{{ route('orderdetails.store') }}",
+            url: "DUMMY",
             method: 'POST',
             data: {
                 order_id: ordenId,
                 product_ids: product_ids,
                 quantities: quantities,
-                _token: '{{ csrf_token() }}'
+                _token: '"DUMMY"'
             },
             success: function(response) {
                 ToastMessage.fire({text: response.message});
@@ -1208,7 +758,7 @@
         });
     }
 
-    // Botón para agregar orden (sin formulario)
+    // BotÃ³n para agregar orden (sin formulario)
     $(document).on('click', '#btnAgregarOrden', function() {
         $('#global-spinner').removeClass('spinner-hidden').addClass('spinner-visible');
         
@@ -1252,22 +802,22 @@
         
         if (!hasValidData) {
             $('#global-spinner').removeClass('spinner-visible').addClass('spinner-hidden');
-            ToastError.fire({text: 'Por favor ingrese al menos una cantidad válida'});
+            ToastError.fire({text: 'Por favor ingrese al menos una cantidad vÃ¡lida'});
             return;
         }
         
         $.ajax({
-            url: "{{ route('orders.store') }}",
+            url: "DUMMY",
             method: 'POST',
             data: {
                 contrato_id: $('#contratoId').val(),
                 product_ids: product_ids,
                 cantidad: cantidad,
-                _token: '{{ csrf_token() }}'
+                _token: '"DUMMY"'
             },
             success: function(response) {
                 ToastMessage.fire({text: response.message || 'Orden agregada correctamente'});
-                // Refrescar el modal para mostrar los nuevos saldos y órdenes
+                // Refrescar el modal para mostrar los nuevos saldos y Ã³rdenes
                 const contratoId = $('#contratoId').val();
                 verOrdenes(contratoId);
             },
@@ -1284,7 +834,7 @@
         });
     });
 
-    // Botón para guardar productos (sin formulario)
+    // BotÃ³n para guardar productos (sin formulario)
     $(document).on('click', '#btnGuardarProductos', function() {
         $('#global-spinner').removeClass('spinner-hidden').addClass('spinner-visible');
         
@@ -1303,13 +853,13 @@
             const productName = quantityInput.closest('.mb-3').find('label').text().split('(')[0].trim();
             
             if (quantity > 0) {
-                // Validar que no exceda el máximo permitido
+                // Validar que no exceda el mÃ¡ximo permitido
                 if (quantity > maxQuantity) {
-                    errores.push(`${productName}: No puede agregar ${quantity}, máximo permitido: ${maxQuantity}`);
+                    errores.push(`${productName}: No puede agregar ${quantity}, mÃ¡ximo permitido: ${maxQuantity}`);
                     return;
                 }
                 
-                // Validar que el máximo no sea 0
+                // Validar que el mÃ¡ximo no sea 0
                 if (maxQuantity <= 0) {
                     errores.push(`${productName}: No hay cantidades disponibles para este producto`);
                     return;
@@ -1329,24 +879,24 @@
         
         if (!hasValidData) {
             $('#global-spinner').removeClass('spinner-visible').addClass('spinner-hidden');
-            ToastError.fire({text: 'Por favor ingrese al menos una cantidad válida'});
+            ToastError.fire({text: 'Por favor ingrese al menos una cantidad vÃ¡lida'});
             return;
         }
         
         $.ajax({
-            url: "{{ route('orderdetails.store') }}",
+            url: "DUMMY",
             method: 'POST',
             data: {
                 order_id: order_id,
                 product_ids: product_ids,
                 quantities: quantities,
-                _token: '{{ csrf_token() }}'
+                _token: '"DUMMY"'
             },
             success: function(response) {
                 ToastMessage.fire({text: response.message});
                 $('#modalAgregarProductos').modal('hide');
                 
-                // Recargar órdenes después de cerrar el modal
+                // Recargar Ã³rdenes despuÃ©s de cerrar el modal
                 setTimeout(function() {
                     const contratoId = $('#contratoId').val();
                     verOrdenes(contratoId);
@@ -1365,15 +915,15 @@
         });
     });
 
-    // Función para eliminar una orden
-    function eliminarOrden(ordenId) {
+    // FunciÃ³n para eliminar una orden
+    window.eliminarOrden = function(ordenId) {
         Swal.fire({
-            title: '¿Eliminar orden?',
-            text: 'Esta acción marcará la orden como eliminada.',
+            title: 'Â¿Eliminar orden?',
+            text: 'Esta acciÃ³n marcarÃ¡ la orden como eliminada.',
             icon: 'warning',
             showCancelButton: true,
             cancelButtonText: 'Cancelar',
-            confirmButtonText: 'Sí, eliminar',
+            confirmButtonText: 'SÃ­, eliminar',
             buttonsStyling: false,
             customClass: {
                 confirmButton: 'btn btn-danger text-white mx-2',
@@ -1385,18 +935,18 @@
             $('#global-spinner').removeClass('spinner-hidden').addClass('spinner-visible');
 
             $.ajax({
-                url: "{{ route('orderdetails.removeOrder', ':id') }}".replace(':id', ordenId),
+                url: "DUMMY".replace(':id', ordenId),
                 method: 'POST',
-                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                headers: { 'X-CSRF-TOKEN': '"DUMMY"' },
                 success: function(response) {
                     ToastMessage.fire({ text: response.message });
 
-                    // 🔁 Recargar lista de órdenes actualizada
+                    // ðŸ” Recargar lista de Ã³rdenes actualizada
                     const contratoId = $('#contratoId').val();
                     verOrdenes(contratoId);
                 },
                 error: function(xhr) {
-                    ToastError.fire({ text: 'Error al eliminar la órden de contrato.' });
+                    ToastError.fire({ text: 'Error al eliminar la Ã³rden de contrato.' });
                 },
                 complete: function() {
                     $('#global-spinner').removeClass('spinner-visible').addClass('spinner-hidden');
@@ -1405,8 +955,8 @@
         });
     }
 
-    // --- LÓGICA DE ÁREAS (INLINE) ---
-    function toggleAreas(ordenId) {
+    // --- LÃ“GICA DE ÃREAS (INLINE) ---
+    window.toggleAreas = function(ordenId) {
         const formRow = $(`#form-areas-${ordenId}`);
         
         if (formRow.is(':visible')) {
@@ -1423,7 +973,7 @@
 
     function cargarDatosAreas(ordenId) {
         $.ajax({
-            url: "{{ route('orders.show', ':id') }}".replace(':id', ordenId),
+            url: "DUMMY".replace(':id', ordenId),
             method: 'GET',
             success: function(data) {
                 if (data && data.order_details && data.order_details.length > 0) {
@@ -1451,7 +1001,7 @@
                     if (productosHTML) {
                         $(`#productos-area-${ordenId}`).html(productosHTML);
                     } else {
-                        $(`#productos-area-${ordenId}`).html(`<span class="text-muted small"><i class="bi bi-info-circle"></i> No hay productos disponibles para asignar áreas</span>`);
+                        $(`#productos-area-${ordenId}`).html(`<span class="text-muted small"><i class="bi bi-info-circle"></i> No hay productos disponibles para asignar Ã¡reas</span>`);
                     }
                 } else {
                     $(`#productos-area-${ordenId}`).html(`<span class="text-muted small"><i class="bi bi-info-circle"></i> No hay productos en esta orden</span>`);
@@ -1462,7 +1012,7 @@
                     tablaAreas.innerHTML = data.order_details.map((detail, index) => `
                         <tr>
                             <td>${index + 1}</td>
-                            <td>${detail.area || '<span class="text-muted">Sin área</span>'}</td>
+                            <td>${detail.area || '<span class="text-muted">Sin Ã¡rea</span>'}</td>
                             <td>${detail.product ? detail.product.name : '-'}</td>
                             <td>${detail.quantity || 'N/A'}</td>
                             <td>
@@ -1480,19 +1030,19 @@
             },
             error: function(xhr, status, error) {
                 console.error('Error:', error);
-                ToastError.fire({text: 'Error al obtener áreas.'});
+                ToastError.fire({text: 'Error al obtener Ã¡reas.'});
             }
         });
     }
 
-    function guardarAreasInline(ordenId) {
+    window.guardarAreasInline = function(ordenId) {
         $('#global-spinner').removeClass('spinner-hidden').addClass('spinner-visible');
         
         const area = $(`#area-input-${ordenId}`).val();
         
         if (!area) {
             $('#global-spinner').removeClass('spinner-visible').addClass('spinner-hidden');
-            ToastError.fire({text: 'Por favor ingrese un área'});
+            ToastError.fire({text: 'Por favor ingrese un Ã¡rea'});
             return;
         }
         
@@ -1507,7 +1057,7 @@
             
             if (qty > 0) {
                 if (qty > maxQty) {
-                    errores.push(`No puede asignar ${qty}, máximo disponible: ${maxQty}`);
+                    errores.push(`No puede asignar ${qty}, mÃ¡ximo disponible: ${maxQty}`);
                     return;
                 }
                 productos.push({ product_id: productId, quantity: qty });
@@ -1523,7 +1073,7 @@
         
         if (!hasValidData) {
             $('#global-spinner').removeClass('spinner-visible').addClass('spinner-hidden');
-            ToastError.fire({text: 'Por favor ingrese al menos una cantidad válida'});
+            ToastError.fire({text: 'Por favor ingrese al menos una cantidad vÃ¡lida'});
             return;
         }
         
@@ -1533,22 +1083,22 @@
         
         productos.forEach(function(producto) {
             $.ajax({
-                url: "{{ route('orders.areas.store') }}",
+                url: "DUMMY",
                 method: 'POST',
                 data: {
                     order_id: ordenId,
                     area: area,
                     product_id: producto.product_id,
                     quantity: producto.quantity,
-                    _token: '{{ csrf_token() }}'
+                    _token: '"DUMMY"'
                 },
                 success: function(response) {
                     completedRequests++;
                     if (completedRequests === totalRequests) {
                         if (errors.length === 0) {
-                            ToastMessage.fire({text: `Área asignada correctamente`});
+                            ToastMessage.fire({text: `Ãrea asignada correctamente`});
                         } else {
-                            ToastMessage.fire({text: `Área asignada parcialmente.`});
+                            ToastMessage.fire({text: `Ãrea asignada parcialmente.`});
                         }
                         $(`#area-input-${ordenId}`).val('');
                         cargarDatosAreas(ordenId);
@@ -1557,7 +1107,7 @@
                 },
                 error: function(xhr) {
                     completedRequests++;
-                    errors.push('Error al asignar área');
+                    errors.push('Error al asignar Ã¡rea');
                     if (completedRequests === totalRequests) {
                         ToastError.fire({text: `Errores al guardar.`});
                         cargarDatosAreas(ordenId);
@@ -1568,28 +1118,28 @@
         });
     }
 
-    function eliminarDetalleInline(detailId, ordenId) {
+    window.eliminarDetalleInline = function(detailId, ordenId) {
         $('#global-spinner').removeClass('spinner-hidden').addClass('spinner-visible');
 
         $.ajax({
-            url: "{{ route('orderdetails.removeArea', ':id') }}".replace(':id', detailId),
+            url: "DUMMY".replace(':id', detailId),
             method: 'POST',
-            headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+            headers: { 'X-CSRF-TOKEN': '"DUMMY"' },
             success: function(response) {
                 ToastMessage.fire({ text: response.message });
                 cargarDatosAreas(ordenId);
             },
             error: function(xhr) {
-                ToastError.fire({ text: 'Error al eliminar el área del detalle.' });
+                ToastError.fire({ text: 'Error al eliminar el Ã¡rea del detalle.' });
             },
             complete: function() {
                 $('#global-spinner').removeClass('spinner-visible').addClass('spinner-hidden');
             }
         });
     }
-    // --- FIN LÓGICA DE ÁREAS (INLINE) ---
+    // --- FIN LÃ“GICA DE ÃREAS (INLINE) ---
 
-    // Validación en tiempo real para cantidad-orden
+    // ValidaciÃ³n en tiempo real para cantidad-orden
     $(document).on('input', '.cantidad-orden', function() {
         const qty = parseFloat($(this).val()) || 0;
         const restante = parseFloat($(this).closest('.row').find('label').text().match(/Restante: (\d+\.?\d*)/)?.[1] || 0);
@@ -1609,7 +1159,7 @@
         }
     });
 
-    // Validación en tiempo real para quantities en la fila expandida (inline)
+    // ValidaciÃ³n en tiempo real para quantities en la fila expandida (inline)
     $(document).on('input', 'input[name^="inline_quantities_"]', function() {
         const qty = parseFloat($(this).val()) || 0;
         const maxQty = parseFloat($(this).attr('max')) || 0;
@@ -1619,9 +1169,9 @@
             // Crear o actualizar mensaje de error
             let feedback = $(this).siblings('.invalid-feedback');
             if (feedback.length === 0) {
-                $(this).after(`<div class="invalid-feedback">Máximo permitido: ${maxQty}</div>`);
+                $(this).after(`<div class="invalid-feedback">MÃ¡ximo permitido: ${maxQty}</div>`);
             } else {
-                feedback.text(`Máximo permitido: ${maxQty}`);
+                feedback.text(`MÃ¡ximo permitido: ${maxQty}`);
             }
         } else {
             $(this).removeClass('is-invalid');
@@ -1629,7 +1179,7 @@
         }
     });
 
-    // Validación para cantidad-area
+    // ValidaciÃ³n para cantidad-area
     $(document).on('input', '.cantidad-area', function() {
         const qty = parseFloat($(this).val()) || 0;
         const maxQty = parseFloat($(this).attr('max')) || 0;
@@ -1638,9 +1188,9 @@
             $(this).addClass('is-invalid');
             let feedback = $(this).siblings('.invalid-feedback');
             if (feedback.length === 0) {
-                $(this).after(`<div class="invalid-feedback">Máximo disponible: ${maxQty}</div>`);
+                $(this).after(`<div class="invalid-feedback">MÃ¡ximo disponible: ${maxQty}</div>`);
             } else {
-                feedback.text(`Máximo disponible: ${maxQty}`);
+                feedback.text(`MÃ¡ximo disponible: ${maxQty}`);
             }
         } else {
             $(this).removeClass('is-invalid');
@@ -1648,11 +1198,11 @@
         }
     });
 
-    function editarOrden(contractId) {
+    window.editarOrden = function(contractId) {
         $('#global-spinner').removeClass('spinner-hidden').addClass('spinner-visible');
 
         $.ajax({
-            url: "{{ route('contracts.show', ':id') }}".replace(':id', contractId),
+            url: "DUMMY".replace(':id', contractId),
             method: 'GET',
             dataType: 'json',
             success: function(response) {
@@ -1664,7 +1214,7 @@
                 $('#edit_location_id').val(c.location_id ?? c.location?.id ?? '');
                 $('#edit_total').val(c.total ?? '');
 
-                // Si el backend devuelve los productos del contrato, pásalos como contractProducts
+                // Si el backend devuelve los productos del contrato, pÃ¡salos como contractProducts
                 // expected format: [{ product_id, unit_price, quantity, subtotal }, ...]
                 const contractProducts = c.details || [];
 
@@ -1702,7 +1252,7 @@
         `);
 
         $.ajax({
-            url: "{{ route('contracts.products', ':id') }}".replace(':id', locationId),
+            url: "DUMMY".replace(':id', locationId),
             method: 'GET',
             success: function(products) {
                 if (!products || products.length === 0) {
@@ -1752,13 +1302,13 @@
     }
 
     
-    // También, si el usuario cambia la sede dentro del modal, recargar productos
+    // TambiÃ©n, si el usuario cambia la sede dentro del modal, recargar productos
     $(document).on('change', '#edit_location_id', function() {
         const loc = $(this).val();
         loadEditModalProducts(loc);
     });
 
-    // Mantener cálculo de subtotales en modal editar (precio * cantidad)
+    // Mantener cÃ¡lculo de subtotales en modal editar (precio * cantidad)
     $(document).on('input', '.precio-input-edit, .cantidad-input-edit', function() {
         const row = $(this).closest('.producto-row-edit');
         const precio = parseFloat(row.find('.precio-input-edit').val()) || 0;
@@ -1771,7 +1321,7 @@
         e.preventDefault();
 
         const id = $('#editContractId').val();
-        if (!id) return ToastError.fire({ text: 'ID de contrato inválido.' });
+        if (!id) return ToastError.fire({ text: 'ID de contrato invÃ¡lido.' });
 
         // Recolectar datos del modal
         const client_id = $('#edit_client_id').val() || null;
@@ -1792,7 +1342,7 @@
             const qty = parseFloat(row.find('.cantidad-input-edit').val()) || 0;
             const sub = parseFloat(row.find('.subtotal-input-edit').val()) || (price * qty);
 
-            // Incluir solo si tiene cantidad > 0 (ajusta la condición si quieres otra)
+            // Incluir solo si tiene cantidad > 0 (ajusta la condiciÃ³n si quieres otra)
             product_ids.push(pid);
             prices_edit.push(price);
             quantities_edit.push(qty);
@@ -1805,13 +1355,13 @@
         $('#global-spinner').removeClass('spinner-hidden').addClass('spinner-visible');
 
         $.ajax({
-            url: "{{ route('contracts.update', ':id') }}".replace(':id', id),
+            url: "DUMMY".replace(':id', id),
             method: 'POST',
             dataType: 'json',
             headers: { Accept: 'application/json' },
             data: {
                 _method: 'PUT',
-                _token: '{{ csrf_token() }}',
+                _token: '"DUMMY"',
                 client_id: client_id,
                 location_id: location_id,
                 total: total.toFixed(2),
@@ -1856,14 +1406,14 @@
         return false;
     });
 
-    function verDetalles(id) {
+    window.verDetalles = function(id) {
         
         if (!id) return;
 
         $('#global-spinner').removeClass('spinner-hidden').addClass('spinner-visible');
 
         $.ajax({
-            url: "{{ route('contracts.details_modal', ':id') }}".replace(':id', id),
+            url: "DUMMY".replace(':id', id),
             method: 'GET',
             dataType: 'json',
             headers: { Accept: 'application/json' },
@@ -1887,5 +1437,137 @@
             }
         });
     };
-</script>
-@endsection
+
+
+        let clientSearchTimeout = null;
+        $('#search-client').autocomplete({
+            source: function(request, response) {
+                clearTimeout(clientSearchTimeout);
+                clientSearchTimeout = setTimeout(function() {
+                    let currentTerm = $('#search-client').val();
+                    // Solo buscar si hay al menos una letra
+                    if (currentTerm && currentTerm.length > 0) {
+                        $.ajax({
+                            url: '"DUMMY"',
+                            method: 'get',
+                            data: {
+                                query: currentTerm
+                            },
+                            success: function(data) {
+                            response($.map(data, function(item) {
+                                const clientName = item.commercial_name || item.business_name || item.contact_name || '';
+                                return {
+                                    label: clientName,
+                                    value: clientName,
+                                    id: item.id,
+                                };
+                            }));
+                            }
+                        });
+                    } else {
+                        // Si no hay letras, limpia el autocomplete
+                        response([]);
+                    }
+                }, 1500);
+            },
+            appendTo: '.container-fluid',
+            select: function(event, ui) {
+                $('#client_id').val(ui.item.id);
+            },
+        }).autocomplete("instance")._renderItem = function(ul, item) {
+            return $("<li>")
+                .append(`<div class="d-flex justify-content-between"><span>${item.label}</span></div>`)
+                .appendTo(ul);
+        };
+
+        let contractoAEliminar = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const eliminarModal = document.getElementById('eliminarModal');
+            eliminarModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                contractoAEliminar = button.getAttribute('data-id');
+            });
+
+            document.getElementById('btnEliminarcontracto').addEventListener('click', function() {
+                if (!contractoAEliminar) return;
+                $.ajax({
+                    url: '"DUMMY"'.replace(':id',
+                        contractoAEliminar),
+                    type: 'POST',
+                    data: {
+                        _method: 'DELETE',
+                        _token: '"DUMMY"'
+                    },
+                    success: function(response) {
+                        $('#eliminarModal').modal('hide');
+                        ToastMessage.fire({
+                            text: "CrÃ©dito eliminado correctamente"
+                        }).then(() => {
+                            location.reload();
+                        });
+                    },
+                    error: function() {
+                        $('#eliminarModal').modal('hide');
+                        ToastError.fire({
+                            text: "OcurriÃ³ un error al eliminar el crÃ©dito"
+                        });
+                    }
+                });
+            });
+            $('#btnExcel').on('click', function() {
+                const formData = $('#fromFilter').serialize();
+
+                // Crear URL para descargar Excel con los filtros actuales
+                const excelUrl = ""DUMMY"?" + formData;
+
+                // Mostrar indicador de carga
+                $(this).html('<i class="bi bi-download"></i> Descargando...').prop('disabled', true);
+
+                // Crear un enlace temporal para descargar
+                const link = document.createElement('a');
+                link.href = excelUrl;
+                link.download = 'contratos_historico.xlsx';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                // Restaurar el botÃ³n despuÃ©s de un momento
+                setTimeout(() => {
+                    $(this).html('Excel').prop('disabled', false);
+                }, 2000);
+            });
+
+            $('#btnPdf').on('click', function() {
+                const startDate = document.getElementById('start_date').value;
+                const endDate = document.getElementById('end_date').value;
+                const location_id = document.getElementById('location_id').value;
+                const client_id = document.getElementById('client_id').value;
+
+                let pdfUrl = '"DUMMY"';
+                const params = new URLSearchParams();
+
+                if (startDate) params.append('start_date', startDate);
+                if (endDate) params.append('end_date', endDate);
+                if (location_id) params.append('location_id', location_id);
+                if (client_id) params.append('client_id', client_id);
+
+                if (params.toString()) {
+                    pdfUrl += '?' + params.toString();
+                }
+
+                console.log('URL generada:', pdfUrl);
+
+                // Crear un enlace temporal para forzar la descarga
+                const link = document.createElement('a');
+                link.href = pdfUrl;
+                link.download = 'reporte_contratos' + '.pdf';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+        });
+    
+
+
+

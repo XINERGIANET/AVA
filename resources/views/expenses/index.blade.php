@@ -1,67 +1,68 @@
 @extends('template.index')
 @section('header')
-    <h1>Histórico de Egresos</h1>
-    <p>Lista de egresos</p>
+    <div class="d-flex align-items-center">
+        <h4 class="mb-0 text-dark fw-bold">
+            <i class="bi bi-wallet2 me-2 text-primary"></i>Histórico de Egresos
+        </h4>
+    </div>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0 bg-transparent p-0">
+            <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item"><a href="#" class="text-decoration-none text-muted">Reportes</a></li>
+            <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">Egresos</li>
+        </ol>
+    </nav>
 @endsection
 @section('content')
-    <div class="container-fluid content-inner mt-0">
+    <div class="container-fluid content-inner" style="padding-top: 1rem;">
         <div class="row">
             <div class="col-sm-12">
-                <div class="card">
+                <div class="card shadow-sm border-0" style="border-radius: 10px;">
                     <div class="card-body border-bottom">
                         <form action="{{ route('expenses.historico') }}" method="GET" id="fromFilter">
-                            <div class="row d-flex">
+                            <div class="row g-2 align-items-end">
                                 <div class="col-md-2">
-                                    <label for="start_date" class="form-label small">Fecha Inicial</label>
-                                    <input type="date" class="form-control" name="start_date" id="start_date"
+                                    <label for="start_date" class="form-label text-dark fw-bold small mb-1">Fecha Inicial</label>
+                                    <input type="date" class="form-control form-control-sm" name="start_date" id="start_date"
                                         value="{{ request()->start_date ? request()->start_date : '' }}">
                                 </div>
                                 <!-- Fecha final -->
                                 <div class="col-md-2">
-                                    <label for="end_date" class="form-label small">Fecha Final</label>
-                                    <input type="date" class="form-control" name="end_date" id="end_date"
+                                    <label for="end_date" class="form-label text-dark fw-bold small mb-1">Fecha Final</label>
+                                    <input type="date" class="form-control form-control-sm" name="end_date" id="end_date"
                                         value="{{ request()->end_date ? request()->end_date : '' }}">
                                 </div>
 
                                 <div class="col-md-3">
-                                    <div class="mb-3">
-                                        <label class="form-label">Sede</label>
-                                        <select class="form-select" id="location_id" name="location_id">
-                                            <option value="">Todas las sedes</option>
-                                            @foreach ($locations ?? [] as $location)
-                                                <option value="{{ $location->id }}"
-                                                    {{ request()->location_id == $location->id ? 'selected' : '' }}>
-                                                    {{ $location->name }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
+                                    <label class="form-label text-dark fw-bold small mb-1">Sede</label>
+                                    <select class="form-select form-select-sm" id="location_id" name="location_id">
+                                        <option value="">Todas las sedes</option>
+                                        @foreach ($locations ?? [] as $location)
+                                            <option value="{{ $location->id }}"
+                                                {{ request()->location_id == $location->id ? 'selected' : '' }}>
+                                                {{ $location->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
                                 </div>
-                            </div>
 
-                            <div class="row">
-                                <div class="col-md-2 mb-2">
-                                    <button type="submit" class="btn btn-primary w-100"
-                                        id="btnFiltrar">Filtrar</button>
-                                </div>
-                                <div class="col-md-2 mb-2">
-                                    <a href="{{ route('expenses.historico') }}" class="btn btn-warning w-100"
-                                        id="btnLimpiar">Limpiar</a>
-                                </div>
-                                <div class="col-md-2 mb-2">
-                                    <button type="button" class="btn btn-success w-100" id="btnExcel"
-                                        onclick="exportExcel()">
-                                        <i class="bi bi-file-excel"></i> Excel
+                                <div class="col-md-auto ms-auto d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary btn-sm fw-medium px-3" id="btnFiltrar" style="border-radius: 6px;">
+                                        <i class="bi bi-funnel me-1"></i>Filtrar
                                     </button>
+                                    <button type="button" class="btn btn-success btn-sm fw-medium px-3" id="btnExcel" onclick="exportExcel()" style="border-radius: 6px;">
+                                        <i class="bi bi-file-earmark-excel me-1"></i>Excel
+                                    </button>
+                                    <a href="{{ route('expenses.historico') }}" class="btn btn-light btn-sm fw-medium px-3" id="btnLimpiar" style="border-radius: 6px;">
+                                        <i class="bi bi-arrow-counterclockwise me-1"></i>Limpiar
+                                    </a>
                                 </div>
-                            </div>
-                                                        <div class="row">
-                                <div class="col-12 mt-4">
+                                <div class="col-12 mt-3">
                                     <div class="d-flex justify-content-end">
-                                        <div>
-                                            <h5>
+                                        <div class="bg-light px-3 py-2 rounded border">
+                                            <h6 class="mb-0 text-dark">
                                                 <strong>Total egresos: S/ {{ number_format($totalExpenses, 2, '.', ',') }}</strong>
-                                            </h5>
+                                            </h6>
                                         </div>
                                     </div>
                                 </div>
@@ -72,19 +73,17 @@
 
                     <div class="card-body p-3">
                         <div class="table-responsive">
-                            <table class="table table-striped">
-                                <thead>
+                            <table class="table table-hover align-middle mb-0" style="border: 1px solid #e9ecef;">
+                                <thead class="text-center">
                                     <tr>
-                                        <th>Descripción</th>
-                                        <th>Monto</th>
-                                        
-                                        <th>Sede / Isla</th>
-                                        
-                                        <th>Fecha</th>
-                                        <th>Acciones</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Descripción</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Monto</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Sede / Isla</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Fecha</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Acciones</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody class="text-center">
                                     @foreach ($expenses as $expense)
                                         <tr>
                                             <td>{{ $expense->description }}</td>
@@ -94,12 +93,12 @@
                                             <td>
                                                 <button class="btn btn-sm btn-warning" data-bs-toggle="modal"
                                                     data-bs-target="#editExpenseModal" data-id="{{ $expense->id }}"
-                                                    title="Editar egreso">
+                                                    title="Editar egreso" style="--bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
                                                     <i class="bi bi-pencil"></i>
                                                 </button>
                                                 <button class="btn btn-sm btn-danger" data-bs-toggle="modal"
                                                     data-bs-target="#deleteExpenseModal" data-id="{{ $expense->id }}"
-                                                    title="Eliminar egreso">
+                                                    title="Eliminar egreso" style="--bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
 
@@ -120,9 +119,9 @@
     <!-- Modal Editar Egreso -->
     <div class="modal fade" id="editExpenseModal" tabindex="-1" aria-labelledby="editExpenseModalLabel" aria-hidden="true">
         <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editExpenseModalLabel">Editar Egreso</h5>
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-light border-bottom-0">
+                    <h5 class="modal-title fw-bold text-dark" id="editExpenseModalLabel"><i class="bi bi-pencil-square me-2 text-warning"></i>Editar Egreso</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <form id="editExpenseForm">
@@ -132,8 +131,8 @@
                         <input type="hidden" id="edit_expense_id" name="expense_id">
                         
                         <div class="mb-3">
-                            <label for="edit_isle_id" class="form-label">Isla <span class="text-danger">*</span></label>
-                            <select class="form-select" id="edit_isle_id" name="isle_id" required>
+                            <label for="edit_isle_id" class="form-label text-dark fw-bold mb-1">Isla <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-sm" id="edit_isle_id" name="isle_id" required>
                                 <option value="">Seleccione una isla</option>
                                 @foreach ($isles ?? [] as $isle)
                                     <option value="{{ $isle->id }}">{{ $isle->name }}</option>
@@ -142,23 +141,23 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="edit_amount" class="form-label">Monto <span class="text-danger">*</span></label>
-                            <input type="number" step="0.01" class="form-control" id="edit_amount" name="amount" required min="0.01">
+                            <label for="edit_amount" class="form-label text-dark fw-bold mb-1">Monto <span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" class="form-control form-control-sm" id="edit_amount" name="amount" required min="0.01">
                         </div>
 
                         <div class="mb-3">
-                            <label for="edit_description" class="form-label">Descripción</label>
-                            <input type="text" class="form-control" id="edit_description" name="description" maxlength="255">
+                            <label for="edit_description" class="form-label text-dark fw-bold mb-1">Descripción</label>
+                            <input type="text" class="form-control form-control-sm" id="edit_description" name="description" maxlength="255">
                         </div>
                         
                         <div class="mb-3">
-                            <label for="edit_category" class="form-label">Categoría</label>
-                            <input type="text" class="form-control" id="edit_category" name="category" maxlength="255">
+                            <label for="edit_category" class="form-label text-dark fw-bold mb-1">Categoría</label>
+                            <input type="text" class="form-control form-control-sm" id="edit_category" name="category" maxlength="255">
                         </div>
                         
                         <div class="mb-3">
-                            <label for="edit_payment_method" class="form-label">Método de Pago</label>
-                            <select class="form-select" id="edit_payment_method" name="payment_method">
+                            <label for="edit_payment_method" class="form-label text-dark fw-bold mb-1">Método de Pago</label>
+                            <select class="form-select form-select-sm" id="edit_payment_method" name="payment_method">
                                 <option value="Efectivo">Efectivo</option>
                                 <option value="Transferencia">Transferencia</option>
                                 <option value="Tarjeta">Tarjeta</option>
@@ -166,18 +165,18 @@
                         </div>
                         
                         <div class="mb-3">
-                            <label for="edit_observation" class="form-label">Observaciones</label>
-                            <textarea class="form-control" id="edit_observation" name="observation" rows="2"></textarea>
+                            <label for="edit_observation" class="form-label text-dark fw-bold mb-1">Observaciones</label>
+                            <textarea class="form-control form-control-sm" id="edit_observation" name="observation" rows="2"></textarea>
                         </div>
 
                         <div class="mb-3">
-                            <label for="edit_date" class="form-label">Fecha <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control" id="edit_date" name="date" required>
+                            <label for="edit_date" class="form-label text-dark fw-bold mb-1">Fecha <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control form-control-sm" id="edit_date" name="date" required>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                    <div class="modal-footer border-top-0 bg-light">
+                        <button type="button" class="btn btn-secondary px-3 btn-sm" data-bs-dismiss="modal"><i class="bi bi-x-circle me-1"></i> Cancelar</button>
+                        <button type="submit" class="btn btn-primary px-4 fw-medium btn-sm"><i class="bi bi-save me-1"></i> Guardar Cambios</button>
                     </div>
                 </form>
             </div>
@@ -186,19 +185,19 @@
 
     <!-- Modal Eliminar Egreso -->
     <div class="modal fade" id="deleteExpenseModal" tabindex="-1" aria-labelledby="deleteExpenseModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="deleteExpenseModalLabel">Eliminar Egreso</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-danger text-white border-bottom-0">
+                    <h5 class="modal-title fw-bold text-white" id="deleteExpenseModalLabel"><i class="bi bi-exclamation-triangle-fill me-2"></i>Eliminar Egreso</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
-                <div class="modal-body">
-                    <p>¿Estás seguro de que deseas eliminar este egreso?</p>
-                    <p class="text-muted small">El monto será devuelto a la caja chica de la isla correspondiente.</p>
+                <div class="modal-body text-center py-4">
+                    <p class="mb-3">¿Estás seguro de que deseas eliminar este egreso?</p>
+                    <p class="text-muted small mb-0">El monto será devuelto a la caja chica de la isla correspondiente.</p>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-danger" id="btnDeleteExpense">Eliminar</button>
+                <div class="modal-footer border-top-0 bg-light justify-content-center">
+                    <button type="button" class="btn btn-secondary btn-sm px-3" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger btn-sm px-4 fw-medium" id="btnDeleteExpense">Eliminar</button>
                 </div>
             </div>
         </div>

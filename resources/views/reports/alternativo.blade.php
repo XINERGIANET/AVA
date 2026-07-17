@@ -1,8 +1,17 @@
 @extends('template.index')
 
 @section('header')
-    <h1>Reporte de Ingresos y Dashboard</h1>
-    <p>Sistema de Gestión AVA</p>
+    <div class="d-flex align-items-center">
+        <h4 class="mb-0 text-dark fw-bold">
+            <i class="bi bi-speedometer2 me-2 text-primary"></i>Dashboard & Ingresos
+        </h4>
+    </div>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0 bg-transparent p-0">
+            <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">Dashboard</li>
+        </ol>
+    </nav>
 @endsection
 
 @section('content')

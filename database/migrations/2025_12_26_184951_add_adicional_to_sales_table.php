@@ -13,9 +13,11 @@ class AddAdicionalToSalesTable extends Migration
      */
     public function up()
     {
-        Schema::table('sales', function (Blueprint $table) {
-            $table->float('adicional')->default(0);
-        });
+        if (!Schema::hasColumn('sales', 'adicional')) {
+            Schema::table('sales', function (Blueprint $table) {
+                $table->float('adicional')->default(0);
+            });
+        }
     }
 
     /**

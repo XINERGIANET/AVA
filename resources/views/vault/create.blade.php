@@ -1,119 +1,49 @@
 @extends('template.index')
 
 @section('header')
-    <h1>Bóveda</h1>
-    <p>Lista de transacciones de bóveda</p>
+    <div class="d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center">
+            <h4 class="mb-0 text-dark fw-bold">
+                <i class="bi bi-safe me-2 text-primary"></i>Registrar en Bóveda
+            </h4>
+        </div>
+        <div>
+            <button class="btn btn-primary fw-medium px-3" data-bs-toggle="modal" data-bs-target="#createModal" style="border-radius: 6px;">
+                <i class="bi bi-plus-circle me-1"></i>Nuevo Registro
+            </button>
+        </div>
+    </div>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0 bg-transparent p-0">
+            <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('sales.index') }}" class="text-decoration-none text-muted">Ventas y Caja</a></li>
+            <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">Registrar en Bóveda</li>
+        </ol>
+    </nav>
 @endsection
 @section('content')
-    <div class="container-fluid content-inner mt-0">
-        <!-- Card que contiene el formulario y la tabla -->
-        <div class="card shadow">
-            <!-- Cuerpo del Card -->
+    <div class="container-fluid content-inner" style="padding-top: 1rem;">
+        <!-- Card que contiene la tabla y filtros -->
+        <div class="card shadow-sm border-0" style="border-radius: 10px;">
             <div class="card-body">
-                <!-- Formulario de Registro -->
-                <form id="createCollaboratorForm" class="mb-5" action="{{ route('vault.store') }}" method="POST">
-                    @csrf
-                    <div class="row mb-3 align-items-center">
-                        <div class="col-md-4 mb-3">
-                            <div class="row align-items-center">
-                                <div class="col-md-4">
-                                    <label for="name" class="form-label mb-0">Sede</label>
-                                </div>
-                                <div class="col-md-8">
-                                    <select class="form-control" id="location_id" name="location_id">
-                                        <option value="{{ auth()->user()->location_id }}">
-                                            {{ auth()->user()->location->name }}</option>
-                                    </select>
-                                </div>
-                            </div>
+                <form id="vaultFilterForm" method="GET" action="{{ route('vault.create') }}">
+                    <div class="row g-2 align-items-end mb-4">
+                        <div class="col-md-3">
+                            <label for="from_date" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Desde</label>
+                            <input type="date" class="form-control form-control-sm" id="from_date" name="from_date" value="{{ $fromDate }}">
                         </div>
-                        <div class="col-md-4 mb-3">
-                            <div class="row align-items-center">
-                                <div class="col-md-4">
-                                    <label for="name" class="form-label mb-0">Isla</label>
-                                </div>
-                                <div class="col-md-8">
-                                    <select class="form-control" id="isle_id" name="isle_id" required>
-                                        <option value="">Seleccione una isla...</option>
-                                        @foreach ($isles as $isle)
-                                            <option value="{{ $isle->id }}" data-balance="{{ $isle->vault }}">
-                                                {{ $isle->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
+                        <div class="col-md-3">
+                            <label for="to_date" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Hasta</label>
+                            <input type="date" class="form-control form-control-sm" id="to_date" name="to_date" value="{{ $toDate }}">
                         </div>
-                        <div class="col-md-4 mb-3">
-                            <div class="row align-items-center">
-                                <div class="col-md-4">
-                                    <label for="name" class="form-label mb-0">Tipo</label>
-                                </div>
-                                <div class="col-md-8">
-                                    <select class="form-control" id="type" name="type">
-                                        <option value="eb">Entrada</option>
-                                        <option value="sb">Salida</option>
-                                    </select>
-                                </div>
-                            </div>
+                        <div class="col-md-6 text-end">
+                            <button type="submit" class="btn btn-primary btn-sm px-3 fw-medium" style="border-radius: 6px;">
+                                <i class="bi bi-funnel me-1"></i>Filtrar
+                            </button>
+                            <a href="{{ route('vault.create') }}" class="btn btn-secondary btn-sm px-3 fw-medium ms-1" style="border-radius: 6px;">
+                                <i class="bi bi-eraser me-1"></i>Limpiar
+                            </a>
                         </div>
-                        <div class="col-md-4 mb-3">
-                            <div class="row align-items-center">
-                                <div class="col-md-4">
-                                    <label for="name" class="form-label mb-0">Monto</label>
-                                </div>
-                                <div class="col-md-8">
-                                    <input type="number" step="0.01" class="form-control" id="amount" name="amount"
-                                        required>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <div class="row align-items-center">
-                                <div class="col-md-4">
-                                    <label for="name" class="form-label mb-0">Fecha</label>
-                                </div>
-                                <div class="col-md-8">
-                                    <input type="date" class="form-control" id="date" name="date" required
-                                        value="{{ date('Y-m-d') }}">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <div class="row align-items-center">
-                                <div class="col-md-4">
-                                    <label for="description" class="form-label mb-0">Descripción</label>
-                                </div>
-                                <div class="col-md-8">
-                                    <input type="text" class="form-control" placeholder="" id="description"
-                                        name="description">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Botón de Guardar (alineado a la derecha) -->
-                    <div class="row mb-3">
-                        <div class="d-flex justify-content-end">
-                            <button type="submit" class="btn btn-primary">Guardar</button>
-                        </div>
-                    </div>
-                </form>
-
-                <form id="vaultFilterForm" class="row g-3 mb-3" method="GET" action="{{ route('vault.create') }}">
-                    <div class="col-md-3">
-                        <label for="from_date" class="form-label">Desde</label>
-                        <input type="date" class="form-control" id="from_date" name="from_date"
-                            value="{{ $fromDate }}">
-                    </div>
-                    <div class="col-md-3">
-                        <label for="to_date" class="form-label">Hasta</label>
-                        <input type="date" class="form-control" id="to_date" name="to_date"
-                            value="{{ $toDate }}">
-                    </div>
-                    <div class="col-md-3 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary me-2">Filtrar</button>
-                        <a href="{{ route('vault.create') }}" class="btn btn-warning">Limpiar</a>
                     </div>
                 </form>
 
@@ -128,24 +58,24 @@
                     </small>
                 </div>
                 <!-- Tabla de Registros -->
-                <div class="table-responsive mt-4">
-                    <table class="table table-bordered table-striped">
-                        <thead>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" style="border: 1px solid #e9ecef;">
+                        <thead class="text-center">
                             <tr>
-                                <th>N°</th>
-                                <th>Usuario</th>    
-                                <th>Isla</th>    
-                                <th>Monto</th>
-                                <th>Tipo</th>
-                                <th>Fecha</th>
-                                <th>Descripción</th>
-                                <th>Estado</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">N°</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Usuario</th>    
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Isla</th>    
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Monto</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Tipo</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Fecha</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Descripción</th>
+                                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Estado</th>
                                 @if (auth()->user()->role->nombre == 'admin' || auth()->user()->role->nombre == 'master')
-                                    <th>Acciones</th>
+                                    <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Acciones</th>
                                 @endif
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="text-center">
                             @forelse ($transactions as $trans)
                                 <tr>
                                     <td>{{ ($transactions->currentPage() - 1) * $transactions->perPage() + $loop->iteration }}
@@ -183,6 +113,60 @@
             </div>
         </div>
     </div>
+    <div class="modal fade" id="createModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-light border-bottom-0">
+                    <h5 class="modal-title fw-bold text-dark"><i class="bi bi-safe me-2 text-primary"></i>Registrar Transacción</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="createCollaboratorForm" action="{{ route('vault.store') }}" method="POST">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Sede</label>
+                            <select class="form-select" id="location_id" name="location_id">
+                                <option value="{{ auth()->user()->location_id }}">{{ auth()->user()->location->name }}</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Isla</label>
+                            <select class="form-select" id="isle_id" name="isle_id" required>
+                                <option value="">Seleccione una isla...</option>
+                                @foreach ($isles as $isle)
+                                    <option value="{{ $isle->id }}" data-balance="{{ $isle->vault }}">{{ $isle->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Tipo</label>
+                            <select class="form-select" id="type" name="type">
+                                <option value="eb">Entrada</option>
+                                <option value="sb">Salida</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Monto</label>
+                            <input type="number" step="0.01" class="form-control" id="amount" name="amount" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Fecha</label>
+                            <input type="date" class="form-control" id="date" name="date" required value="{{ date('Y-m-d') }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Descripción</label>
+                            <input type="text" class="form-control" id="description" name="description">
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top-0 bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary px-4">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -205,6 +189,7 @@
             </div>
         </div>
     </div>
+    
     <div class="modal fade" id="approveModal" tabindex="-1" aria-labelledby="approveModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">

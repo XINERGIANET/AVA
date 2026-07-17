@@ -1,53 +1,57 @@
 @extends('template.index')
 
 @section('header')
-    <h1>Histórico de Recalibraciones</h1>
-    <p>Lista de recalibraciones</p>
+    <div class="d-flex align-items-center">
+        <h4 class="mb-0 text-dark fw-bold">
+            <i class="bi bi-gear-fill me-2 text-primary"></i>Histórico de Recalibraciones
+        </h4>
+    </div>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0 bg-transparent p-0">
+            <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item"><a href="#" class="text-decoration-none text-muted">Control y Soporte</a></li>
+            <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">Recalibración</li>
+        </ol>
+    </nav>
 @endsection
 
 @section('content')
-    <div class="container-fluid content-inner mt-0">
+    <div class="container-fluid content-inner" style="padding-top: 1rem;">
         <div class="row">
             <div class="col-sm-12">
-                <div class="card">
+                <div class="card shadow-sm border-0" style="border-radius: 10px;">
                     <div class="card-body border-bottom">
                         <form action="" id="fromFilter">
-                            <div class="row d-flex">
-                                <div class="col-md-3">
-                                    <div class="mb-3">
-                                        <label class="form-label">Fecha inicial</label>
-                                        <input type="date" class="form-control" id="start_date" name="start_date"
-                                            value="{{ request()->start_date ?? '' }}">
-                                    </div>
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-2">
+                                    <label class="form-label text-dark fw-bold small mb-1">Fecha inicial</label>
+                                    <input type="date" class="form-control form-control-sm" id="start_date" name="start_date"
+                                        value="{{ request()->start_date ?? '' }}">
                                 </div>
-                                <div class="col-md-3">
-                                    <div class="mb-3">
-                                        <label class="form-label">Fecha final</label>
-                                        <input type="date" id="end_date" class="form-control" name="end_date"
-                                            value="{{ request()->end_date ?? '' }}">
-                                    </div>
+                                <div class="col-md-2">
+                                    <label class="form-label text-dark fw-bold small mb-1">Fecha final</label>
+                                    <input type="date" id="end_date" class="form-control form-control-sm" name="end_date"
+                                        value="{{ request()->end_date ?? '' }}">
                                 </div>
 
                                 @if($isMaster)
-                                <div class="col-md-3">
-                                    <div class="mb-3">
-                                        <label class="form-label">Sede</label>
-                                        <select class="form-select" id="location_id" name="location_id">
-                                            <option value="">Todos</option>
-                                            @foreach ($locations as $location)
-                                                <option value="{{ $location->id }}"
-                                                    {{ request()->location_id == $location->id ? 'selected' : '' }}>
-                                                    {{ $location->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
+                                <div class="col-md-2">
+                                    <label class="form-label text-dark fw-bold small mb-1">Sede</label>
+                                    <select class="form-select form-select-sm" id="location_id" name="location_id">
+                                        <option value="">Todos</option>
+                                        @foreach ($locations as $location)
+                                            <option value="{{ $location->id }}"
+                                                {{ request()->location_id == $location->id ? 'selected' : '' }}>
+                                                {{ $location->name }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
                                 @endif
 
                                 @if($isMaster || !empty($users) && $users->count() > 0)
-                                <div class="col-md-3">
-                                    <label class="form-label">Usuario de recalibración</label>
-                                    <select class="form-select" id="user_id" name="user_id">
+                                <div class="col-md-2">
+                                    <label class="form-label text-dark fw-bold small mb-1">Usuario</label>
+                                    <select class="form-select form-select-sm" id="user_id" name="user_id">
                                         <option value="">Todos</option>
                                         @foreach ($users as $user)
                                             <option value="{{ $user->id }}"
@@ -59,30 +63,20 @@
                                 </div>
                                 @endif
 
-                                <div class="col d-flex align-items-end mt-3">
-                                    <div class=" w-50s me-2">
-                                        <button type="submit" class="btn btn-primary w-100"
-                                            id="btnFiltrar">Filtrar</button>
-                                    </div>
-                                    {{-- <div class="w-50s me-2">
-                                        <button type="button" class="btn btn-danger btn-pdf w-100">
-                                            PDF
-                                        </button>
-                                    </div>
-                                    <div class=" w-50s me-2">
-                                        <button type="button" class="btn btn-success w-100" id="btnExcel">Excel</button>
-                                    </div> --}}
-                                    <div class=" w-50s me-2">
-                                        <a href="{{ route('sales.historico') }}" class="btn btn-warning w-100"
-                                            id="btnLimpiar">Limpiar</a>
-                                    </div>
+                                <div class="col-md-auto ms-auto d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary btn-sm fw-medium px-3" id="btnFiltrar" style="border-radius: 6px;">
+                                        <i class="bi bi-funnel me-1"></i>Filtrar
+                                    </button>
+                                    <a href="{{ route('recalibration.index') }}" class="btn btn-light btn-sm fw-medium px-3" id="btnLimpiar" style="border-radius: 6px;">
+                                        <i class="bi bi-arrow-counterclockwise me-1"></i>Limpiar
+                                    </a>
                                 </div>
-                                <div class="col-12 mt-4">
-                                    <div class="d-flex justify-content-end">
-                                        <div>
-                                            <h5>
-                                                <strong>Total de recalibración: S/ {{ number_format($total, 2, '.', ',') }}</strong>
-                                            </h5>
+                                
+                                <div class="col-12 mt-3 pt-3 border-top">
+                                    <div class="d-flex justify-content-end align-items-center">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <h6 class="mb-0 text-muted fw-semibold">Total de recalibración:</h6>
+                                            <h5 class="mb-0 fw-bold text-primary">S/ {{ number_format($total, 2, '.', ',') }}</h5>
                                         </div>
                                     </div>
                                 </div>
@@ -93,17 +87,17 @@
 
                     <div class="card-body p-3">
                         <div class="table-responsive">
-                            <table class="table table-striped">
-                                <thead>
+                            <table class="table table-hover align-middle mb-0" style="border: 1px solid #e9ecef;">
+                                <thead class="text-center">
                                     <tr>
-                                        <th>Fecha</th>
-                                        <th>Cantidad</th>
-                                        <th>Total</th>
-                                        <th>Sede</th>
-                                        <th>Acciones</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Fecha</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Cantidad</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Total</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Sede</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Acciones</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody class="text-center">
                                     @foreach ($sales as $sale)
                                         <tr>
                                             <td>{{ $sale->date->format('d/m/Y') }}</td>
@@ -126,14 +120,14 @@
                                                 <button type="button"
                                                     class="btn btn-primary btn-sm open-details-modal" title="Detalles"
                                                     data-bs-venta_id="{{ $sale->id }}"
-                                                    style="--bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
+                                                    style="border-radius: 6px;">
                                                     <i class="bi bi-list-task"></i>
                                                 </button>
                                                 <button type="button" style="display: none;"
                                                     class="btn btn-danger btn-sm btn-icon btn-anular-venta"
                                                     data-sale-id="{{ $sale->id }}"
                                                     title="{{ $sale->estado === 1 ? 'Venta anulada' : 'Eliminar venta' }}"
-                                                    {{ $sale->estado === 1 ? 'disabled' : '' }}>
+                                                    {{ $sale->estado === 1 ? 'disabled' : '' }} style="border-radius: 6px;">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </td>
@@ -154,29 +148,29 @@
     <div class="modal fade" id="saleDetailsModal" tabindex="-1" aria-labelledby="saleDetailsModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-lg">
-            <div class="modal-content">
+            <div class="modal-content border-0 shadow">
                 <form id="formEditarCantidad" method="POST">
                     @csrf
                     <input type="hidden" name="sale_id" id="modal-sale-id" value="">
                     
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="saleDetailsModalLabel">Productos de la Venta #<span
+                    <div class="modal-header bg-light border-bottom-0">
+                        <h5 class="modal-title fw-bold text-dark" id="saleDetailsModalLabel"><i class="bi bi-box me-2 text-primary"></i>Productos de la Venta #<span
                                 id="sale-number"></span></h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     
                     <div class="modal-body">
                         <div class="table-responsive">
-                            <table class="table table-striped">
-                                <thead>
+                            <table class="table table-hover align-middle mb-0" style="border: 1px solid #e9ecef;">
+                                <thead class="text-center">
                                     <tr>
-                                        <th>Producto</th>
-                                        <th>Cantidad</th>
-                                        <th>Precio Unitario</th>
-                                        <th>Subtotal</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Producto</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Cantidad</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Precio Unitario</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Subtotal</th>
                                     </tr>
                                 </thead>
-                                <tbody id="detail-productos">
+                                <tbody id="detail-productos" class="text-center">
                                     <tr>
                                         <td colspan="4" class="text-center">Cargando productos...</td>
                                     </tr>
@@ -185,11 +179,11 @@
                         </div>
                     </div>
                     
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-save"></i> Guardar
+                    <div class="modal-footer border-top-0 bg-light">
+                        <button type="button" class="btn btn-secondary px-3 btn-sm" data-bs-dismiss="modal"><i class="bi bi-x-circle me-1"></i> Cerrar</button>
+                        <button type="submit" class="btn btn-primary px-4 fw-medium btn-sm">
+                            <i class="bi bi-save me-1"></i> Guardar
                         </button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                     </div>
                 </form>
             </div>

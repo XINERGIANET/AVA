@@ -1,78 +1,79 @@
 @extends('template.index')
 
 @section('header')
-    <h1>Registro de Contómetros</h1>
-    <p>Ingreso de lecturas por turno</p>
+    <div class="d-flex align-items-center">
+        <h4 class="mb-0 text-dark fw-bold"><i class="bi bi-speedometer2 me-2 text-primary"></i>Registro de Contómetros</h4>
+    </div>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0 bg-transparent p-0">
+            <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('flowmeters.historico') }}" class="text-decoration-none text-muted">Abastecimiento</a></li>
+            <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">Registro de Contómetros</li>
+        </ol>
+    </nav>
 @endsection
 
 @section('content')
-<div class="container-fluid content-inner mt-0">
-    
-    <div class="card shadow">
+<div class="container-fluid content-inner" style="padding-top: 1rem;">
+    <div class="card shadow-sm border-0" style="border-radius: 10px;">
         <div class="card-body">
-            <div class="mb-4">
                 {{-- SECCIÓN DE FILTROS --}}
-                <div class="row align-items-end"> 
-                    
-                    {{-- 1. FILTRO SEDE --}}
-                    <div class="col-md-3 mb-3">
-                        <label class="form-label fw-bold text-primary">1. Sede</label>
-                        <form method="GET" action="{{ route('flowmeters.create') }}" id="form-location-filter">
-                            <select name="location_id" class="form-select border-primary" onchange="document.getElementById('form-location-filter').submit()">
-                                @foreach($locations as $location)
-                                    <option value="{{ $location->id }}" {{ $currentLocationId == $location->id ? 'selected' : '' }}>
-                                        {{ $location->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </form>
-                    </div>
-
-                    {{-- 2. FILTRO ISLA --}}
-                    <div class="col-md-3 mb-3">
-                        <label class="form-label fw-bold">2. Isla</label>
-                        <select id="filter_isle" class="form-select">
-                            <option value="all">Todas las Islas</option>
-                            @foreach($islas as $isla)
-                                <option value="{{ $isla->id }}">{{ $isla->name ?? $isla->nombre }}</option> 
+            <!-- Toolbar de Filtros -->
+            <div class="row g-2 align-items-end mb-4">
+                <div class="col-md-3">
+                    <label class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Sede</label>
+                    <form method="GET" action="{{ route('flowmeters.create') }}" id="form-location-filter">
+                        <select name="location_id" class="form-select form-select-sm" onchange="document.getElementById('form-location-filter').submit()">
+                            @foreach($locations as $location)
+                                <option value="{{ $location->id }}" {{ $currentLocationId == $location->id ? 'selected' : '' }}>
+                                    {{ $location->name }}
+                                </option>
                             @endforeach
                         </select>
-                    </div>
-
-                    {{-- 3. FILTRO LADO --}}
-                    <div class="col-md-3 mb-3">
-                        <label class="form-label fw-bold">3. Lado</label>
-                        <select id="filter_side_number" class="form-select">
-                            <option value="all">Todos los Lados</option>
-                            @php
-                                $uniqueSides = $islas->pluck('sides')->flatten()->pluck('side')->unique()->sort();
-                            @endphp
-                            @foreach($uniqueSides as $sideNum)
-                                <option value="{{ $sideNum }}">Lado {{ $sideNum }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
+                    </form>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Isla</label>
+                    <select id="filter_isle" class="form-select form-select-sm">
+                        <option value="all">Todas las Islas</option>
+                        @foreach($islas as $isla)
+                            <option value="{{ $isla->id }}">{{ $isla->name ?? $isla->nombre }}</option> 
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Lado</label>
+                    <select id="filter_side_number" class="form-select form-select-sm">
+                        <option value="all">Todos los Lados</option>
+                        @php
+                            $uniqueSides = $islas->pluck('sides')->flatten()->pluck('side')->unique()->sort();
+                        @endphp
+                        @foreach($uniqueSides as $sideNum)
+                            <option value="{{ $sideNum }}">Lado {{ $sideNum }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3 text-end">
+                    <button type="submit" form="form-contometros" class="btn btn-success btn-sm px-3 fw-medium w-100" style="border-radius: 6px;">
+                        <i class="bi bi-save me-1"></i> Guardar Registros
+                    </button>
                 </div>
             </div>
-            
-            <hr class="my-4">
 
             <form action="{{ route('flowmeters.store') }}" method="POST" id="form-contometros">
                 @csrf
-                {{-- IMPORTANTE: Enviamos la sede actual --}}
                 <input type="hidden" name="location_id" value="{{ $currentLocationId }}">
 
                 <div class="table-responsive">
-                    <table class="table table-bordered table-striped align-middle">
-                        <thead class="bg-light text-center">
+                    <table class="table table-hover align-middle mb-0" style="border: 1px solid #e9ecef;">
+                        <thead class="text-center">
                             <tr>
-                                <th style="width: 12%">Surtidor</th>
-                                <th style="width: 8%">Lado</th>
-                                <th style="width: 12%">Producto</th>
-                                <th style="width: 15%">Valor Inicial</th>
-                                <th style="width: 15%">Valor Final</th>
-                                <th style="width: 13%">Diferencia</th>
+                                <th class="fw-bold text-uppercase" style="width: 12%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Surtidor</th>
+                                <th class="fw-bold text-uppercase" style="width: 8%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Lado</th>
+                                <th class="fw-bold text-uppercase" style="width: 12%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Producto</th>
+                                <th class="fw-bold text-uppercase" style="width: 15%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Valor Inicial</th>
+                                <th class="fw-bold text-uppercase" style="width: 15%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Valor Final</th>
+                                <th class="fw-bold text-uppercase" style="width: 13%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Diferencia</th>
                             </tr>
                         </thead>
                         
@@ -122,13 +123,6 @@
                         </tbody>
                         @endforeach
                     </table>
-                </div>
-
-                <div class="row mt-4 mb-3">
-                    <div class="d-flex justify-content-end gap-2">
-                        <a href="{{ url()->previous() }}" class="btn btn-secondary">Cancelar</a>
-                        <button type="submit" class="btn btn-success px-4">Guardar Registros</button>
-                    </div>
                 </div>
             </form>
 
