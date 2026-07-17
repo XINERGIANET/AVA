@@ -228,6 +228,7 @@
                 invoice_number: $('#invoiceNumber').val(),
                 payment_method_id: $('#paymentMethod').val(),
                 purchase_concept_id: $('#purchaseConcept').val(),
+                location_id: $('#location_id').val(),
                 glosa: $('#glosa').val(),
                 date: $('#purchaseDate').val(),
                 purchase_temp: $('#purchase_temp').val(),

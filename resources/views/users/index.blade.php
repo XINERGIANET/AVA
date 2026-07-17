@@ -256,6 +256,8 @@
                             $('#edit_name').val(user.name);
                             $('#edit_email').val(user.email);
                             $('#edit_shift').val(user.shift);
+                            $('#edit_location_id').val(user.location_id);
+                            $('#edit_isle_id').val(user.isle_id);
                             //Llenar select de rol
                             $('#edit_rol_id').empty().append(
                                 '<option value="">Seleccione un rol</option>'
@@ -306,6 +308,8 @@
                         name: $('#edit_name').val(),
                         email: $('#edit_email').val(),
                         rol_id: $('#edit_rol_id').val(),
+                        location_id: $('#edit_location_id').val(),
+                        isle_id: $('#edit_isle_id').val(),
                         shift: $('#edit_shift').val(),
                         new_pass: $('#new_pass').val(),
                         // new_pass_confirmation: $('#new_pass_confirmation').val()

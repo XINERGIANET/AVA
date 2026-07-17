@@ -67,10 +67,11 @@
                                 </div>
                                 <div class="col-md-2">
                                     <label for="location_id" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Sede</label>
+                                    @php $isMasterUser = auth()->user()->role->nombre === 'master'; @endphp
                                     <select class="form-select form-select-sm" name="location_id" id="location_id">
-                                        <option value="" disabled selected>Seleccione</option>
+                                        <option value="" disabled {{ $isMasterUser && !request()->filled('location_id') ? 'selected' : '' }}>Seleccione</option>
                                         @foreach ($locations as $location)
-                                            <option value="{{ $location->id }}" {{ request()->location_id == $location->id ? 'selected' : '' }}>{{ $location->name }}</option>
+                                            <option value="{{ $location->id }}" {{ (!$isMasterUser || request()->location_id == $location->id) ? 'selected' : '' }}>{{ $location->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -177,9 +178,9 @@
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Sede</label>
                             <select class="form-select" id="movement_location_id" name="location_id" required>
-                                <option value="">Seleccione una sede...</option>
+                                <option value="" {{ $isMasterUser ? 'selected' : '' }}>Seleccione una sede...</option>
                                 @foreach ($locations as $location)
-                                    <option value="{{ $location->id }}" data-balance="{{ $locationVaultTotals[$location->id] ?? 0 }}">{{ $location->name }}</option>
+                                    <option value="{{ $location->id }}" data-balance="{{ $locationVaultTotals[$location->id] ?? 0 }}" {{ !$isMasterUser ? 'selected' : '' }}>{{ $location->name }}</option>
                                 @endforeach
                             </select>
                             <div class="form-text small" id="locationBalanceHint"></div>

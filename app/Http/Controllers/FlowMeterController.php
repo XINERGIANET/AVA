@@ -35,8 +35,18 @@ class FlowMeterController extends Controller
     // Asegúrate de importar el modelo Location arriba
     public function create(Request $request)
     {
-        $locations = Location::all();
-        $currentLocationId = $request->input('location_id', auth()->user()->location_id);
+        $currentUser = auth()->user();
+        $isMaster = $currentUser->role->nombre === 'master';
+
+        $locations = $isMaster
+            ? Location::where('deleted', 0)->get()
+            : Location::where('deleted', 0)->where('id', $currentUser->location_id)->get();
+
+        // No-master siempre ve/registra su propia sede, sin importar qué
+        // location_id venga en el request.
+        $currentLocationId = $isMaster
+            ? $request->input('location_id', $currentUser->location_id)
+            : $currentUser->location_id;
 
         $islas = Isle::where('location_id', $currentLocationId)
             ->with(['sides' => function($query) {
@@ -80,11 +90,18 @@ class FlowMeterController extends Controller
     {
         $request->validate([
             'lecturas' => 'required|array',
-            'location_id' => 'required'
+            'location_id' => 'required|integer|exists:locations,id'
         ]);
 
-        $userId = auth()->user()->id;
-        $locationId = $request->input('location_id'); 
+        $currentUser = auth()->user();
+        $isMaster = $currentUser->role->nombre === 'master';
+        $userId = $currentUser->id;
+        $locationId = $request->input('location_id');
+
+        if (!$isMaster && (int) $locationId !== (int) $currentUser->location_id) {
+            return back()->with('error', 'Solo puedes registrar contómetros de tu propia sede.');
+        }
+
         $date = now()->format('Y-m-d');
 
         try {

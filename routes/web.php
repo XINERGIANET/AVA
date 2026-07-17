@@ -65,14 +65,32 @@ Route::get('/sales/prueba', function () {
 Route::group(['middleware' => 'auth'], function () {
     // Permission Module
 
-    // Cambiar sede del usuario
+    // Cambiar sede activa del usuario (selector de arriba a la derecha).
+    // Solo master puede cambiar de sede: si un admin/worker pudiera hacerlo,
+    // se reasignaría a sí mismo a otra sede y así saltarse toda la
+    // restricción por sede que ya aplican los demás controladores.
     Route::post('/user/change-location', function () {
         $user = auth()->user();
+
+        if (($user->role->nombre ?? '') !== 'master') {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permiso para cambiar de sede.'
+            ], 403);
+        }
+
         $locationId = request()->input('location_id');
-        
+
+        if (!\App\Models\Location::where('id', $locationId)->where('deleted', 0)->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sede no válida.'
+            ], 422);
+        }
+
         $user->location_id = $locationId;
         $user->save();
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Sede actualizada correctamente',

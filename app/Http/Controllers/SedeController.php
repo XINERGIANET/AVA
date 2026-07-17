@@ -7,8 +7,22 @@ use App\Models\Location;
 
 class SedeController extends Controller
 {
+    /**
+     * La gestión de sedes es de alcance global (crear/renombrar/eliminar una
+     * sede afecta a toda la empresa), así que queda reservada a master —
+     * igual que ya lo oculta el sidebar, pero ahora también en el backend.
+     */
+    private function authorizeMaster()
+    {
+        if ((auth()->user()->role->nombre ?? '') !== 'master') {
+            abort(403, 'Solo master puede gestionar sedes.');
+        }
+    }
+
     public function index()
     {
+        $this->authorizeMaster();
+
         // Obtener solo las sedes activas (deleted = 0)
         $sedes = Location::where('deleted', 0)->paginate(15);
         return view('sedes.index', compact('sedes'));
@@ -21,6 +35,8 @@ class SedeController extends Controller
      */
     public function create()
     {
+        $this->authorizeMaster();
+
         return view('sedes.create');
     }
 
@@ -32,6 +48,8 @@ class SedeController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorizeMaster();
+
         $request->validate([
             'name' => 'required|string|max:255',
         ]);
@@ -52,6 +70,8 @@ class SedeController extends Controller
      */
     public function show($id)
     {
+        $this->authorizeMaster();
+
         $sede = Location::findOrFail($id);
         return response()->json($sede);
     }
@@ -64,6 +84,8 @@ class SedeController extends Controller
      */
     public function edit($id)
     {
+        $this->authorizeMaster();
+
         $sede = Location::findOrFail($id);
         return view('sedes.edit', compact('sede'));
     }
@@ -77,6 +99,8 @@ class SedeController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $this->authorizeMaster();
+
         $request->validate([
             'name' => 'required|string|max:255',
         ]);
@@ -96,6 +120,8 @@ class SedeController extends Controller
      */
     public function destroy($id)
     {
+        $this->authorizeMaster();
+
         $sede = Location::findOrFail($id);
         $sede->update(['deleted' => 1]); // Cambiar estado a 1 (eliminado)
         return redirect()->route('sedes.index')

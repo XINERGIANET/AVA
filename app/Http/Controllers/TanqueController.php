@@ -66,6 +66,13 @@ class TanqueController extends Controller
             'is_reserve' => 'required|boolean',
         ]);
 
+        $user = auth()->user();
+        if ($user->role->nombre !== 'master' && (int) $request->location_id !== (int) $user->location_id) {
+            return back()->withInput()->withErrors([
+                'location_id' => 'Solo puedes crear tanques para tu propia sede.'
+            ]);
+        }
+
         // 1. Verificar duplicado exacto (todos los campos)
         $duplicadoExacto = Tank::where('location_id', $request->location_id)
             ->where('name', $request->name)
@@ -111,6 +118,12 @@ class TanqueController extends Controller
     public function show($id)
     {
         $tanque = Tank::findOrFail($id);
+
+        $user = auth()->user();
+        if ($user->role->nombre !== 'master' && (int) $tanque->location_id !== (int) $user->location_id) {
+            abort(403, 'No tienes permiso para ver este tanque.');
+        }
+
         return response()->json($tanque);
     }
 
@@ -134,6 +147,18 @@ class TanqueController extends Controller
         ]);
 
         $tanque = Tank::findOrFail($id);
+
+        $user = auth()->user();
+        if ($user->role->nombre !== 'master') {
+            if ((int) $tanque->location_id !== (int) $user->location_id) {
+                abort(403, 'No tienes permiso para editar este tanque.');
+            }
+            if ((int) $request->location_id !== (int) $user->location_id) {
+                return back()->withInput()->withErrors([
+                    'location_id' => 'Solo puedes asignar tu propia sede.'
+                ]);
+            }
+        }
 
         $duplicado = Tank::where('id', '!=', $id)
             ->where('location_id', $request->location_id)
@@ -168,6 +193,12 @@ class TanqueController extends Controller
     public function destroy($id)
     {
         $tanque = Tank::findOrFail($id);
+
+        $user = auth()->user();
+        if ($user->role->nombre !== 'master' && (int) $tanque->location_id !== (int) $user->location_id) {
+            abort(403, 'No tienes permiso para eliminar este tanque.');
+        }
+
         $tanque->update(['deleted' => 1]); // Cambiar estado a 1 (eliminado)
         return redirect()->route('tanques.index')
             ->with('success', 'Tanque eliminado correctamente.');

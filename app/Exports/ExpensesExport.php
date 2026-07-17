@@ -27,11 +27,10 @@ class ExpensesExport implements FromCollection, WithHeadings, WithMapping, WithS
     {
         $currentUser = Auth::user();
         $isMaster = $currentUser->role->nombre === 'master';
-        $isAdmin = $currentUser->role->nombre === 'admin';
 
         $query = Transaction::with(['user', 'location', 'isle'])->where('type', 'scc');
 
-        if (!$isMaster && !$isAdmin) {
+        if (!$isMaster) {
             if ($currentUser->isle_id) {
                 $query->where('isle_id', $currentUser->isle_id);
             } elseif ($currentUser->location_id) {

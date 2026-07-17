@@ -30,14 +30,15 @@ class PurchaseController extends Controller
         $productId = $request->product_id;
 
         // COMPRAS
-        $query = Purchase::with('purchase_details','payment_method')
+        $query = Purchase::with('purchase_details','payment_method','location')
             ->when($start_date, fn($q) => $q->whereDate('date', '>=', $start_date))
             ->when($end_date, fn($q) => $q->whereDate('date', '<=', $end_date))
             ->when($supplier_id, fn($q) => $q->where('supplier_id', $supplier_id))
             ->when(auth()->user()->role->nombre != 'master' && auth()->user()->location_id, function ($query) {
-                $query->whereHas('purchase_details.tank', function ($q) {
-                    $q->where('location_id', auth()->user()->location_id);
-                });
+                // Filtro directo por la sede de la propia compra (antes se
+                // inferia por el tanque, lo que dejaba invisibles las
+                // compras de "Otros Gastos", que no tienen tanque).
+                $query->where('location_id', auth()->user()->location_id);
             })
             ->when($productId, function($q) use ($productId){
                 $q->whereHas('purchase_details', function ($q2) use ($productId){
@@ -106,6 +107,7 @@ class PurchaseController extends Controller
             'invoice_number'             => 'nullable|string',
             'payment_method_id'          => 'nullable|exists:payment_methods,id',
             'purchase_concept_id'        => 'required|exists:purchase_concepts,id',
+            'location_id'                => 'required|exists:locations,id',
             'glosa'                      => 'nullable|string|max:2000',
             'date'                       => 'required|date',
             'supplier_id'                => 'nullable|exists:suppliers,id',
@@ -126,6 +128,14 @@ class PurchaseController extends Controller
                 'status' => false,
                 'error'  => $validator->errors()->first(),
             ], 400);
+        }
+
+        $currentUser = auth()->user();
+        if ($currentUser->role->nombre !== 'master' && (int) $request->location_id !== (int) $currentUser->location_id) {
+            return response()->json([
+                'status' => false,
+                'error'  => 'Solo puedes registrar compras para tu propia sede.',
+            ], 403);
         }
 
         DB::beginTransaction();
@@ -165,6 +175,7 @@ class PurchaseController extends Controller
                 'invoice_number'       => $request->invoice_number,
                 'payment_method_id'    => $request->payment_method_id,
                 'purchase_concept_id'  => $request->purchase_concept_id,
+                'location_id'          => $request->location_id,
                 'glosa'                => $request->glosa,
                 'date'                 => $request->date,
                 'supplier_id'          => $request->supplier_id,

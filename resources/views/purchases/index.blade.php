@@ -77,6 +77,7 @@
                         <tr>
                             <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">N° Comprobante</th>
                             <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Proveedor</th>
+                            <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Sede</th>
                             <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Fecha</th>
                             <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Método de Pago</th>
                             <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Total (S/)</th>
@@ -90,6 +91,7 @@
                                 <tr style="border-bottom: 1px solid #e9ecef;">
                                     <td class="text-dark fw-medium">{{ $purchase->invoice_number ?? '---' }}</td>
                                     <td class="text-dark">{{ $purchase->supplier->company_name ?? 'Sin proveedor' }}</td>
+                                    <td class="text-dark">{{ $purchase->location->name ?? 'Sin sede' }}</td>
                                     <td class="text-dark">{{ $purchase->date->format('d/m/Y') }}</td>
                                     <td class="text-dark">{{ $purchase->payment_method->name ?? '---' }}</td>
                                     <td class="text-dark fw-bold">{{ number_format($purchase->total, 2) }}</td>
@@ -115,7 +117,7 @@
                             @endforeach
                         @else
                             <tr>
-                                <td colspan="7" class="text-center py-4">No hay compras registradas.</td>
+                                <td colspan="8" class="text-center py-4">No hay compras registradas.</td>
                             </tr>
                         @endif
                     </tbody>

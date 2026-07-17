@@ -266,9 +266,14 @@ class SaleController extends Controller
      */
     public function excel(Request $request)
     {
+        $currentUser = auth()->user();
+        $isMaster = $currentUser->role->nombre === 'master';
+
         $start_date = $request->start_date;
         $end_date = $request->end_date;
-        $location_id = $request->location_id;
+        // No-master siempre exporta solo su propia sede, sin importar qué
+        // location_id venga en el request.
+        $location_id = $isMaster ? $request->location_id : $currentUser->location_id;
         $number = $request->number;
         $client = $request->client;
         $type_sale = $request->type_sale;
@@ -302,9 +307,14 @@ class SaleController extends Controller
     public function pdf(Request $request)
     {
         try {
+            $currentUser = auth()->user();
+            $isMaster = $currentUser->role->nombre === 'master';
+
             $start_date = $request->start_date;
             $end_date = $request->end_date;
-            $location_id = $request->location_id;
+            // No-master siempre exporta solo su propia sede, sin importar qué
+            // location_id venga en el request.
+            $location_id = $isMaster ? $request->location_id : $currentUser->location_id;
             $number = $request->number;
             $client = $request->client_id;
             $type_sale = $request->type_sale;
@@ -373,8 +383,8 @@ class SaleController extends Controller
             }
 
 
-            if ($request->location_id) {
-                $locationObj = Location::find($request->location_id);
+            if ($location_id) {
+                $locationObj = Location::find($location_id);
                 if ($locationObj) {
                     $location_name = $locationObj->name;
                 }
@@ -1269,7 +1279,9 @@ class SaleController extends Controller
         $filename = 'ventas_diarias';
         $filename .= '_' . date('d-m-Y') . '.xlsx';
 
-        $location_id = $request->location_id ?? auth()->user()->location_id;
+        $currentUser = auth()->user();
+        $isMaster = $currentUser->role->nombre === 'master';
+        $location_id = $isMaster ? ($request->location_id ?? $currentUser->location_id) : $currentUser->location_id;
 
         return Excel::download(
             new SalesByIsleExport(

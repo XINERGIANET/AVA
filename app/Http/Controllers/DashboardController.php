@@ -15,9 +15,16 @@ class DashboardController extends Controller
         $today = Carbon::now();
         $thisMonth = $request->input('month', $today->format('m'));
         $thisYear = $request->input('year', $today->format('Y'));
-        $locationId = $request->input('location_id');
 
-        $locations = Location::where('deleted', 0)->get();
+        $user = auth()->user();
+        $isMaster = $user->role->nombre === 'master';
+        // No-master siempre ve su propia sede: se ignora cualquier location_id
+        // que venga en el request para que no pueda mirar cifras de otra sede.
+        $locationId = $isMaster ? $request->input('location_id') : $user->location_id;
+
+        $locations = $isMaster
+            ? Location::where('deleted', 0)->get()
+            : Location::where('id', $user->location_id)->get();
 
         // Base Queries with location filter
         $salesQuery = Sale::whereYear('date', $thisYear)->where('deleted', 0);

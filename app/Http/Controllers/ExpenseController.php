@@ -15,6 +15,43 @@ use App\Exports\ExpensesExport;
 
 class ExpenseController extends Controller
 {
+    /**
+     * Solo master ve/gestiona egresos de todas las sedes. Admin queda acotado
+     * a su propia sede (antes se trataba igual que master, lo cual dejaba ver
+     * y exportar egresos de cualquier sede).
+     */
+    private function scopeExpensesQuery($query, $currentUser, bool $isMaster)
+    {
+        if ($isMaster) {
+            return $query;
+        }
+
+        if ($currentUser->isle_id) {
+            $query->where('isle_id', $currentUser->isle_id);
+        } elseif ($currentUser->location_id) {
+            $query->where('location_id', $currentUser->location_id);
+        }
+
+        return $query;
+    }
+
+    private function userCanAccessExpense($currentUser, bool $isMaster, Transaction $expense): bool
+    {
+        if ($isMaster) {
+            return true;
+        }
+
+        if ($currentUser->isle_id) {
+            return (int) $expense->isle_id === (int) $currentUser->isle_id;
+        }
+
+        if ($currentUser->location_id) {
+            return (int) $expense->location_id === (int) $currentUser->location_id;
+        }
+
+        return false;
+    }
+
     public function index(Request $request)
     {
         $start_date = $request->start_date;
@@ -23,25 +60,13 @@ class ExpenseController extends Controller
 
         $currentUser = Auth::user();
         $isMaster = $currentUser->role->nombre === 'master';
-        $isAdmin = $currentUser->role->nombre === 'admin';
 
         // Construir la consulta base
         $query = Transaction::with('location', 'isle')
             ->where('type', 'scc');
 
         // Aplicar filtros de permisos según el rol del usuario
-        if ($isMaster || $isAdmin) {
-            // Master y Admin ven todo
-        } else {
-            // Worker: solo ve de su sede y/o isla
-            if ($currentUser->isle_id) {
-                // Si tiene isla asignada, solo ve esa isla
-                $query->where('isle_id', $currentUser->isle_id);
-            } elseif ($currentUser->location_id) {
-                // Si no tiene isla asignada pero tiene sede, ve toda su sede
-                $query->where('location_id', $currentUser->location_id);
-            }
-        }
+        $this->scopeExpensesQuery($query, $currentUser, $isMaster);
 
         // Aplicar filtros de fecha
         if ($start_date) {
@@ -64,15 +89,7 @@ class ExpenseController extends Controller
         $totalQuery = Transaction::where('type', 'scc');
 
         // Aplicar los mismos filtros de permisos para el total
-        if ($isMaster || $isAdmin) {
-            // Master y Admin ven todo
-        } else {
-            if ($currentUser->isle_id) {
-                $totalQuery->where('isle_id', $currentUser->isle_id);
-            } elseif ($currentUser->location_id) {
-                $totalQuery->where('location_id', $currentUser->location_id);
-            }
-        }
+        $this->scopeExpensesQuery($totalQuery, $currentUser, $isMaster);
 
         // Aplicar los mismos filtros de fecha para el total
         if ($start_date) {
@@ -91,7 +108,7 @@ class ExpenseController extends Controller
 
         // Cargar locations según permisos
         $locations = Location::where('deleted', 0)
-            ->when(!$isMaster && !$isAdmin && $currentUser->location_id, function ($q) use ($currentUser) {
+            ->when(!$isMaster && $currentUser->location_id, function ($q) use ($currentUser) {
                 $q->where('id', $currentUser->location_id);
             })
             ->orderBy('name')
@@ -99,7 +116,7 @@ class ExpenseController extends Controller
 
         // Cargar islas según permisos para el formulario de editar
         $isles = Isle::where('deleted', 0)
-            ->when(!$isMaster && !$isAdmin, function ($q) use ($currentUser) {
+            ->when(!$isMaster, function ($q) use ($currentUser) {
                 if ($currentUser->isle_id) {
                     $q->where('id', $currentUser->isle_id);
                 } elseif ($currentUser->location_id) {
@@ -144,8 +161,22 @@ class ExpenseController extends Controller
             DB::beginTransaction();
 
             $user = Auth::user();
+            $isMaster = $user->role->nombre === 'master';
 
             $isle = Isle::lockForUpdate()->find($request->input('isle_id'));
+
+            if (!$isMaster) {
+                $allowed = $user->isle_id
+                    ? (int) $isle->id === (int) $user->isle_id
+                    : (int) $isle->location_id === (int) $user->location_id;
+                if (!$allowed) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'No tienes permiso para registrar un egreso en esa isla.'
+                    ], 403);
+                }
+            }
 
             $expense = Transaction::create([
                 'user_id' => $user->id,
@@ -204,12 +235,21 @@ class ExpenseController extends Controller
     public function edit($id)
     {
         $expense = Transaction::with('location', 'isle')->find($id);
-        
+
         if (!$expense) {
             return response()->json([
                 'success' => false,
                 'message' => 'Egreso no encontrado'
             ], 404);
+        }
+
+        $currentUser = Auth::user();
+        $isMaster = $currentUser->role->nombre === 'master';
+        if (!$this->userCanAccessExpense($currentUser, $isMaster, $expense)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permiso para ver este egreso.'
+            ], 403);
         }
 
         return response()->json([
@@ -241,13 +281,38 @@ class ExpenseController extends Controller
             DB::beginTransaction();
 
             $expense = Transaction::find($id);
-            
+
             if (!$expense) {
                 DB::rollBack();
                 return response()->json([
                     'success' => false,
                     'message' => 'Egreso no encontrado'
                 ], 404);
+            }
+
+            $currentUser = Auth::user();
+            $isMaster = $currentUser->role->nombre === 'master';
+
+            if (!$this->userCanAccessExpense($currentUser, $isMaster, $expense)) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No tienes permiso para editar este egreso.'
+                ], 403);
+            }
+
+            $newIsleForCheck = Isle::find($request->isle_id);
+            if (!$isMaster && $newIsleForCheck) {
+                $allowed = $currentUser->isle_id
+                    ? (int) $newIsleForCheck->id === (int) $currentUser->isle_id
+                    : (int) $newIsleForCheck->location_id === (int) $currentUser->location_id;
+                if (!$allowed) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'No tienes permiso para mover este egreso a esa isla.'
+                    ], 403);
+                }
             }
 
             $oldIsle = Isle::find($expense->isle_id);
@@ -335,6 +400,16 @@ class ExpenseController extends Controller
                 ], 404);
             }
 
+            $currentUser = Auth::user();
+            $isMaster = $currentUser->role->nombre === 'master';
+            if (!$this->userCanAccessExpense($currentUser, $isMaster, $expense)) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No tienes permiso para eliminar este egreso.'
+                ], 403);
+            }
+
             // Devolver el monto a la isla
             $isle = Isle::lockForUpdate()->find($expense->isle_id);
             if ($isle) {
@@ -367,6 +442,10 @@ class ExpenseController extends Controller
 
     public function excel(Request $request)
     {
-        return Excel::download(new ExpensesExport($request->start_date, $request->end_date, $request->location_id), 'detalles_de_gastos.xlsx');
+        $currentUser = Auth::user();
+        $isMaster = $currentUser->role->nombre === 'master';
+        $locationId = $isMaster ? $request->location_id : $currentUser->location_id;
+
+        return Excel::download(new ExpensesExport($request->start_date, $request->end_date, $locationId), 'detalles_de_gastos.xlsx');
     }
 }

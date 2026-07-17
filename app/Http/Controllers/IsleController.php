@@ -8,6 +8,15 @@ use App\Models\Isle;
 
 class IsleController extends Controller
 {
+    private function locationsForCurrentUser()
+    {
+        $user = auth()->user();
+        if ($user->role->nombre === 'master') {
+            return Location::where('deleted', 0)->get();
+        }
+        return Location::where('deleted', 0)->where('id', $user->location_id)->get();
+    }
+
     public function index(Request $request)
     {
         // Obtener solo las islas activas (deleted = 0) con sus ubicaciones relacionadas
@@ -40,8 +49,7 @@ class IsleController extends Controller
      */
     public function create()
     {
-        // Obtener solo las sedes activas para el select
-        $locations = Location::where('deleted', 0)->get();
+        $locations = $this->locationsForCurrentUser();
 
         return view('isles.create', compact('locations'));
     }
@@ -58,6 +66,13 @@ class IsleController extends Controller
             'name'        => 'required|string|max:255',
             'location_id' => 'required|integer|exists:locations,id', // Validación de location_id
         ]);
+
+        $user = auth()->user();
+        if ($user->role->nombre !== 'master' && (int) $request->location_id !== (int) $user->location_id) {
+            return back()->withInput()->withErrors([
+                'location_id' => 'Solo puedes crear islas para tu propia sede.'
+            ]);
+        }
 
         Isle::create([
             'name'        => $request->name,
@@ -89,7 +104,13 @@ class IsleController extends Controller
     public function edit($id)
     {
         $isle = Isle::findOrFail($id);
-        $locations = Location::where('deleted', 0)->get(); // Solo sedes activas
+
+        $user = auth()->user();
+        if ($user->role->nombre !== 'master' && (int) $isle->location_id !== (int) $user->location_id) {
+            abort(403, 'No tienes permiso para editar esta isla.');
+        }
+
+        $locations = $this->locationsForCurrentUser();
 
         return view('isles.edit', compact('isle', 'locations'));
     }
@@ -109,6 +130,19 @@ class IsleController extends Controller
         ]);
 
         $isle = Isle::findOrFail($id);
+
+        $user = auth()->user();
+        if ($user->role->nombre !== 'master') {
+            if ((int) $isle->location_id !== (int) $user->location_id) {
+                abort(403, 'No tienes permiso para editar esta isla.');
+            }
+            if ((int) $request->location_id !== (int) $user->location_id) {
+                return back()->withInput()->withErrors([
+                    'location_id' => 'Solo puedes asignar tu propia sede.'
+                ]);
+            }
+        }
+
         $isle->update([
             'name'        => $request->name,
             'location_id' => $request->location_id, // Actualizar el ID de la sede
@@ -127,6 +161,12 @@ class IsleController extends Controller
     public function destroy($id)
     {
         $isle = Isle::findOrFail($id);
+
+        $user = auth()->user();
+        if ($user->role->nombre !== 'master' && (int) $isle->location_id !== (int) $user->location_id) {
+            abort(403, 'No tienes permiso para eliminar esta isla.');
+        }
+
         $isle->update(['deleted' => 1]); // Cambiar el estado de eliminado
 
         return redirect()->route('isles.index')

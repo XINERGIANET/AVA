@@ -16,14 +16,43 @@ use Illuminate\Support\Facades\Log;
 class UserController extends Controller
 {
     /**
+     * Solo master y admin gestionan usuarios; admin queda acotado a su propia
+     * sede y nunca puede ver/asignar el rol master (evita que un admin se
+     * autoeleve o administre cuentas de otras sedes).
+     */
+    private function authorizeManageUsers()
+    {
+        $role = auth()->user()->role->nombre ?? '';
+        if (!in_array($role, ['master', 'admin'], true)) {
+            abort(403, 'No tienes permiso para acceder a la gestión de usuarios.');
+        }
+    }
+
+    private function rolesForCurrentUser()
+    {
+        $isMaster = auth()->user()->role->nombre === 'master';
+        return $isMaster ? Role::get() : Role::where('nombre', '!=', 'master')->get();
+    }
+
+    private function locationsForCurrentUser()
+    {
+        $isMaster = auth()->user()->role->nombre === 'master';
+        return $isMaster
+            ? Location::get()
+            : Location::where('id', auth()->user()->location_id)->get();
+    }
+
+    /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
     public function index(Request $request)
     {
+        $this->authorizeManageUsers();
+
         $search = $request->input('search');
-        
+
         $users = User::with('role')
             ->when($search, function ($query, $search) {
                 return $query->where(function($q) use ($search) {
@@ -36,13 +65,13 @@ class UserController extends Controller
             })
             ->where('deleted', 0)
             ->paginate(10);
-            
-        $roles = Role::get();
-        $locations = Location::get();
+
+        $roles = $this->rolesForCurrentUser();
+        $locations = $this->locationsForCurrentUser();
         $isles = Isle::where('location_id', auth()->user()->location_id)
             ->where('deleted', 0)
             ->get();
-            
+
         return view('users.index', compact('users', 'roles', 'locations', 'isles'));
     }
 
@@ -53,9 +82,10 @@ class UserController extends Controller
      */
     public function create()
     {
-        //
-        $roles = Role::get();
-        $locations = Location::get();
+        $this->authorizeManageUsers();
+
+        $roles = $this->rolesForCurrentUser();
+        $locations = $this->locationsForCurrentUser();
         $isles = Isle::where('location_id', auth()->user()->location_id)
             ->where('deleted', 0)
             ->get();
@@ -75,6 +105,8 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorizeManageUsers();
+
         // Validar el campo 'name' requerido y único
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -93,6 +125,21 @@ class UserController extends Controller
                 ]);
             }
         }
+
+        $currentUser = auth()->user();
+        if ($currentUser->role->nombre !== 'master') {
+            if ((int) $validated['location_id'] !== (int) $currentUser->location_id) {
+                return back()->withInput()->withErrors([
+                    'location_id' => 'Solo puedes crear usuarios para tu propia sede.'
+                ]);
+            }
+            if ($role && $role->nombre === 'master') {
+                return back()->withInput()->withErrors([
+                    'rol_id' => 'No tienes permiso para asignar el rol master.'
+                ]);
+            }
+        }
+
         // Crear el registro
         User::create([
             'name' => $validated['name'],
@@ -129,6 +176,14 @@ class UserController extends Controller
     public function edit($id)
     {
         try {
+            $currentUser = auth()->user();
+            if (!in_array($currentUser->role->nombre ?? '', ['master', 'admin'], true)) {
+                return response()->json([
+                    'status' => false,
+                    'error' => 'No tienes permiso para acceder a la gestión de usuarios.'
+                ], 403);
+            }
+
             $user = User::with('role')
                 ->where('id', $id)
                 ->where('deleted', 0)
@@ -140,7 +195,18 @@ class UserController extends Controller
                 ], 404);
             }
 
-            $roles = Role::all();
+            if ($currentUser->role->nombre !== 'master') {
+                $isOtherLocation = (int) $user->location_id !== (int) $currentUser->location_id;
+                $isMasterTarget = ($user->role->nombre ?? '') === 'master';
+                if ($isOtherLocation || $isMasterTarget) {
+                    return response()->json([
+                        'status' => false,
+                        'error' => 'No tienes permiso para editar este usuario.'
+                    ], 403);
+                }
+            }
+
+            $roles = $this->rolesForCurrentUser();
 
             return response()->json([
                 'status' => true,
@@ -169,6 +235,27 @@ class UserController extends Controller
     public function update(Request $request, $id)
     {
         try {
+            $currentUser = auth()->user();
+            if (!in_array($currentUser->role->nombre ?? '', ['master', 'admin'], true)) {
+                return response()->json([
+                    'status' => false,
+                    'error' => 'No tienes permiso para acceder a la gestión de usuarios.'
+                ], 403);
+            }
+
+            $user = User::findOrFail($id);
+
+            if ($currentUser->role->nombre !== 'master') {
+                $isOtherLocation = (int) $user->location_id !== (int) $currentUser->location_id;
+                $isMasterTarget = ($user->role->nombre ?? '') === 'master';
+                if ($isOtherLocation || $isMasterTarget) {
+                    return response()->json([
+                        'status' => false,
+                        'error' => 'No tienes permiso para editar este usuario.'
+                    ], 403);
+                }
+            }
+
             // Reglas de validación
             $rules = [
                 'name' => 'required|string|max:255',
@@ -185,7 +272,21 @@ class UserController extends Controller
 
             $validated = $request->validate($rules);
 
-            $user = User::findOrFail($id);
+            if ($currentUser->role->nombre !== 'master') {
+                if ((int) $validated['location_id'] !== (int) $currentUser->location_id) {
+                    return response()->json([
+                        'status' => false,
+                        'error' => 'Solo puedes asignar tu propia sede.'
+                    ], 403);
+                }
+                $targetRole = Role::find($validated['rol_id']);
+                if ($targetRole && $targetRole->nombre === 'master') {
+                    return response()->json([
+                        'status' => false,
+                        'error' => 'No tienes permiso para asignar el rol master.'
+                    ], 403);
+                }
+            }
 
             $user->name = $validated['name'];
             $user->email = $validated['email'];
@@ -227,6 +328,14 @@ class UserController extends Controller
     public function destroy($id)
     {
         try {
+            $currentUser = auth()->user();
+            if (!in_array($currentUser->role->nombre ?? '', ['master', 'admin'], true)) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'No tienes permiso para acceder a la gestión de usuarios.'
+                ], 403);
+            }
+
             $user = User::where('id', $id)
                 ->where('deleted', 0)
                 ->first();
@@ -236,6 +345,17 @@ class UserController extends Controller
                     'status' => false,
                     'message' => 'Usuario no encontrado'
                 ], 404);
+            }
+
+            if ($currentUser->role->nombre !== 'master') {
+                $isOtherLocation = (int) $user->location_id !== (int) $currentUser->location_id;
+                $isMasterTarget = ($user->role->nombre ?? '') === 'master';
+                if ($isOtherLocation || $isMasterTarget) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'No tienes permiso para eliminar este usuario.'
+                    ], 403);
+                }
             }
 
             // Soft delete - marcar como eliminado

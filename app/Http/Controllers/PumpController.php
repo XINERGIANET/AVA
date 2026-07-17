@@ -10,6 +10,16 @@ use App\Models\Location;
 
 class PumpController extends Controller
 {
+    private function islesForCurrentUser()
+    {
+        $user = auth()->user();
+        return Isle::where('deleted', 0)
+            ->when($user->role->nombre !== 'master' && $user->location_id, function ($query) use ($user) {
+                $query->where('location_id', $user->location_id);
+            })
+            ->get();
+    }
+
     public function index(Request $request)
     {
         $fuelpumps = Pump::with('isle','product')  // Obtener la relación con Isla
@@ -48,7 +58,7 @@ class PumpController extends Controller
      */
     public function create()
     {
-        $isles = Isle::where('deleted', 0)->get(); 
+        $isles = $this->islesForCurrentUser();
 
         return view('fuelpumps.create', compact('isles'));
     }
@@ -63,10 +73,20 @@ class PumpController extends Controller
     {
         $request->validate([
             'name'    => 'required|string|max:255',
-            'isle_id' => 'required|integer|exists:isles,id', 
-            'product_id' => 'required|integer|exists:products,id', 
-            'side' => 'required|integer', 
+            'isle_id' => 'required|integer|exists:isles,id',
+            'product_id' => 'required|integer|exists:products,id',
+            'side' => 'required|integer',
         ]);
+
+        $user = auth()->user();
+        if ($user->role->nombre !== 'master') {
+            $isle = Isle::find($request->isle_id);
+            if (!$isle || (int) $isle->location_id !== (int) $user->location_id) {
+                return back()->withInput()->withErrors([
+                    'isle_id' => 'Solo puedes crear bombas para islas de tu propia sede.'
+                ]);
+            }
+        }
 
         Pump::create([
             'name'    => $request->name,
@@ -99,8 +119,14 @@ class PumpController extends Controller
      */
     public function edit($id)
     {
-        $fuelpumps = Pump::findOrFail($id);
-        $isles = Isle::where('deleted', 0)->get();
+        $fuelpumps = Pump::with('isle')->findOrFail($id);
+
+        $user = auth()->user();
+        if ($user->role->nombre !== 'master' && (int) ($fuelpumps->isle->location_id ?? 0) !== (int) $user->location_id) {
+            abort(403, 'No tienes permiso para editar esta bomba.');
+        }
+
+        $isles = $this->islesForCurrentUser();
 
         return view('fuelpumps.edit', compact('fuelpumps', 'isles'));
     }
@@ -116,12 +142,26 @@ class PumpController extends Controller
     {
         $request->validate([
             'name'    => 'required|string|max:255',
-            'product_id' => 'required|integer|exists:products,id', 
-            'isle_id' => 'required|integer|exists:isles,id', 
-            'side' => 'required|integer', 
+            'product_id' => 'required|integer|exists:products,id',
+            'isle_id' => 'required|integer|exists:isles,id',
+            'side' => 'required|integer',
         ]);
 
-        $fuelpumps = Pump::findOrFail($id);
+        $fuelpumps = Pump::with('isle')->findOrFail($id);
+
+        $user = auth()->user();
+        if ($user->role->nombre !== 'master') {
+            if ((int) ($fuelpumps->isle->location_id ?? 0) !== (int) $user->location_id) {
+                abort(403, 'No tienes permiso para editar esta bomba.');
+            }
+            $newIsle = Isle::find($request->isle_id);
+            if (!$newIsle || (int) $newIsle->location_id !== (int) $user->location_id) {
+                return back()->withInput()->withErrors([
+                    'isle_id' => 'Solo puedes asignar islas de tu propia sede.'
+                ]);
+            }
+        }
+
         $fuelpumps->update([
             'name'    => $request->name,
             'isle_id' => $request->isle_id,
@@ -141,8 +181,14 @@ class PumpController extends Controller
      */
     public function destroy($id)
     {
-        $fuelpumps = Pump::findOrFail($id);
-        $fuelpumps->update(['deleted' => 1]); 
+        $fuelpumps = Pump::with('isle')->findOrFail($id);
+
+        $user = auth()->user();
+        if ($user->role->nombre !== 'master' && (int) ($fuelpumps->isle->location_id ?? 0) !== (int) $user->location_id) {
+            abort(403, 'No tienes permiso para eliminar esta bomba.');
+        }
+
+        $fuelpumps->update(['deleted' => 1]);
 
         return redirect()->route('fuelpumps.index')
             ->with('success', 'Bomba de combustible eliminada correctamente.');
