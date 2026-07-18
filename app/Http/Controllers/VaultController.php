@@ -115,6 +115,9 @@ class VaultController extends Controller
     public function create(Request $request)
     {
         $user = auth()->user();
+        if ($user->role->nombre !== 'master') {
+            abort(403, 'Solo el usuario master puede registrar movimientos desde esta pantalla.');
+        }
         $transactionsBaseQuery = Transaction::with(['user', 'location', 'isle', 'vault_destination'])
             ->whereIn('type', ['eb', 'sb', 'eg'])
             ->when($user->role->nombre != 'master' || $user->location_id, function ($query) use ($user) {
@@ -163,6 +166,11 @@ class VaultController extends Controller
 
     public function store(Request $request)
     {
+        $user = auth()->user();
+        if ($user->role->nombre !== 'master') {
+            abort(403, 'Solo el usuario master puede registrar movimientos desde esta pantalla.');
+        }
+
         $validated = $request->validate([
             'isle_id'     => 'required|integer|exists:isles,id',
             'type'        => 'required|string|in:sb,eb',
@@ -171,8 +179,6 @@ class VaultController extends Controller
             'date'        => 'required|date',
         ]);
 
-        $user = auth()->user();
-        
         DB::beginTransaction();
         try {
             // 1. Buscamos y Bloqueamos la Isla
@@ -401,6 +407,15 @@ class VaultController extends Controller
                 ], 404);
             }
 
+            $isMaster = $user->role->nombre === 'master';
+            if (!$isMaster && (int) $isle->location_id !== (int) $user->location_id) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No tiene permisos para operar la caja de esta isla.'
+                ], 403);
+            }
+
             $currentCash = floatval($isle->cash_amount ?? 0);
             if ($currentCash < $amount) {
                 DB::rollBack();
@@ -410,7 +425,11 @@ class VaultController extends Controller
                 ], 422);
             }
 
-            $destinationLocationId = $request->input('location_id') ?: $isle->location_id;
+            // Un admin (no master) solo puede enviar a la bóveda de su propia sede,
+            // sin importar qué location_id llegue en el request.
+            $destinationLocationId = $isMaster
+                ? ($request->input('location_id') ?: $isle->location_id)
+                : $user->location_id;
             $destinationLocation = Location::lockForUpdate()->find($destinationLocationId);
 
             if (!$destinationLocation) {

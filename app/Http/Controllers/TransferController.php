@@ -15,20 +15,16 @@ use Illuminate\Support\Facades\Log;
 
 class TransferController extends Controller
 {
-    private function scopeTransfersQuery($query, $currentUser, $isMaster)
+    private function authorizeMaster()
     {
-        return $query->when(!$isMaster, function ($q) use ($currentUser) {
-            $q->where(function ($sub) use ($currentUser) {
-                $sub->whereHas('from_tank', fn($t) => $t->where('location_id', $currentUser->location_id))
-                    ->orWhereHas('to_tank', fn($t) => $t->where('location_id', $currentUser->location_id));
-            });
-        });
+        if (auth()->user()->role->nombre !== 'master') {
+            abort(403, 'Solo el usuario master puede administrar traspasos entre tanques.');
+        }
     }
 
     public function historico(Request $request)
     {
-        $currentUser = auth()->user();
-        $isMaster = $currentUser->role->nombre === 'master';
+        $this->authorizeMaster();
 
         $from_date = $request->from_date;
         $to_date   = $request->to_date;
@@ -72,8 +68,6 @@ class TransferController extends Controller
                 $q->whereDate('created_at', '<=', $to_date);
             });
 
-        $query = $this->scopeTransfersQuery($query, $currentUser, $isMaster);
-
         $distribuciones = $query->paginate(10);
 
         return view('transfers.historico', compact('distribuciones', 'locations', 'tanksByLocation'));
@@ -81,8 +75,7 @@ class TransferController extends Controller
     //Excel del historico
     public function excel(Request $request)
     {
-        $currentUser = auth()->user();
-        $isMaster = $currentUser->role->nombre === 'master';
+        $this->authorizeMaster();
 
         $from_location_id = $request->from_location_id;
         $from_tank = $request->from_tank_id;
@@ -110,7 +103,7 @@ class TransferController extends Controller
                 $from_date,
                 $to_date,
                 $received,
-                $isMaster ? null : $currentUser->location_id
+                null
             ),
             $filename
         );
@@ -118,10 +111,8 @@ class TransferController extends Controller
 
     public function pdf(Request $request)
     {
+        $this->authorizeMaster();
         try {
-            $currentUser = auth()->user();
-            $isMaster = $currentUser->role->nombre === 'master';
-
             $from_date = $request->from_date;
             $to_date = $request->to_date;
             $from_location_id = $request->from_location_id;
@@ -145,8 +136,6 @@ class TransferController extends Controller
                     });
                 })
                 ->when($to_tank_id, fn($q) => $q->where('', $to_tank_id));
-
-            $query = $this->scopeTransfersQuery($query, $currentUser, $isMaster);
 
             $distribucion = $query->get();
             $data = [
@@ -185,14 +174,12 @@ class TransferController extends Controller
     //listar
     public function index()
     {
-        $currentUser = auth()->user();
-        $isMaster = $currentUser->role->nombre === 'master';
+        $this->authorizeMaster();
         $locations = Location::where('deleted', '0')->get();
         $tanksByLocation = Tank::where('deleted', '0')->get()->groupBy('location_id');
-        $transfersQuery = Transfer::with(['from_tank', 'to_tank', 'product'])
+        $transfers = Transfer::with(['from_tank', 'to_tank', 'product'])
             ->where('deleted', 0)
-            ->orderBy('id','desc');
-        $transfers = $this->scopeTransfersQuery($transfersQuery, $currentUser, $isMaster)
+            ->orderBy('id','desc')
             ->paginate(10);
 
         return view(
@@ -206,6 +193,7 @@ class TransferController extends Controller
     }
     public function create()
     {
+        $this->authorizeMaster();
         $sedes = Location::where('estado', '0')->get();
         $products = Product::where('estado', '0')->get();
         return view('transfers.create', compact('sedes', 'products'));
@@ -214,6 +202,7 @@ class TransferController extends Controller
     //crear
     public function store(Request $request)
     {
+        $this->authorizeMaster();
         $request->validate([
             'from_tank_id' => 'required|exists:tanks,id',
             'to_tank_id' => 'required|exists:tanks,id',
@@ -222,12 +211,6 @@ class TransferController extends Controller
 
         $from_tank = Tank::findOrFail($request->from_tank_id);
         $to_tank = Tank::findOrFail($request->to_tank_id);
-
-        $currentUser = auth()->user();
-        $isMaster = $currentUser->role->nombre === 'master';
-        if (!$isMaster && $from_tank->location_id != $currentUser->location_id && $to_tank->location_id != $currentUser->location_id) {
-            return redirect()->route('transfers.index')->with('error', 'No tiene permisos para transferir entre tanques que no pertenecen a su sede');
-        }
 
         //verifica que tanques sean del mismo producto
         if ($from_tank->product_id != $to_tank->product_id) {
@@ -267,15 +250,8 @@ class TransferController extends Controller
 
     public function destroy($id)
     {
+        $this->authorizeMaster();
         $transfer = Transfer::with(['from_tank', 'to_tank'])->findOrFail($id);
-
-        $currentUser = auth()->user();
-        $isMaster = $currentUser->role->nombre === 'master';
-        if (!$isMaster
-            && optional($transfer->from_tank)->location_id != $currentUser->location_id
-            && optional($transfer->to_tank)->location_id != $currentUser->location_id) {
-            abort(403, 'No tiene permisos para eliminar esta transferencia');
-        }
 
         DB::transaction(function () use ($transfer) {
             //borra
@@ -303,15 +279,8 @@ class TransferController extends Controller
     //usado para confirmar
     public function update($id)
     {
+        $this->authorizeMaster();
         $transfer = Transfer::with(['from_tank', 'to_tank'])->findOrFail($id);
-
-        $currentUser = auth()->user();
-        $isMaster = $currentUser->role->nombre === 'master';
-        if (!$isMaster
-            && optional($transfer->from_tank)->location_id != $currentUser->location_id
-            && optional($transfer->to_tank)->location_id != $currentUser->location_id) {
-            abort(403, 'No tiene permisos para confirmar esta transferencia');
-        }
 
         DB::transaction(function () use ($transfer) {
             //cambia recibido a 1

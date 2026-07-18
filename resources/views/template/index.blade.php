@@ -197,10 +197,10 @@
                         $cfgOpen = $cfgStructureOpen || $cfgCatalogOpen || $cfgPeopleOpen;
 
                         $supplyOpen = request()->routeIs('purchases.*', 'discharges.*', 'storages.*', 'supplier_payments.*')
-                            || (request()->routeIs('transfers.*') && !request()->routeIs('transfers.historico'));
+                            || (request()->routeIs('transfers.*') && !request()->routeIs('transfers.historico'))
+                            || (request()->routeIs('flowmeters.*') && !request()->routeIs('flowmeters.historico'));
 
                         $salesOpen = (request()->routeIs('sales.*') && !request()->routeIs('sales.historico'))
-                            || (request()->routeIs('flowmeters.*') && !request()->routeIs('flowmeters.historico'))
                             || request()->routeIs('measurements.*', 'petty_cash.*', 'cashClose.*', 'vault.*');
 
                         $creditOpen = request()->routeIs('contracts.*', 'credits.*', 'payments.*');
@@ -398,6 +398,7 @@
                                         <span class="item-name">Descargas</span>
                                     </a>
                                 </li>
+                                @if(auth()->user()->role->nombre === 'master')
                                 <li class="nav-item">
                                     <a class="nav-link {{ request()->routeIs('transfers.index') ? 'active' : '' }}" href="{{ route('transfers.index') }}">
                                         <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
@@ -405,6 +406,7 @@
                                         <span class="item-name">Traspaso Tanques</span>
                                     </a>
                                 </li>
+                                @endif
                                 <li class="nav-item">
                                     <a class="nav-link {{ request()->routeIs('storages.*') ? 'active' : '' }}" href="{{ route('storages.index') }}">
                                         <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
@@ -413,7 +415,7 @@
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link {{ request()->routeIs('flowmeters.historico') ? 'active' : '' }}" href="{{ route('flowmeters.historico') }}">
+                                    <a class="nav-link {{ request()->routeIs('flowmeters.*') ? 'active' : '' }}" href="{{ route('flowmeters.historico') }}">
                                         <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
                                         <i class="sidenav-mini-icon"><i class="bi bi-dash"></i></i>
                                         <span class="item-name">Contómetros</span>
@@ -469,6 +471,7 @@
                                         <span class="item-name">Cierre de Caja</span>
                                     </a>
                                 </li>
+                                @if(auth()->user()->role->nombre === 'master')
                                 <li class="nav-item">
                                     <a class="nav-link {{ request()->routeIs('vault.create') ? 'active' : '' }}" href="{{ route('vault.create') }}">
                                         <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
@@ -476,6 +479,7 @@
                                         <span class="item-name">Registrar Bóveda</span>
                                     </a>
                                 </li>
+                                @endif
                                 <li class="nav-item">
                                     <a class="nav-link {{ request()->routeIs('vault.index') ? 'active' : '' }}" href="{{ route('vault.index') }}">
                                         <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
@@ -602,6 +606,7 @@
                             </a>
                             <ul class="sub-nav collapse {{ $reportsOpen ? 'show' : '' }}" id="sidebar-reports" data-bs-parent="#sidebar-menu">
 
+                                @if(auth()->user()->role->nombre === 'master')
                                 <li class="nav-item">
                                     <a class="nav-link {{ request()->routeIs('transfers.historico') ? 'active' : '' }}" href="{{ route('transfers.historico') }}">
                                         <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
@@ -609,6 +614,7 @@
                                         <span class="item-name">Traspasos</span>
                                     </a>
                                 </li>
+                                @endif
 
                                 <li class="nav-item">
                                     <a class="nav-link {{ request()->routeIs('expenses.historico') ? 'active' : '' }}" href="{{ route('expenses.historico') }}">

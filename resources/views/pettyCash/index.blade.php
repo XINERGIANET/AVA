@@ -86,8 +86,10 @@
         </div>
         <div class="mb-3 d-none" id="vaultLocationGroup">
             <label class="form-label">Bóveda destino</label>
-            <select class="form-select" id="cashVaultLocation">
-                <option value="">Seleccione una bóveda</option>
+            <select class="form-select" id="cashVaultLocation" {{ $isMaster ? '' : 'disabled' }}>
+                @if($isMaster)
+                    <option value="">Seleccione una bóveda</option>
+                @endif
                 @foreach($vaultLocations as $location)
                     <option value="{{ $location->id }}">{{ $location->name }}</option>
                 @endforeach
