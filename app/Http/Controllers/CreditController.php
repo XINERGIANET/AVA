@@ -26,7 +26,11 @@ class CreditController extends Controller
         $start_date = $request->start_date;
         $end_date = $request->end_date;
         $client_id = $request->client_id;
-        $location_id = $request->location_id;
+        $currentUser = auth()->user();
+        $isMaster = $currentUser->role->nombre === 'master';
+        // No-master siempre ve su propia sede, sin importar qué location_id
+        // venga en el request.
+        $location_id = $isMaster ? $request->location_id : $currentUser->location_id;
         $status = $request->has('status') ? $request->status : 'pending';
 
         $client = Client::find($client_id);
@@ -76,8 +80,10 @@ class CreditController extends Controller
         $totalCreditosPagados = $totalQuery->sum('amount');
         
         // Obtener todas las sedes disponibles para el filtro
-        $locations = Location::where('deleted', 0)->orderBy('name')->get();
-        
+        $locations = $isMaster
+            ? Location::where('deleted', 0)->orderBy('name')->get()
+            : Location::where('deleted', 0)->where('id', $currentUser->location_id)->orderBy('name')->get();
+
         return view('credits.index', compact('credits', 'client', 'totalCreditosPagados', 'locations'));
     }
 
@@ -100,7 +106,9 @@ class CreditController extends Controller
             $request->merge(['client_name' => $client->business_name ? $client->business_name : $client->contact_name]);
         }
 
-        $location_id = $request->location_id;
+        $currentUser = auth()->user();
+        $isMaster = $currentUser->role->nombre === 'master';
+        $location_id = $isMaster ? $request->location_id : $currentUser->location_id;
         $location = Location::find($location_id);
         if ($location) {
             // Agrega el nombre al request usando merge
@@ -131,8 +139,10 @@ class CreditController extends Controller
             $start_date = request()->get('start_date');
             $end_date = request()->get('end_date');
             $client_id = request()->get('client_id');
-            $location_id = request()->get('location_id');
-    
+            $currentUser = auth()->user();
+            $isMaster = $currentUser->role->nombre === 'master';
+            $location_id = $isMaster ? request()->get('location_id') : $currentUser->location_id;
+
             $client = Client::find($client_id);
             $location = Location::find($location_id);
     
@@ -188,7 +198,9 @@ class CreditController extends Controller
     public function create(Request $request)
     {
         $client_id = $request->client_id;
-        $location_id = $request->location_id;
+        $currentUser = auth()->user();
+        $isMaster = $currentUser->role->nombre === 'master';
+        $location_id = $isMaster ? $request->location_id : $currentUser->location_id;
         $payment_date = $request->payment_date;
         $number = $request->number;
         $credits = Payment::with([
@@ -213,7 +225,9 @@ class CreditController extends Controller
             ->paginate(10)
             ->appends($request->query());
         
-        $areas = Location::where('deleted', 0)->orderBy('name')->get();
+        $areas = $isMaster
+            ? Location::where('deleted', 0)->orderBy('name')->get()
+            : Location::where('deleted', 0)->where('id', $currentUser->location_id)->orderBy('name')->get();
         $paymentMethods = PaymentMethod::where('deleted', 0)->orderBy('name')->get();
         
         // Obtener el cliente seleccionado para mantener el nombre en el input
@@ -241,6 +255,14 @@ class CreditController extends Controller
             'subtotals' => 'required|array',
             'subtotals.*' => 'nullable|numeric|min:0',
         ]);
+
+        $currentUser = auth()->user();
+        if ($currentUser->role->nombre !== 'master' && (int) $validated['location_id'] !== (int) $currentUser->location_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Solo puedes registrar créditos para tu propia sede.'
+            ], 403);
+        }
 
         try {
             DB::beginTransaction();
@@ -364,13 +386,24 @@ class CreditController extends Controller
     public function destroy($id)
     {
         // Buscar el Payment por ID
-        $payment = Payment::find($id);
+        $payment = Payment::with(['sale.location', 'agreement.location'])->find($id);
 
         if (!$payment) {
             return response()->json([
                 'status' => false,
                 'message' => 'Crédito no encontrado'
             ], 404);
+        }
+
+        $currentUser = auth()->user();
+        if ($currentUser->role->nombre !== 'master') {
+            $creditLocationId = optional($payment->sale)->location_id ?? optional($payment->agreement)->location_id;
+            if ((int) $creditLocationId !== (int) $currentUser->location_id) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'No tienes permiso para anular este crédito.'
+                ], 403);
+            }
         }
 
         // Marcar el Payment como eliminado

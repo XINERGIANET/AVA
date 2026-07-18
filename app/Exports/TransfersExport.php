@@ -23,6 +23,7 @@ class TransfersExport implements FromCollection, WithHeadings, WithMapping, With
     protected $received;
     protected $from_date;
     protected $to_date;
+    protected $user_location_id;
 
     public function __construct(
         $from_location_id = null,
@@ -34,7 +35,8 @@ class TransfersExport implements FromCollection, WithHeadings, WithMapping, With
         $quantity = null,
         $from_date = null,
         $to_date = null,
-        $received = null
+        $received = null,
+        $user_location_id = null
     ) {
         $this->from_location_id = $from_location_id;
         $this->from_tank = $from_tank;
@@ -46,6 +48,7 @@ class TransfersExport implements FromCollection, WithHeadings, WithMapping, With
         $this->from_date = $from_date;
         $this->to_date = $to_date;
         $this->received = $received;
+        $this->user_location_id = $user_location_id;
     }
 
     public function collection()
@@ -93,6 +96,12 @@ class TransfersExport implements FromCollection, WithHeadings, WithMapping, With
         }
         if ($this->received !== null && $this->received !== '') {
             $query->where('received', $this->received);
+        }
+        if ($this->user_location_id) {
+            $query->where(function ($q) {
+                $q->whereHas('from_tank', fn($t) => $t->where('location_id', $this->user_location_id))
+                    ->orWhereHas('to_tank', fn($t) => $t->where('location_id', $this->user_location_id));
+            });
         }
 
         return $query->get();

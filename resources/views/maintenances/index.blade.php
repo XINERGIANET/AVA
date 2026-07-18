@@ -34,9 +34,12 @@
           <table class="table table-hover align-middle mb-0" style="border: 1px solid #e9ecef;">
             <thead class="text-center">
               <tr>
-                <th class="fw-bold text-uppercase" style="width: 10%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">N°</th>
-                <th class="fw-bold text-uppercase" style="width: 20%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Fecha</th>
-                <th class="fw-bold text-uppercase" style="width: 55%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Descripción</th>
+                <th class="fw-bold text-uppercase" style="width: 8%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">N°</th>
+                <th class="fw-bold text-uppercase" style="width: 15%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Fecha</th>
+                @if ($isMaster)
+                <th class="fw-bold text-uppercase" style="width: 15%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Sede</th>
+                @endif
+                <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Descripción</th>
                 <th class="fw-bold text-uppercase" style="width: 15%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Acciones</th>
               </tr>
             </thead>
@@ -45,6 +48,9 @@
                 <tr>
                   <td>{{ ($maintenances->currentPage() - 1) * $maintenances->perPage() + $loop->iteration }}</td>
                   <td>{{ $mant->date->format('d/m/Y') }}</td>
+                  @if ($isMaster)
+                  <td>{{ $mant->location->name ?? 'Sin sede' }}</td>
+                  @endif
                   <td>{{ $mant->description }}</td>
                   <td>
                     <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal"
@@ -55,7 +61,7 @@
                 </tr>
               @empty
                 <tr>
-                  <td colspan="4" class="text-center py-4 text-muted">No hay mantenimientos registrados.</td>
+                  <td colspan="{{ $isMaster ? 5 : 4 }}" class="text-center py-4 text-muted">No hay mantenimientos registrados.</td>
                 </tr>
               @endforelse
             </tbody>
@@ -77,6 +83,19 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
+            @if ($isMaster)
+            <div class="mb-3">
+              <label for="location_id" class="form-label text-dark fw-bold mb-1">Sede</label>
+              <select class="form-select" id="location_id" name="location_id" required>
+                <option value="" selected disabled>Seleccione una sede</option>
+                @foreach ($locations as $location)
+                  <option value="{{ $location->id }}">{{ $location->name }}</option>
+                @endforeach
+              </select>
+            </div>
+            @else
+              <input type="hidden" name="location_id" value="{{ $locations->first()->id ?? '' }}">
+            @endif
             <div class="mb-3">
               <label for="date" class="form-label text-dark fw-bold mb-1">Fecha</label>
               <input type="date" class="form-control" id="date" name="date" required value="{{ date('Y-m-d') }}">

@@ -99,6 +99,11 @@ class LoanController extends Controller
     {
         $loan = Loan::where('deleted', false)->findOrFail($id);
 
+        $currentIsle = Isle::find($loan->isle_id);
+        if (! $currentIsle || ! $this->canAccessIsle($currentIsle)) {
+            return response()->json(['success' => false, 'message' => 'No tiene acceso a esta isla.'], 403);
+        }
+
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -118,6 +123,11 @@ class LoanController extends Controller
     public function destroy($id)
     {
         $loan = Loan::where('deleted', false)->findOrFail($id);
+
+        $isle = Isle::find($loan->isle_id);
+        if (! $isle || ! $this->canAccessIsle($isle)) {
+            return response()->json(['success' => false, 'message' => 'No tiene acceso a esta isla.'], 403);
+        }
 
         DB::beginTransaction();
         try {

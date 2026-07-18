@@ -18,8 +18,9 @@ class PaymentsExport implements FromCollection, WithHeadings, WithMapping, WithS
     protected $client_name;
     protected $voucher_type;
     protected $payment_method_id;
+    protected $location_id;
 
-    public function __construct($start_date = null, $end_date = null, $number = null, $client_name = null, $voucher_type = null, $payment_method_id = null)
+    public function __construct($start_date = null, $end_date = null, $number = null, $client_name = null, $voucher_type = null, $payment_method_id = null, $location_id = null)
     {
         $this->start_date = $start_date;
         $this->end_date = $end_date;
@@ -27,6 +28,7 @@ class PaymentsExport implements FromCollection, WithHeadings, WithMapping, WithS
         $this->client_name = $client_name;
         $this->voucher_type = $voucher_type;
         $this->payment_method_id = $payment_method_id;
+        $this->location_id = $location_id;
     }
 
     public function collection()
@@ -39,6 +41,12 @@ class PaymentsExport implements FromCollection, WithHeadings, WithMapping, WithS
             ->when($this->client_name, fn($query) => $query->where('client_name', 'like', "%$this->client_name%"))
             ->when($this->voucher_type, fn($query) => $query->where('voucher_type', $this->voucher_type))
             ->when($this->payment_method_id, fn($query) => $query->where('payment_method_id', $this->payment_method_id))
+            ->when($this->location_id, function ($query) {
+                $query->where(function ($q) {
+                    $q->whereHas('sale.location', fn($q2) => $q2->where('id', $this->location_id))
+                        ->orWhereHas('agreement.location', fn($q2) => $q2->where('id', $this->location_id));
+                });
+            })
             ->orderBy("date", "desc")
             ->orderBy("id", "desc");
 

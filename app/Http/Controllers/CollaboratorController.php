@@ -15,10 +15,14 @@ class CollaboratorController extends Controller
      */
     public function index()
     {
-        $collaborators = Employee::where('deleted', 0)->get();
-        $collaborators = Employee::where('deleted', 0)->paginate(10);
-        $locations = Location::where('deleted', 0)->when(auth()->user()->role->nombre != 'master' && auth()->user()->location_id, function ($query) {
-            $query->where('id', auth()->user()->location_id);
+        $currentUser = auth()->user();
+        $isMaster = $currentUser->role->nombre === 'master';
+
+        $collaborators = Employee::where('deleted', 0)
+            ->when(!$isMaster, fn($q) => $q->where('location_id', $currentUser->location_id))
+            ->paginate(10);
+        $locations = Location::where('deleted', 0)->when(!$isMaster, function ($query) use ($currentUser) {
+            $query->where('id', $currentUser->location_id);
         })->get();
         return view('collaborators.index', compact('collaborators', 'locations'));
     }
@@ -53,6 +57,12 @@ class CollaboratorController extends Controller
             'address' => 'required|string|max:255',
             'pin' => 'required|string|max:4|min:4'
         ]);
+
+        $currentUser = auth()->user();
+        $isMaster = $currentUser->role->nombre === 'master';
+        if (!$isMaster && $request->location_id != $currentUser->location_id) {
+            return redirect()->back()->withInput()->withErrors(['location_id' => 'No tiene permisos para registrar colaboradores en otra sede.']);
+        }
 
         // Verificar que el PIN no exista en otro colaborador activo
         $existingPin = Employee::where('pin', $request->pin)
@@ -127,6 +137,12 @@ class CollaboratorController extends Controller
         // Buscar el colaborador por ID
         $collaborator = Employee::findOrFail($id);
 
+        $currentUser = auth()->user();
+        $isMaster = $currentUser->role->nombre === 'master';
+        if (!$isMaster && $collaborator->location_id != $currentUser->location_id) {
+            abort(403, 'No tiene permisos para modificar este colaborador');
+        }
+
         // Verificar que el PIN no exista en otro colaborador activo (excepto el actual)
         $existingPin = Employee::where('pin', $request->pin)
             ->where('deleted', 0)
@@ -164,6 +180,12 @@ class CollaboratorController extends Controller
     {
         // Buscar el colaborador por ID
         $collaborator = Employee::findOrFail($id);
+
+        $currentUser = auth()->user();
+        $isMaster = $currentUser->role->nombre === 'master';
+        if (!$isMaster && $collaborator->location_id != $currentUser->location_id) {
+            abort(403, 'No tiene permisos para eliminar este colaborador');
+        }
 
         // Cambiar el estado del colaborador a inactivo (1)
         $collaborator->update(['deleted' => 1]);

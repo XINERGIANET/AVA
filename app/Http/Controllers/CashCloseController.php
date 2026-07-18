@@ -69,7 +69,7 @@ class CashCloseController extends Controller
             ->paginate(15)
             ->appends($request->query());
 
-        $locations = in_array((int) $user->role_id, [1, 2], true)
+        $locations = in_array((int) $user->role_id, [1], true)
             ? Location::where('deleted', 0)->orderBy('name')->get()
             : Location::where('id', $user->location_id)->get();
 

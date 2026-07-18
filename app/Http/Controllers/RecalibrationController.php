@@ -38,10 +38,13 @@ class RecalibrationController extends Controller
         }
 
         $paymentMethods = PaymentMethod::where('deleted', false)->get();
-        $locations = Location::where('deleted', false)->get();
 
         $currentUser = auth()->user();
         $isMaster = $currentUser->role->nombre === 'master';
+
+        $locations = $isMaster
+            ? Location::where('deleted', false)->get()
+            : Location::where('deleted', false)->where('id', $currentUser->location_id)->get();
 
         // Filtrar usuarios según el rol
         if ($isMaster) {

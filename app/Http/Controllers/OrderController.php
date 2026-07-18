@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Order;
+use App\Models\Agreement;
 
 class OrderController extends Controller
 {
@@ -29,12 +30,18 @@ class OrderController extends Controller
     public function show($id)
     {
         try {
-            $order = Order::with(['order_details' => function($query) {
+            $order = Order::with(['agreement', 'order_details' => function($query) {
                     $query->with('product')
                           ->orderByRaw('CASE WHEN area IS NULL THEN 1 ELSE 0 END, area ASC');
                 }])
                 ->where('deleted', 0)
                 ->findOrFail($id);
+
+            $currentUser = auth()->user();
+            $isMaster = $currentUser->role->nombre === 'master';
+            if (!$isMaster && optional($order->agreement)->location_id != $currentUser->location_id) {
+                return response()->json(['error' => 'No tiene permisos para ver esta orden'], 403);
+            }
 
             return response()->json($order);
         } catch (\Exception $e) {
@@ -58,6 +65,13 @@ class OrderController extends Controller
             'cantidad.*' => 'numeric|min:0.01',
             'number_of_orders' => 'nullable|integer|min:1'
         ]);
+
+        $currentUser = auth()->user();
+        $isMaster = $currentUser->role->nombre === 'master';
+        $agreement = Agreement::findOrFail($validated['contrato_id']);
+        if (!$isMaster && $agreement->location_id != $currentUser->location_id) {
+            return response()->json(['success' => false, 'message' => 'No tiene permisos para registrar órdenes en este contrato'], 403);
+        }
 
         $orders = [];
         $contratoId = $validated['contrato_id'];
@@ -123,8 +137,14 @@ class OrderController extends Controller
         ]);
 
         try {
-            $order = Order::findOrFail($validated['order_id']);
-            
+            $order = Order::with('agreement')->findOrFail($validated['order_id']);
+
+            $currentUser = auth()->user();
+            $isMaster = $currentUser->role->nombre === 'master';
+            if (!$isMaster && optional($order->agreement)->location_id != $currentUser->location_id) {
+                return response()->json(['success' => false, 'message' => 'No tiene permisos para asignar área en esta orden'], 403);
+            }
+
             // Buscar si ya existe un OrderDetail para este producto sin área asignada
             $existingDetail = $order->order_details()
                 ->where('product_id', $validated['product_id'])
@@ -214,7 +234,22 @@ class OrderController extends Controller
             'cantidad3' => 'nullable|integer',
         ]);
 
-        $order = Order::findOrFail($id);
+        $order = Order::with('agreement')->findOrFail($id);
+
+        $currentUser = auth()->user();
+        $isMaster = $currentUser->role->nombre === 'master';
+        if (!$isMaster) {
+            if (optional($order->agreement)->location_id != $currentUser->location_id) {
+                return response()->json(['success' => false, 'message' => 'No tiene permisos para modificar esta orden'], 403);
+            }
+            if ($request->filled('agreement_id')) {
+                $newAgreement = Agreement::find($request->agreement_id);
+                if (!$newAgreement || $newAgreement->location_id != $currentUser->location_id) {
+                    return response()->json(['success' => false, 'message' => 'No tiene permisos para asignar esta orden a ese contrato'], 403);
+                }
+            }
+        }
+
         $order->update($request->all());
 
         return response()->json(['success' => true, 'message' => 'Orden actualizada exitosamente.', 'order' => $order]);
@@ -228,7 +263,14 @@ class OrderController extends Controller
      */
     public function destroy($id)
     {
-        $order = Order::findOrFail($id);
+        $order = Order::with('agreement')->findOrFail($id);
+
+        $currentUser = auth()->user();
+        $isMaster = $currentUser->role->nombre === 'master';
+        if (!$isMaster && optional($order->agreement)->location_id != $currentUser->location_id) {
+            return response()->json(['success' => false, 'message' => 'No tiene permisos para eliminar esta orden'], 403);
+        }
+
         $order->update(['estado' => 1]);
 
         return response()->json(['success' => true, 'message' => 'Orden eliminada correctamente.']);

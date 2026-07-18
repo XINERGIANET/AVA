@@ -14,13 +14,19 @@ class Maintenance extends Model
 {
 
 	protected $fillable = [
+		'location_id',
 		'date',
 		'description',
 		'deleted',
 	];
 
 	protected $dates =[
-		'date'	
+		'date'
 	];
+
+	public function location()
+	{
+		return $this->belongsTo(Location::class);
+	}
 
 }

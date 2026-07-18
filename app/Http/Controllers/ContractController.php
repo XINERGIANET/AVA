@@ -44,8 +44,12 @@ class ContractController extends Controller
             $request->merge(['client_name' => $client->business_name]);
         }
 
-        $location_id = $request->location_id;
+        $currentUser = auth()->user();
+        $isMaster = $currentUser->role->nombre === 'master';
 
+        // No-master siempre ve/registra su propia sede, sin importar qué
+        // location_id venga en el request.
+        $location_id = $isMaster ? $request->location_id : $currentUser->location_id;
 
         $contracts = Agreement::with(['agreement_details.product', 'orders.order_details.product', 'client', 'location'])
             ->where('type', 'contract')
@@ -56,13 +60,16 @@ class ContractController extends Controller
             ->when($location_id, fn($q) => $q->where('location_id', $location_id))
             ->paginate(10);
 
-        $locations = Location::where('deleted', 0)
-            ->get();
+        $locations = $isMaster
+            ? Location::where('deleted', 0)->get()
+            : Location::where('deleted', 0)->where('id', $currentUser->location_id)->get();
 
-        $areas = Location::all();
+        $areas = $locations;
         $products = Product::all();
         $paymentMethods = PaymentMethod::where('deleted', 0)->orderBy('name')->get();
-        $isles = Isle::where('deleted', 0)->orderBy('name')->get();
+        $isles = $isMaster
+            ? Isle::where('deleted', 0)->orderBy('name')->get()
+            : Isle::where('deleted', 0)->where('location_id', $currentUser->location_id)->orderBy('name')->get();
         $nextContractNumber = $this->generateNextContractNumber();
 
         return view('contracts.index', compact('contracts', 'locations', 'areas', 'products', 'paymentMethods', 'isles', 'nextContractNumber'));
@@ -80,7 +87,9 @@ class ContractController extends Controller
             $request->merge(['client_name' => $client->business_name ? $client->business_name : $client->contact_name]);
         }
 
-        $location_id = $request->location_id;
+        $currentUser = auth()->user();
+        $isMaster = $currentUser->role->nombre === 'master';
+        $location_id = $isMaster ? $request->location_id : $currentUser->location_id;
         $location = Location::find($location_id);
         if ($location) {
             // Agrega el nombre al request usando merge
@@ -111,7 +120,9 @@ class ContractController extends Controller
             $start_date = request()->get('start_date');
             $end_date = request()->get('end_date');
             $client_id = request()->get('client_id');
-            $location_id = request()->get('location_id');
+            $currentUser = auth()->user();
+            $isMaster = $currentUser->role->nombre === 'master';
+            $location_id = $isMaster ? request()->get('location_id') : $currentUser->location_id;
 
             $client = Client::find($client_id);
             $location = Location::find($location_id);
@@ -197,6 +208,11 @@ class ContractController extends Controller
                 'orders.order_details',
                 'agreement_details.product'
             ])->findOrFail($id);
+
+            $currentUser = auth()->user();
+            if ($currentUser->role->nombre !== 'master' && (int) $agreement->location_id !== (int) $currentUser->location_id) {
+                return response()->json(['error' => 'No tienes permiso para ver las órdenes de este contrato.'], 403);
+            }
 
             // Construir productos con info de cantidades
             $productos = $agreement->agreement_details->map(function ($detail) use ($agreement) {
@@ -341,6 +357,14 @@ class ContractController extends Controller
             'generate_orders' => 'nullable|boolean',
             'number_of_orders' => 'nullable|integer|min:1',
         ]);
+
+        $currentUser = auth()->user();
+        if ($currentUser->role->nombre !== 'master' && (int) $validated['location_id'] !== (int) $currentUser->location_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Solo puedes registrar contratos para tu propia sede.'
+            ], 403);
+        }
 
         try {
             DB::beginTransaction();
@@ -586,6 +610,14 @@ class ContractController extends Controller
             // Cargar relaciones necesarias: client (cliente) y location (sede)
             $contract = Agreement::with(['client', 'location'])->findOrFail($id);
 
+            $currentUser = auth()->user();
+            if ($currentUser->role->nombre !== 'master' && (int) $contract->location_id !== (int) $currentUser->location_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No tienes permiso para ver este contrato.'
+                ], 403);
+            }
+
             // Normalizar salida (evitar exposiciones innecesarias)
             $payload = [
                 'id' => $contract->id,
@@ -640,10 +672,30 @@ class ContractController extends Controller
             'subtotals_edit' => 'nullable|array',
         ]);
 
+        $currentUser = auth()->user();
+        $isMaster = $currentUser->role->nombre === 'master';
+
         try {
             DB::beginTransaction();
 
             $contract = Agreement::findOrFail($id);
+
+            if (!$isMaster) {
+                if ((int) $contract->location_id !== (int) $currentUser->location_id) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'No tienes permiso para editar este contrato.'
+                    ], 403);
+                }
+                if (array_key_exists('location_id', $validated) && (int) $validated['location_id'] !== (int) $currentUser->location_id) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Solo puedes asignar tu propia sede.'
+                    ], 403);
+                }
+            }
 
             // Actualizar campos principales si vienen
             if (array_key_exists('client_id', $validated)) {
@@ -704,6 +756,12 @@ class ContractController extends Controller
     public function destroy($id)
     {
         $agreement = Agreement::findOrFail($id);
+
+        $currentUser = auth()->user();
+        if ($currentUser->role->nombre !== 'master' && (int) $agreement->location_id !== (int) $currentUser->location_id) {
+            return redirect()->back()->with('error', 'No tienes permiso para eliminar este contrato.');
+        }
+
         $agreement->deleted = 1;
         $agreement->save();
 
@@ -868,6 +926,11 @@ class ContractController extends Controller
     public function details_modal(Request $request, $id)
     {
         try {
+            $agreement = Agreement::findOrFail($id);
+            $currentUser = auth()->user();
+            if ($currentUser->role->nombre !== 'master' && (int) $agreement->location_id !== (int) $currentUser->location_id) {
+                return response()->json(['success' => false, 'message' => 'No tienes permiso para ver este contrato.'], 403);
+            }
 
             $orderIds = Order::where('agreement_id', $id)->pluck('id');
             $orderDetailIds = OrderDetail::whereIn('order_id', $orderIds)->pluck('id');

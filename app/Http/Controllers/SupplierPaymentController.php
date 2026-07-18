@@ -30,9 +30,7 @@ class SupplierPaymentController extends Controller
             ->when($endDate, fn($q) => $q->whereDate('date', '<=', $endDate))
             ->when($supplierId, fn($q) => $q->where('supplier_id', $supplierId))
             ->when(auth()->user()->role->nombre != 'master' && auth()->user()->location_id, function ($query) {
-                $query->whereHas('purchase_details.tank', function ($q) {
-                    $q->where('location_id', auth()->user()->location_id);
-                });
+                $query->where('location_id', auth()->user()->location_id);
             })
             ->orderBy('date', 'desc');
 
@@ -80,6 +78,17 @@ class SupplierPaymentController extends Controller
         DB::beginTransaction();
         try {
             $purchase = Purchase::findOrFail($request->purchase_id);
+
+            $currentUser = auth()->user();
+            $isMaster = $currentUser->role->nombre === 'master';
+            if (!$isMaster && $purchase->location_id != $currentUser->location_id) {
+                DB::rollBack();
+                return response()->json([
+                    'status' => false,
+                    'error' => 'No tiene permisos para registrar pagos de compras de otra sede.',
+                ], 403);
+            }
+
             $balance = $purchase->balance;
 
             if ($request->amount > $balance + 0.009) {

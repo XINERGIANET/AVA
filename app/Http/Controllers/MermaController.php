@@ -85,7 +85,13 @@ class MermaController extends Controller
             'lecturas.*.fisico'   => 'nullable|numeric|min:0',
         ]);
 
-        $userId = auth()->user()->id;
+        $currentUser = auth()->user();
+        $userId = $currentUser->id;
+        $isMaster = $currentUser->role->nombre === 'master';
+        if (!$isMaster && $validated['location_id'] != $currentUser->location_id) {
+            return redirect()->back()->with('error', 'No tiene permisos para registrar tomas de inventario en otra sede.');
+        }
+
         $date = $validated['date'];
         $savedCount = 0;
 
@@ -98,6 +104,10 @@ class MermaController extends Controller
 
                 $tank = Tank::find($tankId);
                 if (!$tank) {
+                    continue;
+                }
+
+                if (!$isMaster && $tank->location_id != $currentUser->location_id) {
                     continue;
                 }
 
@@ -258,7 +268,9 @@ class MermaController extends Controller
             $reading->stock_level = $reading->tank ? $this->nivelStock($reading->tank) : 'SIN DATO';
         }
 
-        $locations = Location::where('deleted', 0)->orderBy('name')->get();
+        $locations = $isMaster
+            ? Location::where('deleted', 0)->orderBy('name')->get()
+            : Location::where('deleted', 0)->where('id', $currentUser->location_id)->orderBy('name')->get();
         $products = Product::where('deleted', 0)->orderBy('name')->get();
 
         return view('merma.index', compact('readings', 'locations', 'products', 'isMaster'));
@@ -269,13 +281,17 @@ class MermaController extends Controller
      */
     public function excel(Request $request)
     {
+        $currentUser = auth()->user();
+        $isMaster = $currentUser->role->nombre === 'master';
+        $locationId = $isMaster ? $request->location_id : $currentUser->location_id;
+
         $filename = 'control_merma_' . date('Y-m-d_H-i-s') . '.xlsx';
 
         return Excel::download(
             new MermaExport(
                 $request->start_date,
                 $request->end_date,
-                $request->location_id,
+                $locationId,
                 $request->product_id
             ),
             $filename

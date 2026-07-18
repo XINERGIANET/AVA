@@ -35,14 +35,16 @@ class MeasurementController extends Controller
      */
     public function create()
     {
-        $locations = Location::where('deleted', 0)
-            ->get();
+        $currentUser = auth()->user();
+        $isMaster = $currentUser->role->nombre === 'master';
+
+        $locations = $isMaster
+            ? Location::where('deleted', 0)->get()
+            : Location::where('deleted', 0)->where('id', $currentUser->location_id)->get();
 
         $measurements = Measurement::where('deleted', 0)
-            ->orderByDesc('id')->when(auth()->user()->role->nombre != 'master' && auth()->user()->location_id, function ($query) {
-                $query->whereHas('location', function ($q) {
-                    $q->where('location_id', auth()->user()->location_id);
-                });
+            ->orderByDesc('id')->when(!$isMaster, function ($query) use ($currentUser) {
+                $query->where('location_id', $currentUser->location_id);
             })
             ->paginate(15);
 
@@ -63,6 +65,12 @@ class MeasurementController extends Controller
             'date'        => 'required|date',
             'description' => 'nullable|string|max:500',
         ]);
+
+        $currentUser = auth()->user();
+        $isMaster = $currentUser->role->nombre === 'master';
+        if (!$isMaster && $validated['location_id'] != $currentUser->location_id) {
+            abort(403, 'No tiene permisos para registrar mediciones en otra sede');
+        }
 
         // valores por defecto/normalización
         $validated['amount'] = round(floatval($validated['amount']), 2);

@@ -1,17 +1,10 @@
 @extends('template.index')
 
 @section('header')
-    <div class="d-flex align-items-center justify-content-between">
-        <div class="d-flex align-items-center">
-            <h4 class="mb-0 text-dark fw-bold">
-                <i class="bi bi-safe me-2 text-primary"></i>Registrar en Bóveda
-            </h4>
-        </div>
-        <div>
-            <button class="btn btn-primary fw-medium px-3" data-bs-toggle="modal" data-bs-target="#createModal" style="border-radius: 6px;">
-                <i class="bi bi-plus-circle me-1"></i>Nuevo Registro
-            </button>
-        </div>
+    <div class="d-flex align-items-center">
+        <h4 class="mb-0 text-dark fw-bold">
+            <i class="bi bi-safe me-2 text-primary"></i>Registrar en Bóveda
+        </h4>
     </div>
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb mb-0 bg-transparent p-0">
@@ -26,17 +19,19 @@
         <!-- Card que contiene la tabla y filtros -->
         <div class="card shadow-sm border-0" style="border-radius: 10px;">
             <div class="card-body">
-                <form id="vaultFilterForm" method="GET" action="{{ route('vault.create') }}">
-                    <div class="row g-2 align-items-end mb-4">
-                        <div class="col-md-3">
-                            <label for="from_date" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Desde</label>
-                            <input type="date" class="form-control form-control-sm" id="from_date" name="from_date" value="{{ $fromDate }}">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+                    <form id="vaultFilterForm" method="GET" action="{{ route('vault.create') }}">
+                        <div class="row g-2 align-items-end mb-2">
+                            <div class="col-auto">
+                                <label for="from_date" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Desde</label>
+                                <input type="date" class="form-control form-control-sm" id="from_date" name="from_date" value="{{ $fromDate }}">
+                            </div>
+                            <div class="col-auto">
+                                <label for="to_date" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Hasta</label>
+                                <input type="date" class="form-control form-control-sm" id="to_date" name="to_date" value="{{ $toDate }}">
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <label for="to_date" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Hasta</label>
-                            <input type="date" class="form-control form-control-sm" id="to_date" name="to_date" value="{{ $toDate }}">
-                        </div>
-                        <div class="col-md-6 text-end">
+                        <div>
                             <button type="submit" class="btn btn-primary btn-sm px-3 fw-medium" style="border-radius: 6px;">
                                 <i class="bi bi-funnel me-1"></i>Filtrar
                             </button>
@@ -44,18 +39,23 @@
                                 <i class="bi bi-eraser me-1"></i>Limpiar
                             </a>
                         </div>
-                    </div>
-                </form>
+                    </form>
 
-                <div class="mb-3 d-flex flex-column">
-                    <strong>
-                        Total filtrado ({{ \Carbon\Carbon::parse($fromDate)->format('d/m/Y') }} -
-                        {{ \Carbon\Carbon::parse($toDate)->format('d/m/Y') }}):
-                        S/ {{ number_format($filteredTotal, 2) }}
-                    </strong>
-                    <small class="text-muted">
-                        Por defecto se muestra la última fecha registrada: {{ \Carbon\Carbon::parse($defaultDate)->format('d/m/Y') }}
-                    </small>
+                    <div class="text-end">
+                        <button class="btn btn-primary fw-medium px-3" data-bs-toggle="modal" data-bs-target="#createModal" style="border-radius: 6px;">
+                            <i class="bi bi-plus-circle me-1"></i>Nuevo Registro
+                        </button>
+                        <div class="mt-2">
+                            <strong class="d-block">
+                                Total filtrado ({{ \Carbon\Carbon::parse($fromDate)->format('d/m/Y') }} -
+                                {{ \Carbon\Carbon::parse($toDate)->format('d/m/Y') }}):
+                                S/ {{ number_format($filteredTotal, 2) }}
+                            </strong>
+                            <small class="text-muted">
+                                Por defecto se muestra la última fecha registrada: {{ \Carbon\Carbon::parse($defaultDate)->format('d/m/Y') }}
+                            </small>
+                        </div>
+                    </div>
                 </div>
                 <!-- Tabla de Registros -->
                 <div class="table-responsive">

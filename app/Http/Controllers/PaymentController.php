@@ -43,8 +43,10 @@ class PaymentController extends Controller
             ->when($client_id, fn($query) => $query->where('client_id', $client_id))
             ->when($voucher_type, fn($query) => $query->where('voucher_type', $voucher_type))
             ->when(auth()->user()->role->nombre != 'master' && auth()->user()->location_id, function ($query) {
-                $query->whereHas('sale.location', function ($q) {
-                    $q->where('location_id', auth()->user()->location_id);
+                $locationId = auth()->user()->location_id;
+                $query->where(function ($q) use ($locationId) {
+                    $q->whereHas('sale', fn($q2) => $q2->where('location_id', $locationId))
+                        ->orWhereHas('agreement', fn($q2) => $q2->where('location_id', $locationId));
                 });
             })
             ->when($payment_method_id, fn($query) => $query->where('payment_method_id', $payment_method_id))
@@ -485,7 +487,16 @@ class PaymentController extends Controller
     {
         Log::info('Entró al método update de PaymentController', ['id' => $id]);
 
-        $payment = Payment::find($id);
+        $payment = Payment::with(['sale.location', 'agreement.location'])->find($id);
+
+        $currentUser = auth()->user();
+        if ($currentUser->role->nombre !== 'master') {
+            $paymentLocationId = optional($payment->sale)->location_id ?? optional($payment->agreement)->location_id;
+            if ((int) $paymentLocationId !== (int) $currentUser->location_id) {
+                return response()->json(['status' => false, 'message' => 'No tienes permiso para anular este pago.'], 403);
+            }
+        }
+
         $payment->deleted = 1;
         $payment->save();
 
@@ -501,10 +512,12 @@ class PaymentController extends Controller
         $voucher_type = $request->input('voucher_type');
         $payment_method_id = $request->input('payment_method_id');
 
-
+        $currentUser = auth()->user();
+        $isMaster = $currentUser->role->nombre === 'master';
+        $location_id = $isMaster ? $request->input('location_id') : $currentUser->location_id;
 
         try {
-            return Excel::download(new PaymentsExport($start_date, $end_date, $number, $client_name, $voucher_type, $payment_method_id), 'Pagos.xlsx');
+            return Excel::download(new PaymentsExport($start_date, $end_date, $number, $client_name, $voucher_type, $payment_method_id, $location_id), 'Pagos.xlsx');
         } catch (\Exception $e) {
             return response()->json([
                 'status' => false,
@@ -523,13 +536,23 @@ class PaymentController extends Controller
             $voucher_type = $request->voucher_type;
             $payment_method_id = $request->payment_method_id;
 
+            $currentUser = auth()->user();
+            $isMaster = $currentUser->role->nombre === 'master';
+            $location_id = $isMaster ? $request->location_id : $currentUser->location_id;
+
             $query = Payment::with('payment_method', 'client')
                 ->when($start_date, fn($query) => $query->whereDate('date', '>=', $start_date))
                 ->when($end_date, fn($query) => $query->whereDate('date', '<=', $end_date))
                 ->when($number, fn($query) => $query->where('number', 'like', "%$number%"))
                 ->when($client_id, fn($query) => $query->where('client_id', $client_id))
                 ->when($voucher_type, fn($query) => $query->where('voucher_type', $voucher_type))
-                ->when($payment_method_id, fn($query) => $query->where('payment_method_id', $payment_method_id));
+                ->when($payment_method_id, fn($query) => $query->where('payment_method_id', $payment_method_id))
+                ->when($location_id, function ($query) use ($location_id) {
+                    $query->where(function ($q) use ($location_id) {
+                        $q->whereHas('sale.location', fn($q2) => $q2->where('id', $location_id))
+                            ->orWhereHas('agreement.location', fn($q2) => $q2->where('id', $location_id));
+                    });
+                });
             $payments = $query->get();
 
             $client_name = "";

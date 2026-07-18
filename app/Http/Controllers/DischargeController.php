@@ -17,9 +17,16 @@ class DischargeController extends Controller
     // DischargeController.php
     public function index()
     {
-        $locations = Location::where('deleted', '0')->get();
+        $currentUser = auth()->user();
+        $isMaster = $currentUser->role->nombre === 'master';
+
+        $locations = $isMaster
+            ? Location::where('deleted', '0')->get()
+            : Location::where('deleted', '0')->where('id', $currentUser->location_id)->get();
         $products = Product::where('deleted', '0')->get();
-        $discharges = Discharge::with(['location', 'first_detail.product', 'first_detail.tank'])->get();
+        $discharges = Discharge::with(['location', 'first_detail.product', 'first_detail.tank'])
+            ->when(!$isMaster, fn($q) => $q->where('location_id', $currentUser->location_id))
+            ->get();
 
         // Obtener todos los tanques agrupados por sede
         $tanks = Tank::where('deleted', '0')
@@ -50,6 +57,12 @@ class DischargeController extends Controller
             'tank_id' => 'required|exists:tanks,id',
             'quantity' => 'required|numeric|min:0.01'
         ]);
+
+        $currentUser = auth()->user();
+        $isMaster = $currentUser->role->nombre === 'master';
+        if (!$isMaster && $validated['location_id'] != $currentUser->location_id) {
+            return redirect()->route('discharges.index')->with('error', 'No tiene permisos para registrar distribuciones en otra sede');
+        }
 
         DB::transaction(function () use ($validated, $request) {
             // Registrar la distribución

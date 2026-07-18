@@ -14,12 +14,13 @@ class StorageController extends Controller
     {
         $location_id = $request->location_id;
         $user = auth()->user();
+        $isMaster = $user->role->nombre === 'master';
 
-        $tanks = Tank::where('location_id', $user->location_id)
+        $tanks = Tank::when(!$isMaster, fn($q) => $q->where('location_id', $user->location_id))
             ->with(['location', 'product'])
             ->get();
 
-        $locations = Location::all(); // Obtener todas las sedes para el filtro
+        $locations = $isMaster ? Location::all() : Location::where('id', $user->location_id)->get();
         $products = Product::all();
         return view('storages.index', compact('tanks', 'locations', 'products'));
     }
@@ -28,6 +29,12 @@ class StorageController extends Controller
     {
         try {
             $tank = Tank::findOrFail($id);
+
+            $currentUser = auth()->user();
+            $isMaster = $currentUser->role->nombre === 'master';
+            if (!$isMaster && $tank->location_id != $currentUser->location_id) {
+                return response()->json(['success' => false, 'message' => 'No tiene permisos para modificar este tanque.'], 403);
+            }
 
             $request->validate([
                 'name' => 'required|string|max:255',
@@ -38,6 +45,10 @@ class StorageController extends Controller
             ], [
                 'stored_quantity.lte' => 'El stock disponible no puede superar la capacidad máxima del tanque.'
             ]);
+
+            if (!$isMaster && $request->location_id != $currentUser->location_id) {
+                return response()->json(['success' => false, 'message' => 'No tiene permisos para asignar el tanque a otra sede.'], 403);
+            }
 
             $tank->update([
                 'name' => $request->name,
