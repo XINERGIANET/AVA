@@ -184,13 +184,6 @@
                     <!--logo End-->
                     <h4 class="logo-title">Ava</h4>
                 </a>
-                <div class="sidebar-toggle" data-toggle="sidebar" data-active="true" style="cursor: pointer; position: absolute; right: -25px; top: 15px; background: var(--bs-primary); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1050;">
-                    <i class="icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </i>
-                </div>
             </div>
             <div class="sidebar-body pt-0 data-scrollbar">
                 <div class="sidebar-list">
@@ -419,6 +412,20 @@
                                         <span class="item-name">Almacén</span>
                                     </a>
                                 </li>
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->routeIs('flowmeters.historico') ? 'active' : '' }}" href="{{ route('flowmeters.historico') }}">
+                                        <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
+                                        <i class="sidenav-mini-icon"><i class="bi bi-dash"></i></i>
+                                        <span class="item-name">Contómetros</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->routeIs('measurements.*') ? 'active' : '' }}" href="{{ route('measurements.create') }}">
+                                        <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
+                                        <i class="sidenav-mini-icon"> MD </i>
+                                        <span class="item-name">Mediciones</span>
+                                    </a>
+                                </li>
                             </ul>
                         </li>
 
@@ -446,20 +453,6 @@
                                         <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
                                         <i class="sidenav-mini-icon"><i class="bi bi-dash"></i></i>
                                         <span class="item-name">Ventas</span>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link {{ request()->routeIs('flowmeters.historico') ? 'active' : '' }}" href="{{ route('flowmeters.historico') }}">
-                                        <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
-                                        <i class="sidenav-mini-icon"><i class="bi bi-dash"></i></i>
-                                        <span class="item-name">Contómetros</span>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link {{ request()->routeIs('measurements.*') ? 'active' : '' }}" href="{{ route('measurements.create') }}">
-                                        <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
-                                        <i class="sidenav-mini-icon"> MD </i>
-                                        <span class="item-name">Mediciones</span>
                                     </a>
                                 </li>
                                 <li class="nav-item">
@@ -650,7 +643,7 @@
                         <!--logo End-->
                         <h4 class="logo-title">Ava</h4>
                     </a>
-                    <div class="sidebar-toggle" data-toggle="sidebar" data-active="true" style="cursor: pointer;">
+                    <div class="sidebar-toggle ms-3" data-toggle="sidebar" data-active="true" style="cursor: pointer; display: flex !important; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: rgba(255, 255, 255, 0.1); color: white;">
                         <i class="icon">
                             <svg width="24px" class="icon-24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
