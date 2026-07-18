@@ -61,7 +61,10 @@ class PurchaseController extends Controller
         $products = Product::where('deleted', 0)
             ->get();
         
-        $tanks = Tank::where('deleted', 0)->get();
+        $tanks = Tank::where('deleted', 0)
+            ->whereNotNull('product_id')
+            ->where('name', '!=', '')
+            ->get();
         $locations = Location::where('deleted', 0) ->when(auth()->user()->role->nombre != 'master' && auth()->user()->location_id, function ($query) {
             $query->where('id', auth()->user()->location_id);
         })->get();
@@ -85,7 +88,10 @@ class PurchaseController extends Controller
     public function create(Request $request)
     {
         $paymentMethods = PaymentMethod::where('deleted', 0)->get();
-        $tanks = Tank::where('deleted', 0)->get();
+        $tanks = Tank::where('deleted', 0)
+            ->whereNotNull('product_id')
+            ->where('name', '!=', '')
+            ->get();
         $locations = Location::where('deleted', 0) ->when(auth()->user()->role->nombre != 'master' && auth()->user()->location_id, function ($query) {
             $query->where('id', auth()->user()->location_id);
         })->get();

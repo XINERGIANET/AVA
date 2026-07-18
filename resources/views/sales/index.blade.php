@@ -3503,6 +3503,17 @@
                 $(inputSelector).prop('disabled', true).val('');
             }
 
+            // Si tras este cambio queda un único método de pago marcado, se le
+            // asigna automáticamente el total a cobrar (igual que al abrir el
+            // cobro). Si queda más de uno marcado, el/los recién marcados
+            // arrancan en 0 para que el usuario reparta el monto a mano.
+            var checkedBoxes = $('input[type="checkbox"][id^="cbx_amount_"]:checked');
+            if (checkedBoxes.length === 1) {
+                var total = parseFloat($('#total').text()) || 0;
+                var onlyPaymentId = checkedBoxes.first().attr('id').replace('cbx_amount_', '');
+                $('#amount_' + onlyPaymentId).val(total.toFixed(2));
+            }
+
             // Recalcular diferencia
             calculateDifference();
         }
