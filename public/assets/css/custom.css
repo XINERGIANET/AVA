@@ -565,24 +565,27 @@ body.uikit .btn-download {
 /* Compact page header for CRUD screens */
 .iq-banner .iq-navbar-header .iq-container,
 .sidebar + .main-content .iq-navbar-header .iq-container {
-  padding: 1rem calc(var(--bs-gutter-x, 1rem) * 3) 0.75rem;
+  padding-top: 0.35rem !important;
+  padding-bottom: 0.25rem !important;
 }
 
 .iq-navbar-header .flex-wrap {
-  row-gap: 0.5rem;
+  row-gap: 0.25rem;
 }
 
 .iq-navbar-header h4 {
+  margin-bottom: 0 !important;
   line-height: 1.2;
 }
 
 .main-content .content-inner {
-  padding-top: 0.75rem;
+  padding-top: 0.25rem !important;
 }
 
 @media (max-width: 767.98px) {
   .iq-banner .iq-navbar-header .iq-container,
   .sidebar + .main-content .iq-navbar-header .iq-container {
-    padding: 0.75rem calc(var(--bs-gutter-x, 0.75rem) * 2) 0.5rem;
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.15rem !important;
   }
 }
