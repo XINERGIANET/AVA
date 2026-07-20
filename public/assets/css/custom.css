@@ -561,3 +561,28 @@ body.uikit .btn-download {
 .top-1 {
   top: 1rem;
 }
+
+/* Compact page header for CRUD screens */
+.iq-banner .iq-navbar-header .iq-container,
+.sidebar + .main-content .iq-navbar-header .iq-container {
+  padding: 1rem calc(var(--bs-gutter-x, 1rem) * 3) 0.75rem;
+}
+
+.iq-navbar-header .flex-wrap {
+  row-gap: 0.5rem;
+}
+
+.iq-navbar-header h4 {
+  line-height: 1.2;
+}
+
+.main-content .content-inner {
+  padding-top: 0.75rem;
+}
+
+@media (max-width: 767.98px) {
+  .iq-banner .iq-navbar-header .iq-container,
+  .sidebar + .main-content .iq-navbar-header .iq-container {
+    padding: 0.75rem calc(var(--bs-gutter-x, 0.75rem) * 2) 0.5rem;
+  }
+}
