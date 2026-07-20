@@ -423,6 +423,19 @@ class CashCloseController extends Controller
             return response()->json(['status' => false, 'message' => 'No tiene acceso a esta isla.'], 403);
         }
 
+        $generalCashOpen = CashClose::where('location_id', $isle->location_id)
+            ->where('cash_type', 'general')
+            ->whereNull('real_cash_amount')
+            ->exists();
+
+        if ($generalCashOpen) {
+            return response()->json([
+                'status' => true,
+                'isOpen' => true,
+                'cashMode' => 'general'
+            ]);
+        }
+
         $lastClose = CashClose::where('isle_id', $isleId)
                         ->where('cash_type', 'isle')
                         ->latest('id') // Equivalente a ORDER BY id DESC
@@ -432,7 +445,8 @@ class CashCloseController extends Controller
 
         return response()->json([
             'status' => true,
-            'isOpen' => $isOpen
+            'isOpen' => $isOpen,
+            'cashMode' => 'isle'
         ]);
     }
 

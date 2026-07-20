@@ -2075,7 +2075,7 @@
                         btnProcesar.prop('disabled', true);
                         containerBtn.append(`
                             <small class="text-danger d-block mt-1 alert-caja-cerrada">
-                                <i class="bi bi-lock-fill"></i> Caja cerrada o no iniciada para esta isla.
+                                <i class="bi bi-lock-fill"></i> Caja cerrada o no iniciada para esta isla, y no hay caja general abierta.
                             </small>
                         `);
                     }
