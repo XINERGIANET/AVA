@@ -565,8 +565,8 @@ body.uikit .btn-download {
 /* Compact page header for CRUD screens */
 .iq-banner .iq-navbar-header .iq-container,
 .sidebar + .main-content .iq-navbar-header .iq-container {
-  padding-top: 0.35rem !important;
-  padding-bottom: 0.25rem !important;
+  padding-top: 0.75rem !important;
+  padding-bottom: 0.65rem !important;
 }
 
 .iq-navbar-header .flex-wrap {
@@ -579,13 +579,13 @@ body.uikit .btn-download {
 }
 
 .main-content .content-inner {
-  padding-top: 0.25rem !important;
+  padding-top: 0.65rem !important;
 }
 
 @media (max-width: 767.98px) {
   .iq-banner .iq-navbar-header .iq-container,
   .sidebar + .main-content .iq-navbar-header .iq-container {
-    padding-top: 0.25rem !important;
-    padding-bottom: 0.15rem !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.4rem !important;
   }
 }
