@@ -29,6 +29,7 @@ class Location extends Model
 {
 	protected $fillable = [
 		'name',
+		'cash_amount',
 		'deleted'
 	];
 

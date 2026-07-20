@@ -385,7 +385,8 @@ class VaultController extends Controller
         // 1. Agregar validación del isle_id
         $request->validate([
             'amount'  => 'required|numeric|min:0.01',
-            'isle_id' => 'required|exists:isles,id',
+            'cash_type' => 'nullable|in:general,isle',
+            'isle_id' => 'required_if:cash_type,isle|nullable|exists:isles,id',
             'location_id' => 'nullable|exists:locations,id',
         ]);
 
@@ -393,7 +394,71 @@ class VaultController extends Controller
         try {
             $user = Auth::user();
             $amount = floatval($request->input('amount'));
+            $cashType = $request->input('cash_type', 'isle');
             $isleId = $request->input('isle_id');
+
+            if ($cashType === 'general') {
+                $sourceLocation = Location::lockForUpdate()->find($user->location_id);
+
+                if (!$sourceLocation) {
+                    DB::rollBack();
+                    return response()->json(['success' => false, 'message' => 'Sede no encontrada.'], 404);
+                }
+
+                $currentCash = floatval($sourceLocation->cash_amount ?? 0);
+                if ($currentCash < $amount) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Saldo insuficiente en la caja general. Disponible: S/ ' . number_format($currentCash, 2)
+                    ], 422);
+                }
+
+                $destinationLocationId = $user->role->nombre === 'master'
+                    ? ($request->input('location_id') ?: $sourceLocation->id)
+                    : $user->location_id;
+                $destinationLocation = Location::lockForUpdate()->find($destinationLocationId);
+
+                if (!$destinationLocation) {
+                    DB::rollBack();
+                    return response()->json(['success' => false, 'message' => 'Boveda destino no encontrada.'], 404);
+                }
+
+                $sourceLocation->decrement('cash_amount', $amount);
+
+                if ($user->role->nombre !== 'worker') {
+                    $destinationIsle = Isle::where('location_id', $destinationLocation->id)
+                        ->where('deleted', 0)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if ($destinationIsle) {
+                        $destinationIsle->increment('vault', $amount);
+                    }
+                }
+
+                $expense = Transaction::create([
+                    'user_id' => $user->id,
+                    'location_id' => $destinationLocation->id,
+                    'isle_id' => null,
+                    'type' => 'eb',
+                    'description' => 'Transferencia a boveda desde caja general de ' . ($sourceLocation->name ?? 'N/A') . ' hacia boveda de ' . $destinationLocation->name,
+                    'amount' => $amount,
+                    'date' => now(),
+                    'status' => $user->role->nombre === 'worker' ? 0 : 1,
+                ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => $user->role->nombre === 'worker'
+                        ? 'Dinero descontado de la caja general. Envio a boveda pendiente de aprobacion.'
+                        : 'Dinero enviado a la boveda correctamente.',
+                    'expense' => $expense,
+                    'new_general_balance' => $sourceLocation->cash_amount
+                ]);
+            }
 
             // 2. Buscar la ISLA y bloquearla para transacciones seguras
             // Usamos la tabla 'isles' como fuente de la verdad
@@ -539,6 +604,12 @@ class VaultController extends Controller
         try {
             // El saldo de bóveda se lleva por isla (Isle.vault), no por sede.
             $isle = $transaction->isle_id ? Isle::lockForUpdate()->find($transaction->isle_id) : null;
+            if (!$isle && $transaction->type === 'eb') {
+                $isle = Isle::where('location_id', $transaction->location_id)
+                    ->where('deleted', 0)
+                    ->lockForUpdate()
+                    ->first();
+            }
             if (!$isle) {
                 DB::rollBack();
                 return redirect()->back()->with('error', 'No se encontró la isla asociada al movimiento.');

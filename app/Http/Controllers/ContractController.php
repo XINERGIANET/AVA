@@ -386,7 +386,12 @@ class ContractController extends Controller
                 $isCashPayment = $paymentMethod && strtolower(trim($paymentMethod->name)) === 'efectivo';
 
                 if ($isCashPayment) {
-                    if (empty($validated['payment_isle_id'])) {
+                    $hasOpenGeneralCash = CashClose::where('location_id', $validated['location_id'])
+                        ->where('cash_type', 'general')
+                        ->whereNull('real_cash_amount')
+                        ->exists();
+
+                    if (!$hasOpenGeneralCash && empty($validated['payment_isle_id'])) {
                         DB::rollBack();
                         return response()->json([
                             'success' => false,
@@ -394,30 +399,33 @@ class ContractController extends Controller
                         ], 422);
                     }
 
-                    $paymentIsle = Isle::whereKey($validated['payment_isle_id'])
-                        ->where('location_id', $validated['location_id'])
-                        ->where('deleted', 0)
-                        ->lockForUpdate()
-                        ->first();
+                    if (!$hasOpenGeneralCash) {
+                        $paymentIsle = Isle::whereKey($validated['payment_isle_id'])
+                            ->where('location_id', $validated['location_id'])
+                            ->where('deleted', 0)
+                            ->lockForUpdate()
+                            ->first();
 
-                    if (!$paymentIsle) {
-                        DB::rollBack();
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'La caja de isla seleccionada no pertenece a la sede del contrato.'
-                        ], 422);
-                    }
+                        if (!$paymentIsle) {
+                            DB::rollBack();
+                            return response()->json([
+                                'success' => false,
+                                'message' => 'La caja de isla seleccionada no pertenece a la sede del contrato.'
+                            ], 422);
+                        }
 
-                    $hasOpenCash = CashClose::where('isle_id', $paymentIsle->id)
-                        ->whereNull('real_cash_amount')
-                        ->exists();
+                        $hasOpenCash = CashClose::where('isle_id', $paymentIsle->id)
+                            ->where('cash_type', 'isle')
+                            ->whereNull('real_cash_amount')
+                            ->exists();
 
-                    if (!$hasOpenCash) {
-                        DB::rollBack();
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'La caja de esta isla esta cerrada. Abre la caja antes de registrar el pago en efectivo.'
-                        ], 409);
+                        if (!$hasOpenCash) {
+                            DB::rollBack();
+                            return response()->json([
+                                'success' => false,
+                                'message' => 'La caja de esta isla esta cerrada. Abre la caja antes de registrar el pago en efectivo.'
+                            ], 409);
+                        }
                     }
                 }
             }
@@ -455,7 +463,9 @@ class ContractController extends Controller
                     'deleted' => false
                 ]);
 
-                if ($paymentIsle) {
+                if ($hasOpenGeneralCash ?? false) {
+                    Location::where('id', $validated['location_id'])->increment('cash_amount', $validated['total']);
+                } elseif ($paymentIsle) {
                     $paymentIsle->increment('cash_amount', $validated['total']);
                 }
             }

@@ -515,11 +515,17 @@ class SaleController extends Controller
             ], 422);
         }
 
-        $hasOpenCash = CashClose::where('isle_id', $isle->id)
+        $hasOpenGeneralCash = CashClose::where('location_id', $sede)
+            ->where('cash_type', 'general')
             ->whereNull('real_cash_amount')
             ->exists();
 
-        if (!$hasOpenCash) {
+        $hasOpenCash = CashClose::where('isle_id', $isle->id)
+            ->where('cash_type', 'isle')
+            ->whereNull('real_cash_amount')
+            ->exists();
+
+        if (!$hasOpenGeneralCash && !$hasOpenCash) {
             return response()->json([
                 'status' => false,
                 'code' => 'CASH_CLOSED',
@@ -600,17 +606,6 @@ class SaleController extends Controller
 
                     $currentTankStock = (float) ($tank->stored_quantity ?? 0);
                     $requestedQuantity = (float) $productData['quantity'];
-
-                    if ($currentTankStock + 0.000001 < $requestedQuantity) {
-                        throw ValidationException::withMessages([
-                            'products' => [
-                                "Stock insuficiente en tanque {$tank->name}. Disponible: " .
-                                number_format($currentTankStock, 3, '.', '') .
-                                ", solicitado: " .
-                                number_format($requestedQuantity, 3, '.', '')
-                            ]
-                        ]);
-                    }
                 }
 
                 $unitPriceFromRequest = floatval($productData['unit_price'] ?? 0);
@@ -698,8 +693,10 @@ class SaleController extends Controller
 
                     if (intval($paymentData['payment_method_id']) === 1) {
                         $isleIdSeleccionada = $request->isle_id;
-                        $affected = DB::table('isles')
-                            ->where('id', $isleIdSeleccionada)
+                        $cashTable = $hasOpenGeneralCash ? 'locations' : 'isles';
+                        $cashId = $hasOpenGeneralCash ? $sede : $isleIdSeleccionada;
+                        $affected = DB::table($cashTable)
+                            ->where('id', $cashId)
                             ->increment('cash_amount', $paymentData['amount']);
 
                         if ($affected === 0) {

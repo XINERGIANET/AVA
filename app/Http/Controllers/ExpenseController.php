@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Location;
+use App\Models\CashClose;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -154,7 +155,8 @@ class ExpenseController extends Controller
             'category' => 'nullable|string|max:255',
             'payment_method' => 'nullable|string|max:255',
             'observation' => 'nullable|string',
-            'isle_id' => 'required|exists:isles,id',
+            'cash_type' => 'nullable|in:general,isle',
+            'isle_id' => 'required_if:cash_type,isle|nullable|exists:isles,id',
         ]);
 
         try {
@@ -162,6 +164,49 @@ class ExpenseController extends Controller
 
             $user = Auth::user();
             $isMaster = $user->role->nombre === 'master';
+            $cashType = $request->input('cash_type', 'isle');
+
+            if ($cashType === 'general') {
+                $location = Location::lockForUpdate()->find($user->location_id);
+
+                if (!$location) {
+                    DB::rollBack();
+                    return response()->json(['success' => false, 'message' => 'Sede no encontrada.'], 404);
+                }
+
+                $generalCashOpen = CashClose::where('location_id', $location->id)
+                    ->where('cash_type', 'general')
+                    ->whereNull('real_cash_amount')
+                    ->exists();
+
+                if (!$generalCashOpen) {
+                    DB::rollBack();
+                    return response()->json(['success' => false, 'message' => 'No hay caja general abierta.'], 422);
+                }
+
+                $expense = Transaction::create([
+                    'user_id' => $user->id,
+                    'location_id' => $location->id,
+                    'isle_id' => null,
+                    'type' => 'scc',
+                    'description' => $request->input('description'),
+                    'category' => $request->input('category'),
+                    'payment_method' => $request->input('payment_method') ?: 'Efectivo',
+                    'observation' => $request->input('observation'),
+                    'amount' => $request->input('amount'),
+                    'date' => now(),
+                ]);
+
+                $location->decrement('cash_amount', $request->input('amount'));
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Egreso registrado exitosamente.',
+                    'expense' => $expense
+                ]);
+            }
 
             $isle = Isle::lockForUpdate()->find($request->input('isle_id'));
 
@@ -192,12 +237,13 @@ class ExpenseController extends Controller
             ]);
 
             $isle->decrement('cash_amount', $request->input('amount'));
+            $isle->refresh();
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Egreso registrado exitosamente. Nuevo saldo: ' . ($isle->cash_amount - $request->input('amount')),
+                'message' => 'Egreso registrado exitosamente. Nuevo saldo: ' . $isle->cash_amount,
                 'expense' => $expense
             ]);
         } catch (\Exception $e) {

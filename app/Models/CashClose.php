@@ -15,6 +15,7 @@ class CashClose extends Model
         'user_id',
         'location_id',
         'isle_id',
+        'cash_type',
         'initial_cash_amount',
         'real_cash_amount',
         'final_cash_amount',
