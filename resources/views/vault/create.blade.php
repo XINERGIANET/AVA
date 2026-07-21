@@ -15,6 +15,7 @@
     </nav>
 @endsection
 @section('content')
+    @php($userLocationName = auth()->user()->location->name ?? 'Sede no disponible')
     <div class="container-fluid content-inner" style="padding-top: 1rem;">
         <!-- Card que contiene la tabla y filtros -->
         <div class="card shadow-sm border-0" style="border-radius: 10px;">
@@ -131,7 +132,7 @@
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Sede</label>
                             <select class="form-select" id="location_id" name="location_id">
-                                <option value="{{ auth()->user()->location_id }}">{{ auth()->user()->location->name }}</option>
+                                <option value="{{ auth()->user()->location_id }}">{{ $userLocationName }}</option>
                             </select>
                         </div>
                         <div class="mb-3">

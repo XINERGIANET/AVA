@@ -17,6 +17,7 @@
 
 @section('content')
 <div class="container-fluid content-inner mt-0 py-0">
+    @php($generalLocationId = $generalLocation->id ?? auth()->user()->location_id)
     <div class="card border-0 shadow-sm rounded-4">
         <div class="card-body p-4">
             <div class="d-flex justify-content-between align-items-start mb-4">
@@ -66,13 +67,13 @@
                 </div>
                 <div class="d-flex flex-wrap gap-2 mt-3">
                     @if($openGeneralCash)
-                        <button class="btn btn-outline-danger js-cash-action" data-cash-type="general" data-action="expense" data-isle="" data-name="Caja General" data-location="{{ $generalLocation->id }}"><i class="bi bi-box-arrow-right me-1"></i>Egreso</button>
-                        <button class="btn btn-outline-info js-cash-action" data-cash-type="general" data-action="vault" data-isle="" data-name="Caja General" data-location="{{ $generalLocation->id }}" data-amount="{{ number_format((float)($generalLocation->cash_amount ?? 0), 2, '.', '') }}"><i class="bi bi-safe me-1"></i>Enviar a boveda</button>
+                        <button class="btn btn-outline-danger js-cash-action" data-cash-type="general" data-action="expense" data-isle="" data-name="Caja General" data-location="{{ $generalLocationId }}"><i class="bi bi-box-arrow-right me-1"></i>Egreso</button>
+                        <button class="btn btn-outline-info js-cash-action" data-cash-type="general" data-action="vault" data-isle="" data-name="Caja General" data-location="{{ $generalLocationId }}" data-amount="{{ number_format((float)($generalLocation->cash_amount ?? 0), 2, '.', '') }}"><i class="bi bi-safe me-1"></i>Enviar a boveda</button>
                         @if(auth()->user()->role->nombre !== 'worker')
-                            <button class="btn btn-outline-secondary js-cash-action" data-cash-type="general" data-action="close" data-isle="general" data-name="Caja General" data-location="{{ $generalLocation->id }}"><i class="bi bi-lock me-1"></i>Cerrar caja general</button>
+                            <button class="btn btn-outline-secondary js-cash-action" data-cash-type="general" data-action="close" data-isle="general" data-name="Caja General" data-location="{{ $generalLocationId }}"><i class="bi bi-lock me-1"></i>Cerrar caja general</button>
                         @endif
                     @elseif(auth()->user()->role->nombre !== 'worker' && !$cashMode)
-                        <button class="btn btn-primary js-cash-action" data-cash-type="general" data-action="open" data-isle="" data-name="Caja General" data-location="{{ $generalLocation->id }}"><i class="bi bi-unlock me-1"></i>Abrir caja general</button>
+                        <button class="btn btn-primary js-cash-action" data-cash-type="general" data-action="open" data-isle="" data-name="Caja General" data-location="{{ $generalLocationId }}"><i class="bi bi-unlock me-1"></i>Abrir caja general</button>
                     @endif
                 </div>
             </div>
