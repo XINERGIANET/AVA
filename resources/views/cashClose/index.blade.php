@@ -1,18 +1,27 @@
 @extends('template.index')
 
 @section('header')
-    <div class="d-flex align-items-center">
-        <h4 class="mb-0 text-dark fw-bold">
-            <i class="bi bi-clock-history me-2 text-primary"></i>Histórico de Cierre de Caja
-        </h4>
+    <div class="d-flex justify-content-between align-items-center w-100">
+        <div>
+            <div class="d-flex align-items-center">
+                <h4 class="mb-0 text-dark fw-bold">
+                    <i class="bi bi-clock-history me-2 text-primary"></i>Histórico de Cierre de Caja
+                </h4>
+            </div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0 bg-transparent p-0">
+                    <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}" class="text-decoration-none text-muted">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('sales.index') }}" class="text-decoration-none text-muted">Ventas y Caja</a></li>
+                    <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">Cierre de Caja</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <a href="{{ route('petty_cash.index') }}" class="btn btn-primary shadow-sm d-flex align-items-center rounded-pill px-3 text-white fw-bold">
+                <i class="bi bi-arrow-left me-2"></i> Volver a Caja Chica
+            </a>
+        </div>
     </div>
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-0 bg-transparent p-0">
-            <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}" class="text-decoration-none text-muted">Home</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('sales.index') }}" class="text-decoration-none text-muted">Ventas y Caja</a></li>
-            <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">Cierre de Caja</li>
-        </ol>
-    </nav>
 @endsection
 
 @section('content')

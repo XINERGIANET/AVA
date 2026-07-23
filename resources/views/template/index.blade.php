@@ -422,7 +422,7 @@
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link {{ request()->routeIs('measurements.*') ? 'active' : '' }}" href="{{ route('measurements.create') }}">
+                                    <a class="nav-link {{ request()->routeIs('measurements.*') ? 'active' : ''  }}" href="{{ route('measurements.create') }}">
                                         <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
                                         <i class="sidenav-mini-icon"> MD </i>
                                         <span class="item-name">Mediciones</span>
@@ -462,13 +462,6 @@
                                         <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
                                         <i class="sidenav-mini-icon"> CC </i>
                                         <span class="item-name">Caja Chica</span>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link {{ request()->routeIs('cashClose.*') ? 'active' : '' }}" href="{{ route('cashClose.index') }}">
-                                        <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
-                                        <i class="sidenav-mini-icon"> CZ </i>
-                                        <span class="item-name">Cierre de Caja</span>
                                     </a>
                                 </li>
                                 @if(auth()->user()->role->nombre === 'master')
