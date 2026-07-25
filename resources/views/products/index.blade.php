@@ -108,11 +108,19 @@
                 </div>
                 <div class="modal-body row">
                     <div class="col-md-6 mb-3">
-                        <label for="name" class="form-label text-dark fw-bold">Producto</label>
+                        <label for="name" class="form-label text-dark fw-bold">Producto <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="name" name="name" required>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label for="category" class="form-label text-dark fw-bold">Categoría</label>
+                        <label for="brand" class="form-label text-dark fw-bold">Marca</label>
+                        <input type="text" class="form-control" id="brand" name="brand">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="type" class="form-label text-dark fw-bold">Tipo</label>
+                        <input type="text" class="form-control" id="type" name="type">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="category" class="form-label text-dark fw-bold">Categoría <span class="text-danger">*</span></label>
                         <div class="input-group">
                             <select name="category" id="category" class="form-select" required>
                                 <option value="">Seleccione una categoría</option>
@@ -124,6 +132,10 @@
                                 <i class="bi bi-plus-lg"></i>
                             </button>
                         </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="measurement_unit" class="form-label text-dark fw-bold">Unidad de Medida</label>
+                        <input type="text" class="form-control" id="measurement_unit" name="measurement_unit" placeholder="Ej. galones, litros, unidades...">
                     </div>
                     
                     <div class="col-md-12 mb-3">
