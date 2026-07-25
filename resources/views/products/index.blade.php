@@ -270,6 +270,8 @@
 
 @section('scripts')
 <script>
+    var productSpinner = document.getElementById('spinner');
+
     // Modal de Editar
     $('#editModal').on('show.bs.modal', function(event) {
         const button = $(event.relatedTarget); // Botón que activó el modal
@@ -310,6 +312,9 @@
 
         const formData = new FormData(this);
 
+        productSpinner.classList.add('spinner-visible');
+        productSpinner.classList.remove('spinner-hidden');
+
         $.ajax({
             url: $(this).attr('action'),
             method: 'POST',
@@ -317,12 +322,13 @@
             processData: false,
             contentType: false,
             success: function(response) {
-                spinner.classList.add('spinner-visible');
-                spinner.classList.remove('spinner-hidden');
+                productSpinner.classList.add('spinner-hidden');
+                productSpinner.classList.remove('spinner-visible');
                 if (response.status) {
+                   $('#createModal').modal('hide');
                    ToastMessage.fire({
                         icon: 'success',
-                        text: response.message || 'Operación exitosa' 
+                        text: response.message || 'Operación exitosa'
                     }).then(() => {
                         location.reload();
                     });
@@ -333,8 +339,8 @@
                 }
             },
             error: function(xhr) {
-                spinner.classList.add('spinner-visible');
-                spinner.classList.remove('spinner-hidden');
+                productSpinner.classList.add('spinner-hidden');
+                productSpinner.classList.remove('spinner-visible');
                 if (xhr.responseJSON && xhr.responseJSON.error) {
                     alert(xhr.responseJSON.error);
                 } else {

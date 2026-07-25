@@ -307,12 +307,14 @@ const resizePlugins = () => {
 -----------------------------------------------------------------------*/
 const loaderInit = () => {
   const loader = document.querySelector('.loader')
-  setTimeout(() => {
-    loader.classList.add('animate__animated', 'animate__fadeOut')
+  if (loader !== null) {
     setTimeout(() => {
-      loader.classList.add('d-none')
+      loader.classList.add('animate__animated', 'animate__fadeOut')
+      setTimeout(() => {
+        loader.classList.add('d-none')
+      }, 500)
     }, 500)
-  }, 500)
+  }
 }
 /*---------------------------------------------------------------------
               Sidebar Toggle
@@ -320,10 +322,12 @@ const loaderInit = () => {
 const sidebarToggle = (elem) => {
   elem.addEventListener('click', (e) => {
     const sidebar = document.querySelector('.sidebar')
-    if (sidebar.classList.contains('sidebar-mini')) {
-      sidebar.classList.remove('sidebar-mini')
-    } else {
-      sidebar.classList.add('sidebar-mini')
+    if (sidebar !== null) {
+      if (sidebar.classList.contains('sidebar-mini')) {
+        sidebar.classList.remove('sidebar-mini')
+      } else {
+        sidebar.classList.add('sidebar-mini')
+      }
     }
   })
 }
@@ -333,12 +337,17 @@ const sidebar = document.querySelector('.sidebar-default')
 if (sidebar !== null) {
   const sidebarActiveItem = sidebar.querySelectorAll('.active')
   Array.from(sidebarActiveItem, (elem) => {
-    if (!elem.closest('ul').classList.contains('iq-main-menu')) {
-      const childMenu = elem.closest('ul')
-      childMenu.classList.add('show')
-      const parentMenu = childMenu.closest('li').querySelector('.nav-link')
-      parentMenu.classList.add('collapsed')
-      parentMenu.setAttribute('aria-expanded', true)
+    const closestUl = elem.closest('ul')
+    if (closestUl && !closestUl.classList.contains('iq-main-menu')) {
+      closestUl.classList.add('show')
+      const closestLi = closestUl.closest('li')
+      if (closestLi) {
+        const parentMenu = closestLi.querySelector('.nav-link')
+        if (parentMenu) {
+          parentMenu.classList.add('collapsed')
+          parentMenu.setAttribute('aria-expanded', true)
+        }
+      }
     }
   })
 }
@@ -361,10 +370,13 @@ if (backToTop !== null && backToTop !== undefined) {
     }
   })
   // scroll body to 0px on click
-  document.querySelector('#top').addEventListener('click', (e) => {
-    e.preventDefault()
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  })
+  const topElem = document.querySelector('#top')
+  if (topElem !== null) {
+    topElem.addEventListener('click', (e) => {
+      e.preventDefault()
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    })
+  }
 }
 /*---------------------------------------------------------------------
               DOMContentLoaded

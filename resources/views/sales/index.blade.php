@@ -1826,7 +1826,13 @@
         }
 
         function appendEditableProductRow(selectedProductId) {
-            if (!directSaleProducts.length) return;
+            if (!directSaleProducts.length) {
+                ToastError.fire({
+                    title: 'Sin productos',
+                    text: 'No hay productos disponibles para agregar a la venta.'
+                });
+                return;
+            }
 
             const product = selectedProductId
                 ? directSaleProducts.find(p => String(p.id) === String(selectedProductId))
@@ -2038,6 +2044,7 @@
         });
 
         function loadProductsBySede() {
+            const isDirecta = $('#tipo-venta').val() === 'directa';
             // 1. Determinar isla seleccionada
             const selectedIsle = setDefaultIsle();
             
@@ -2048,42 +2055,46 @@
             // Limpiar alertas de bloqueo previas
             containerBtn.find('.alert-caja-cerrada').remove();
 
-            if (!selectedIsle) {
+            if (!selectedIsle && !isDirecta) {
                 $('#tbl-products').html('<div class="alert alert-info text-center">Seleccione una isla...</div>');
                 btnProcesar.prop('disabled', true); // Bloquear si no hay isla
                 return;
             }
 
             // --- NUEVA LÓGICA: VERIFICAR ESTADO DE CAJA (AJAX) ---
-            // Bloqueamos temporalmente mientras consulta
-            btnProcesar.prop('disabled', true); 
+            if (selectedIsle) {
+                // Bloqueamos temporalmente mientras consulta
+                btnProcesar.prop('disabled', true); 
 
-            // Construimos la URL dinámicamente. 
-            // Nota: Asegúrate de tener una variable base o usar replace si estás en un archivo .js externo
-            let urlCheck = "{{ route('cash_closes.check_status', ':id') }}";
-            urlCheck = urlCheck.replace(':id', selectedIsle);
+                // Construimos la URL dinámicamente. 
+                // Nota: Asegúrate de tener una variable base o usar replace si estás en un archivo .js externo
+                let urlCheck = "{{ route('cash_closes.check_status', ':id') }}";
+                urlCheck = urlCheck.replace(':id', selectedIsle);
 
-            $.ajax({
-                url: urlCheck,
-                method: 'GET',
-                success: function(response) {
-                    if (response.isOpen) {
-                        // CAJA ABIERTA: Habilitar botón
-                        btnProcesar.prop('disabled', false);
-                    } else {
-                        // CAJA CERRADA: Mantener bloqueado y mostrar mensaje
-                        btnProcesar.prop('disabled', true);
-                        containerBtn.append(`
-                            <small class="text-danger d-block mt-1 alert-caja-cerrada">
-                                <i class="bi bi-lock-fill"></i> Caja cerrada o no iniciada para esta isla, y no hay caja general abierta.
-                            </small>
-                        `);
+                $.ajax({
+                    url: urlCheck,
+                    method: 'GET',
+                    success: function(response) {
+                        if (response.isOpen) {
+                            // CAJA ABIERTA: Habilitar botón
+                            btnProcesar.prop('disabled', false);
+                        } else {
+                            // CAJA CERRADA: Mantener bloqueado y mostrar mensaje
+                            btnProcesar.prop('disabled', true);
+                            containerBtn.append(`
+                                <small class="text-danger d-block mt-1 alert-caja-cerrada">
+                                    <i class="bi bi-lock-fill"></i> Caja cerrada o no iniciada para esta isla, y no hay caja general abierta.
+                                </small>
+                            `);
+                        }
+                    },
+                    error: function() {
+                        console.error('Error verificando estado de caja');
                     }
-                },
-                error: function() {
-                    console.error('Error verificando estado de caja');
-                }
-            });
+                });
+            } else if (isDirecta) {
+                btnProcesar.prop('disabled', false);
+            }
             // -----------------------------------------------------
 
             // TU CÓDIGO ORIGINAL PARA CARGAR PRODUCTOS CONTINÚA AQUÍ...
