@@ -50,6 +50,7 @@
                             <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Tipo</th>
                             <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Categoría</th>
                             <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Und. Medida</th>
+                            <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Sedes</th>
                             <th class="pe-4 text-center fw-bold text-uppercase" style="width: 15%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Acciones</th>
                         </tr>
                     </thead>
@@ -62,6 +63,23 @@
                             <td class="text-dark">{{ $product->type ?: '-' }}</td>
                             <td class="text-dark">{{ $product->category ?: '-' }}</td>
                             <td class="text-dark">{{ $product->measurement_unit ?: '-' }}</td>
+                            <td class="text-dark">
+                                @php
+                                    $assignedCount = $product->location_prices->count();
+                                    $totalCount = $allLocationsCount ?? count($locations);
+                                @endphp
+                                @if ($assignedCount === 0)
+                                    <span class="badge bg-secondary" style="font-size: 0.75rem;">Sin sedes</span>
+                                @elseif ($totalCount > 0 && $assignedCount >= $totalCount)
+                                    <span class="badge bg-success" style="font-size: 0.75rem;">Todas</span>
+                                @else
+                                    @foreach ($product->location_prices as $lp)
+                                        @if ($lp->location)
+                                            <span class="badge bg-info text-dark me-1 mb-1" style="font-size: 0.75rem;">{{ $lp->location->name }}</span>
+                                        @endif
+                                    @endforeach
+                                @endif
+                            </td>
                             <td class="pe-4 text-center">
                                 <!-- Botón para editar -->
                                 <button class="btn btn-sm btn-warning text-white me-1" style="border-radius: 4px; padding: 0.25rem 0.5rem;" data-bs-toggle="modal" data-bs-target="#editModal"
@@ -83,7 +101,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="7" class="text-center py-4">No hay productos registrados.</td>
+                            <td colspan="8" class="text-center py-4">No hay productos registrados.</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -140,24 +158,39 @@
                     
                     <div class="col-md-12 mb-3">
                         <label class="form-label text-dark fw-bold">Precio por Sede</label>
+                        <small class="text-muted d-block mb-2">Marque las sedes a las cuales desea asignar este producto e ingrese su precio.</small>
                         <div class="table-responsive">
-                            <table class="table table-striped mb-0" id="productionTable">
-                                <thead>
+                            <table class="table table-striped table-hover align-middle mb-0" id="productionTable">
+                                <thead class="table-light">
                                     <tr>
+                                        <th style="width: 15%;" class="text-center">Asignar</th>
                                         <th>Sede</th>
-                                        <th>Precio</th>
+                                        <th>Precio (S/)</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach ($locations as $location)
                                     <tr>
-                                        <td class="align-middle">{{ $location->name }}</td>
+                                        <td class="text-center align-middle">
+                                            <input class="form-check-input create-location-checkbox"
+                                                type="checkbox"
+                                                name="locations_selected[{{ $location->id }}]"
+                                                value="{{ $location->id }}"
+                                                id="create_loc_check_{{ $location->id }}"
+                                                checked
+                                                onchange="toggleCreateLocationPriceInput(this, '{{ $location->id }}')">
+                                        </td>
+                                        <td class="align-middle">
+                                            <label for="create_loc_check_{{ $location->id }}" class="form-check-label fw-bold text-dark mb-0" style="cursor: pointer;">
+                                                {{ $location->name }}
+                                            </label>
+                                        </td>
                                         <td>
                                             <input type="number"
-                                                id="unit_price_{{ $location->id }}"
+                                                id="create_unit_price_{{ $location->id }}"
                                                 name="unit_price[{{ $location->id }}]"
                                                 class="form-control form-control-sm cantidad-input"
-                                                min="0.01"
+                                                min="0"
                                                 step="0.01"
                                                 placeholder="0.00">
                                         </td>
@@ -219,40 +252,47 @@
                         <label for="edit_unidad_medida" class="form-label">Unidad de Medida</label>
                         <input type="text" class="form-control" id="edit_unidad_medida" name="measurement_unit">
                     </div>
-                    <div class="col-md-12 mb-3 row align-items-center"> <!-- alineación vertical centrada -->
-                        <div class="col-md-2 d-flex align-items-center justify-content-center">
-                            <!-- Label centrado vertical y horizontalmente -->
-                            <label for="edit_unit_price" class="col-form-label text-center w-100">
-                                Precio por Sede
-                            </label>
-                        </div>
-                        <div class="col-md-10">
-                            <div class="table-responsive">
-                                <table class="table table-striped mb-0" id="productionTable">
-                                    <thead>
-                                        <tr>
-                                            <th>Sede</th>
-                                            <th>Precio</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($locations as $location)
-                                        <tr>
-                                            <td>{{ $location->name }}</td>
-                                            <td>
-                                                <input type="number"
-                                                    id="edit_unit_price_{{ $location->id }}"
-                                                    name="unit_price[{{ $location->id }}]"
-                                                    class="form-control cantidad-input"
-                                                    min="0.01"
-                                                    step="0.01"
-                                                    placeholder="0.00">
-                                            </td>
-                                        </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label text-dark fw-bold">Precio por Sede</label>
+                        <small class="text-muted d-block mb-2">Marque las sedes asignadas a este producto e ingrese el precio correspondiente.</small>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover align-middle mb-0" id="editProductionTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 15%;" class="text-center">Asignar</th>
+                                        <th>Sede</th>
+                                        <th>Precio (S/)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($locations as $location)
+                                    <tr>
+                                        <td class="text-center align-middle">
+                                            <input class="form-check-input edit-location-checkbox"
+                                                type="checkbox"
+                                                name="locations_selected[{{ $location->id }}]"
+                                                value="{{ $location->id }}"
+                                                id="edit_loc_check_{{ $location->id }}"
+                                                onchange="toggleEditLocationPriceInput(this, '{{ $location->id }}')">
+                                        </td>
+                                        <td class="align-middle">
+                                            <label for="edit_loc_check_{{ $location->id }}" class="form-check-label fw-bold text-dark mb-0" style="cursor: pointer;">
+                                                {{ $location->name }}
+                                            </label>
+                                        </td>
+                                        <td>
+                                            <input type="number"
+                                                id="edit_unit_price_{{ $location->id }}"
+                                                name="unit_price[{{ $location->id }}]"
+                                                class="form-control form-control-sm cantidad-input"
+                                                min="0"
+                                                step="0.01"
+                                                placeholder="0.00">
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -294,6 +334,26 @@
 <script>
     var productSpinner = document.getElementById('spinner');
 
+    function toggleCreateLocationPriceInput(checkbox, locationId) {
+        const input = document.getElementById('create_unit_price_' + locationId);
+        if (input) {
+            input.disabled = !checkbox.checked;
+            if (!checkbox.checked) {
+                input.value = '';
+            }
+        }
+    }
+
+    function toggleEditLocationPriceInput(checkbox, locationId) {
+        const input = document.getElementById('edit_unit_price_' + locationId);
+        if (input) {
+            input.disabled = !checkbox.checked;
+            if (!checkbox.checked) {
+                input.value = '';
+            }
+        }
+    }
+
     // Modal de Editar
     $('#editModal').on('show.bs.modal', function(event) {
         const button = $(event.relatedTarget); // Botón que activó el modal
@@ -309,14 +369,21 @@
         $('#edit_categoria').val(button.data('category'));
         $('#edit_unidad_medida').val(button.data('measurement_unit'));
 
-        //llenado de precios localmente, no hacer en pantallas pesadas sino usar /show
+        // Llenado de precios y checkboxes por sede
         const prices = button.data('prices') || {};
         @foreach ($locations as $location)
-            $('#edit_unit_price_{{ $location->id }}').val(prices['{{ $location->id }}'] ?? '');
+            const priceVal_{{ $location->id }} = prices['{{ $location->id }}'];
+            const $check_{{ $location->id }} = $('#edit_loc_check_{{ $location->id }}');
+            const $input_{{ $location->id }} = $('#edit_unit_price_{{ $location->id }}');
+
+            if (priceVal_{{ $location->id }} !== undefined && priceVal_{{ $location->id }} !== null && priceVal_{{ $location->id }} !== '') {
+                $check_{{ $location->id }}.prop('checked', true);
+                $input_{{ $location->id }}.prop('disabled', false).val(priceVal_{{ $location->id }});
+            } else {
+                $check_{{ $location->id }}.prop('checked', false);
+                $input_{{ $location->id }}.prop('disabled', true).val('');
+            }
         @endforeach
-
-
-        
     });
 
     // Modal de Eliminar
@@ -356,20 +423,26 @@
                     });
                 } else {
                     ToastError.fire({
-                        text: response.error || 'Ocurrió un error'
+                        text: response.message || response.error || 'Ocurrió un error al guardar el producto'
                     });
                 }
             },
             error: function(xhr) {
                 productSpinner.classList.add('spinner-hidden');
                 productSpinner.classList.remove('spinner-visible');
-                if (xhr.responseJSON && xhr.responseJSON.error) {
-                    alert(xhr.responseJSON.error);
-                } else {
-                    ToastError.fire({
-                        text: 'Ocurrió un error'
-                    });
+                let errMsg = 'Ocurrió un error al procesar la solicitud.';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.message) {
+                        errMsg = xhr.responseJSON.message;
+                    } else if (xhr.responseJSON.error) {
+                        errMsg = xhr.responseJSON.error;
+                    } else if (xhr.responseJSON.errors) {
+                        errMsg = Object.values(xhr.responseJSON.errors).flat().join(' - ');
+                    }
                 }
+                ToastError.fire({
+                    text: errMsg
+                });
             }
         });
     });

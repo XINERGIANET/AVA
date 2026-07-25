@@ -20,14 +20,31 @@ class ProductController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::with('location_prices')->where('deleted', 0)->paginate(15);
-        $locations = Location::where('deleted', 0) ->when(auth()->user()->role->nombre != 'master' && auth()->user()->location_id, function ($query) {
-            $query->where('id', auth()->user()->location_id);
-        })->get();
+        $user = auth()->user();
+        $userLocationId = $user->location_id;
+        $isMaster = ($user->role && $user->role->nombre === 'master');
+
+        $products = Product::with('location_prices.location')
+            ->where('deleted', 0)
+            ->when(!$isMaster && $userLocationId, function ($query) use ($userLocationId) {
+                $query->where(function ($q) use ($userLocationId) {
+                    $q->whereHas('location_prices', function ($lpQuery) use ($userLocationId) {
+                        $lpQuery->where('location_id', $userLocationId);
+                    })->orWhereHas('tanks', function ($tankQuery) use ($userLocationId) {
+                        $tankQuery->where('location_id', $userLocationId)->where('deleted', '0');
+                    });
+                });
+            })
+            ->paginate(15);
+
+        $allLocations = Location::where('deleted', 0)->get();
+        $locations = $isMaster ? $allLocations : $allLocations->where('id', $userLocationId);
         $categories = Category::where('deleted', 0)->orderBy('name')->get();
-        return view('products.index', compact('products', 'locations', 'categories'));
+        $allLocationsCount = $allLocations->count();
+
+        return view('products.index', compact('products', 'locations', 'categories', 'allLocationsCount'));
     }
 
     /**
@@ -51,19 +68,36 @@ class ProductController extends Controller
         $validatedData = $this->validateProduct($request);
 
         try {
-
-            $prices = $validatedData['unit_price'];
+            $prices = $validatedData['unit_price'] ?? [];
             unset($validatedData['unit_price']);
-            $product = Product::create(array_merge($validatedData, ['deleted' => 0]));
 
-            foreach ($prices as $locationId => $price) {
-                if ($price !== null && $price !== '') {
-                    LocationPrice::create([
-                        'product_id' => $product->id,
-                        'location_id' => $locationId,
-                        'unit_price' => $price,
-                    ]);
+            $selectedLocations = $request->input('locations_selected', []);
+            unset($validatedData['locations_selected']);
+
+            $firstPrice = 0;
+            if (!empty($prices) && is_array($prices)) {
+                foreach ($prices as $p) {
+                    if ($p !== null && $p !== '') {
+                        $firstPrice = (float) $p;
+                        break;
+                    }
                 }
+            }
+
+            $product = Product::create(array_merge($validatedData, [
+                'unit_price' => $firstPrice,
+                'deleted' => 0
+            ]));
+
+            $selectedLocationIds = is_array($selectedLocations) ? array_values($selectedLocations) : [];
+
+            foreach ($selectedLocationIds as $locationId) {
+                $price = $prices[$locationId] ?? 0;
+                LocationPrice::create([
+                    'product_id' => $product->id,
+                    'location_id' => $locationId,
+                    'unit_price' => ($price !== null && $price !== '') ? $price : 0,
+                ]);
             }
 
             return response()->json([
@@ -71,6 +105,7 @@ class ProductController extends Controller
                 'message' => 'Producto Guardado correctamente.'
             ]);
         } catch (\Exception $e) {
+            Log::error('Error al guardar producto: ' . $e->getMessage());
             return response()->json([
                 'status' => false,
                 'message' => 'Error al guardar el producto: ' . $e->getMessage()
@@ -115,25 +150,54 @@ class ProductController extends Controller
     {
         $validatedData = $this->validateProduct($request);
 
-        $prices = $validatedData['unit_price'];
+        $prices = $validatedData['unit_price'] ?? [];
         unset($validatedData['unit_price']);
 
-        $product = Product::findOrFail($id);
-        $product->update($validatedData);
+        $selectedLocations = $request->input('locations_selected', []);
+        unset($validatedData['locations_selected']);
 
-        foreach ($prices as $locationId => $price) {
-            if ($price !== null && $price !== '') {
-                LocationPrice::upsert(
-                    [
-                        'product_id' => $id,
-                        'location_id' => $locationId,
-                        'unit_price' => $price,
-                        'updated_at' => now(),
-                    ],
-                    ['product_id', 'location_id'],
-                    ['unit_price', 'updated_at']
-                );
+        $firstPrice = 0;
+        if (!empty($prices) && is_array($prices)) {
+            foreach ($prices as $p) {
+                if ($p !== null && $p !== '') {
+                    $firstPrice = (float) $p;
+                    break;
+                }
             }
+        }
+
+        $product = Product::findOrFail($id);
+        $product->update(array_merge($validatedData, [
+            'unit_price' => $firstPrice
+        ]));
+
+        $selectedLocationIds = is_array($selectedLocations) ? array_values($selectedLocations) : [];
+        $user = auth()->user();
+
+        if ($user->role->nombre === 'master') {
+            LocationPrice::where('product_id', $id)
+                ->whereNotIn('location_id', $selectedLocationIds)
+                ->delete();
+        } else if ($user->location_id) {
+            if (!in_array($user->location_id, $selectedLocationIds)) {
+                LocationPrice::where('product_id', $id)
+                    ->where('location_id', $user->location_id)
+                    ->delete();
+            }
+        }
+
+        foreach ($selectedLocationIds as $locationId) {
+            $price = $prices[$locationId] ?? 0;
+            LocationPrice::upsert(
+                [
+                    'product_id' => $id,
+                    'location_id' => $locationId,
+                    'unit_price' => ($price !== null && $price !== '') ? $price : 0,
+                    'updated_at' => now(),
+                ],
+                ['product_id', 'location_id'],
+                ['unit_price', 'updated_at']
+            );
         }
 
         return redirect()->route('products.index')->with('success', 'Producto actualizado correctamente.');
@@ -161,8 +225,9 @@ class ProductController extends Controller
             'type' => 'nullable|string|max:255',
             'category' => 'nullable|string|max:255',
             'measurement_unit' => 'nullable|string|max:50',
-            'unit_price' => 'required|array',
-            'unit_price.*' => 'nullable|numeric|min:0.01', // o 'required|numeric|min:0.01' si todos son obligatorios
+            'locations_selected' => 'nullable|array',
+            'unit_price' => 'nullable|array',
+            'unit_price.*' => 'nullable|numeric|min:0',
         ]);
     }
 
@@ -173,73 +238,90 @@ class ProductController extends Controller
         try {
             $user = auth()->user();
             $locationId = $user->location_id;
+            $isMaster = ($user->role && $user->role->nombre === 'master');
 
             if (!$locationId && $user->location) {
                 $locationData = is_array($user->location) ? $user->location : json_decode($user->location, true);
                 $locationId = $locationData['id'] ?? null;
             }
 
-            if (!$locationId) {
+            if (!$locationId && !$isMaster) {
                 Log::info('Usuario sin ubicación asignada');
                 return response()->json([]);
             }
 
-            Log::info('ID de la ubicación extraído: ' . $locationId);
+            Log::info('ID de la ubicación extraído: ' . $locationId . ' | Es Master: ' . ($isMaster ? 'Sí' : 'No'));
 
             $result = [];
             $includedProductIds = [];
 
-            // 1. Obtener tanques de la ubicación con producto relacionado
-            $tanks = Tank::where('location_id', $locationId)
-                ->where('deleted', '0')
-                ->whereNotNull('product_id')
-                ->with('product')
-                ->get();
+            // 1. Obtener tanques de la ubicación con producto relacionado (si aplica)
+            if ($locationId) {
+                $tanks = Tank::where('location_id', $locationId)
+                    ->where('deleted', '0')
+                    ->whereNotNull('product_id')
+                    ->with('product')
+                    ->get();
 
-            foreach ($tanks as $tank) {
-                $product = $tank->product;
-                if (!$product || $product->deleted == 1) {
-                    continue;
-                }
+                foreach ($tanks as $tank) {
+                    $product = $tank->product;
+                    if (!$product || $product->deleted == 1) {
+                        continue;
+                    }
 
-                $includedProductIds[] = $product->id;
+                    $includedProductIds[] = $product->id;
 
-                $locationPrice = LocationPrice::where('location_id', $locationId)
-                    ->where('product_id', $product->id)
-                    ->first(['unit_price']);
-
-                $price = $locationPrice ? $locationPrice->unit_price : ($product->unit_price ?? 0);
-
-                $prodItem = [
-                    'id' => $product->id,
-                    'name' => $product->name,
-                    'price' => (float) $price,
-                    'stock' => $tank->stored_quantity ?? 0,
-                    'measurement_unit' => $product->measurement_unit ?? '',
-                    'observations' => $product->observations ?? ''
-                ];
-
-                $result[] = [
-                    'id' => $tank->id,
-                    'name' => $tank->name,
-                    'capacity' => $tank->capacity,
-                    'stored_quantity' => $tank->stored_quantity,
-                    'products' => [$prodItem]
-                ];
-            }
-
-            // 2. Obtener productos activos que NO están vinculados a ningún tanque de esta sede
-            $unassignedProducts = Product::where('deleted', 0)
-                ->whereNotIn('id', $includedProductIds)
-                ->get();
-
-            if ($unassignedProducts->isNotEmpty()) {
-                foreach ($unassignedProducts as $product) {
                     $locationPrice = LocationPrice::where('location_id', $locationId)
                         ->where('product_id', $product->id)
                         ->first(['unit_price']);
 
                     $price = $locationPrice ? $locationPrice->unit_price : ($product->unit_price ?? 0);
+
+                    $prodItem = [
+                        'id' => $product->id,
+                        'name' => $product->name,
+                        'price' => (float) $price,
+                        'stock' => $tank->stored_quantity ?? 0,
+                        'measurement_unit' => $product->measurement_unit ?? '',
+                        'observations' => $product->observations ?? ''
+                    ];
+
+                    $result[] = [
+                        'id' => $tank->id,
+                        'name' => $tank->name,
+                        'capacity' => $tank->capacity,
+                        'stored_quantity' => $tank->stored_quantity,
+                        'products' => [$prodItem]
+                    ];
+                }
+            }
+
+            // 2. Obtener productos sin tanque
+            // Para usuario Master: retorna TODOS los productos activos restantes del catálogo
+            // Para usuario de Sede: solo aquellos con asignación de precio para su sede
+            $unassignedProductsQuery = Product::where('deleted', 0)
+                ->whereNotIn('id', $includedProductIds);
+
+            if (!$isMaster && $locationId) {
+                $unassignedProductsQuery->whereHas('location_prices', function ($q) use ($locationId) {
+                    $q->where('location_id', $locationId);
+                });
+            }
+
+            $unassignedProducts = $unassignedProductsQuery->get();
+
+            if ($unassignedProducts->isNotEmpty()) {
+                foreach ($unassignedProducts as $product) {
+                    $price = $product->unit_price ?? 0;
+                    if ($locationId) {
+                        $locationPrice = LocationPrice::where('location_id', $locationId)
+                            ->where('product_id', $product->id)
+                            ->first(['unit_price']);
+
+                        if ($locationPrice) {
+                            $price = $locationPrice->unit_price;
+                        }
+                    }
 
                     $prodItem = [
                         'id' => $product->id,
