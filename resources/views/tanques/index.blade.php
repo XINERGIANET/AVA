@@ -90,10 +90,9 @@
                                             <span class="text-muted">Sin producto</span>
                                         @endif
                                     </td>
-                                    <td>{{ $tanque->is_reserve === 1 ? 'Si' : 'No' }}</td>
                                     <td>
                                         <span class="badge {{ $tanque->is_reserve === 1 ? 'bg-primary' : 'bg-secondary' }}">
-                                            {{ $tanque->is_reserve === 1 ? 'Si' : 'No' }}
+                                            {{ $tanque->is_reserve === 1 ? 'Sí' : 'No' }}
                                         </span>
                                     </td>
                                     <td class="pe-4 text-center">
@@ -114,7 +113,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="text-center">No hay tanques registrados.</td>
+                                    <td colspan="7" class="text-center">No hay tanques registrados.</td>
                                 </tr>
                             @endforelse
                         </tbody>

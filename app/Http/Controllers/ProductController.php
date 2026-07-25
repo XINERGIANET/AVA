@@ -171,63 +171,49 @@ class ProductController extends Controller
         Log::info('=== INICIO getProductsBySede ===');
         
         try {
-            // Obtener la ubicación del usuario autenticado directamente
-            $userLocation = auth()->user()->location;
-            Log::info('Location del usuario: ' . $userLocation);
+            $user = auth()->user();
+            $locationId = $user->location_id;
 
-            if (!$userLocation) {
+            if (!$locationId && $user->location) {
+                $locationData = is_array($user->location) ? $user->location : json_decode($user->location, true);
+                $locationId = $locationData['id'] ?? null;
+            }
+
+            if (!$locationId) {
                 Log::info('Usuario sin ubicación asignada');
                 return response()->json([]);
             }
 
-            // Decodificar el JSON y obtener el ID
-            $locationData = json_decode($userLocation, true);
-            $locationId = $locationData['id'] ?? null;
-            
             Log::info('ID de la ubicación extraído: ' . $locationId);
 
-            if (!$locationId) {
-                Log::info('No se pudo extraer el ID de la ubicación');
-                return response()->json([]);
-            }
+            $result = [];
+            $includedProductIds = [];
 
-            // Obtener todos los tanques de la ubicación con producto relacionado
+            // 1. Obtener tanques de la ubicación con producto relacionado
             $tanks = Tank::where('location_id', $locationId)
                 ->where('deleted', '0')
                 ->whereNotNull('product_id')
                 ->with('product')
                 ->get();
 
-            Log::info('Tanques encontrados: ' . $tanks->count());
-
-            if ($tanks->isEmpty()) {
-                Log::info('No hay tanques con stock disponible');
-                return response()->json([]);
-            }
-
-            $result = [];
-
             foreach ($tanks as $tank) {
-                Log::info('Procesando tanque ID: ' . $tank->id . ' con producto ID: ' . $tank->product_id);
-
                 $product = $tank->product;
                 if (!$product || $product->deleted == 1) {
-                    Log::info('Producto no encontrado o eliminado para ID: ' . $tank->product_id);
                     continue;
                 }
 
-                // Precio por ubicación (fallback 0)
+                $includedProductIds[] = $product->id;
+
                 $locationPrice = LocationPrice::where('location_id', $locationId)
                     ->where('product_id', $product->id)
                     ->first(['unit_price']);
 
-                $price = $locationPrice ? $locationPrice->unit_price : 0;
+                $price = $locationPrice ? $locationPrice->unit_price : ($product->unit_price ?? 0);
 
-                // Construir la estructura de producto que espera la vista
                 $prodItem = [
                     'id' => $product->id,
                     'name' => $product->name,
-                    'price' => $price,
+                    'price' => (float) $price,
                     'stock' => $tank->stored_quantity ?? 0,
                     'measurement_unit' => $product->measurement_unit ?? '',
                     'observations' => $product->observations ?? ''
@@ -242,7 +228,39 @@ class ProductController extends Controller
                 ];
             }
 
-            Log::info('Total tanques para retornar: ' . count($result));
+            // 2. Obtener productos activos que NO están vinculados a ningún tanque de esta sede
+            $unassignedProducts = Product::where('deleted', 0)
+                ->whereNotIn('id', $includedProductIds)
+                ->get();
+
+            if ($unassignedProducts->isNotEmpty()) {
+                foreach ($unassignedProducts as $product) {
+                    $locationPrice = LocationPrice::where('location_id', $locationId)
+                        ->where('product_id', $product->id)
+                        ->first(['unit_price']);
+
+                    $price = $locationPrice ? $locationPrice->unit_price : ($product->unit_price ?? 0);
+
+                    $prodItem = [
+                        'id' => $product->id,
+                        'name' => $product->name,
+                        'price' => (float) $price,
+                        'stock' => 0,
+                        'measurement_unit' => $product->measurement_unit ?? '',
+                        'observations' => $product->observations ?? ''
+                    ];
+
+                    $result[] = [
+                        'id' => null,
+                        'name' => 'General',
+                        'capacity' => 0,
+                        'stored_quantity' => 0,
+                        'products' => [$prodItem]
+                    ];
+                }
+            }
+
+            Log::info('Total ítems de productos para retornar: ' . count($result));
             Log::info('=== FIN getProductsBySede ===');
 
             return response()->json($result);
