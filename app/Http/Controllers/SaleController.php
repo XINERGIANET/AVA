@@ -465,18 +465,17 @@ class SaleController extends Controller
      */
     public function store(Request $request)
     {
+        $user = auth()->user();
+        $sede = $user->location_id;
+        $hasIslesInLocation = $sede ? Isle::where('location_id', $sede)->where('deleted', 0)->exists() : false;
+
         $validationRules = [
             'client_id' => 'nullable|exists:clients,id',
             'client_name' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:20',
             'order_detail_id' => 'nullable|exists:order_details,id',
             'vehicle_plate' => 'nullable|string|max:20',
-            'pump_id' => 'nullable|exists:pumps,id',
-            'type_sale' => 'nullable|integer|in:0,1,2',
-            'date' => 'nullable|date',
-            'adicional' => 'nullable|numeric|min:0',
-            'credit_number' => 'nullable|integer|min:0',
-            'voucher_code' => 'nullable|string|max:50',
+            'type_sale' => 'required|in:0,1,2',
             'responsible_id' => 'nullable|exists:employees,id',
             'detail' => 'nullable|string',
             'products' => 'required|array|min:1',
@@ -489,11 +488,9 @@ class SaleController extends Controller
             'products.*.truck_id' => 'nullable|exists:trucks,id',
             'products.*.pump_id' => 'nullable|exists:pumps,id',
             'products.*.vehicle_plate' => 'nullable|string|max:20',
-            'isle_id' => 'required|exists:isles,id', 
+            'isle_id' => $hasIslesInLocation ? 'required|exists:isles,id' : 'nullable|exists:isles,id', 
             'user_id' => 'nullable|exists:users,id',
         ];
-
-        $sede = auth()->user()->location_id;
 
         if ($request->has('credit_number') && $request->credit_number === '') {
             $request->merge(['credit_number' => null]);
@@ -517,34 +514,44 @@ class SaleController extends Controller
 
         $request->validate($validationRules);
 
-        $isle = Isle::whereKey($request->isle_id)
-            ->where('deleted', 0)
-            ->where('location_id', $sede)
-            ->first();
-
-        if (!$isle) {
-            return response()->json([
-                'status' => false,
-                'message' => 'La isla seleccionada no pertenece a tu sede o ya no está disponible.'
-            ], 422);
-        }
-
         $hasOpenGeneralCash = CashClose::where('location_id', $sede)
             ->where('cash_type', 'general')
             ->whereNull('real_cash_amount')
             ->exists();
 
-        $hasOpenCash = CashClose::where('isle_id', $isle->id)
-            ->where('cash_type', 'isle')
-            ->whereNull('real_cash_amount')
-            ->exists();
+        if ($request->filled('isle_id')) {
+            $isle = Isle::whereKey($request->isle_id)
+                ->where('deleted', 0)
+                ->where('location_id', $sede)
+                ->first();
 
-        if (!$hasOpenGeneralCash && !$hasOpenCash) {
-            return response()->json([
-                'status' => false,
-                'code' => 'CASH_CLOSED',
-                'message' => 'La caja de esta isla está cerrada. Abre la caja antes de registrar la venta.'
-            ], 409);
+            if (!$isle) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'La isla seleccionada no pertenece a tu sede o ya no está disponible.'
+                ], 422);
+            }
+
+            $hasOpenCash = CashClose::where('isle_id', $isle->id)
+                ->where('cash_type', 'isle')
+                ->whereNull('real_cash_amount')
+                ->exists();
+
+            if (!$hasOpenGeneralCash && !$hasOpenCash) {
+                return response()->json([
+                    'status' => false,
+                    'code' => 'CASH_CLOSED',
+                    'message' => 'La caja de esta isla está cerrada. Abre la caja antes de registrar la venta.'
+                ], 409);
+            }
+        } else {
+            if (!$hasOpenGeneralCash) {
+                return response()->json([
+                    'status' => false,
+                    'code' => 'CASH_CLOSED',
+                    'message' => 'No hay caja general abierta en tu sede. Abre la caja antes de registrar la venta.'
+                ], 409);
+            }
         }
 
         DB::beginTransaction();
