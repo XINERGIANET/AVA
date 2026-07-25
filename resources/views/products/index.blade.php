@@ -113,12 +113,17 @@
                     </div>
                     <div class="col-md-6 mb-3">
                         <label for="category" class="form-label text-dark fw-bold">Categoría</label>
-                        <select name="category" id="category" class="form-select" required>
-                            <option value="">Seleccione una categoría</option>
-                            @foreach ($categories as $cat)
-                                <option value="{{ $cat->name }}">{{ $cat->name }}</option>
-                            @endforeach
-                        </select>
+                        <div class="input-group">
+                            <select name="category" id="category" class="form-select" required>
+                                <option value="">Seleccione una categoría</option>
+                                @foreach ($categories as $cat)
+                                    <option value="{{ $cat->name }}">{{ $cat->name }}</option>
+                                @endforeach
+                            </select>
+                            <button type="button" class="btn btn-outline-primary" onclick="openQuickCategoryModal(event)" title="Agregar nueva categoría">
+                                <i class="bi bi-plus-lg"></i>
+                            </button>
+                        </div>
                     </div>
                     
                     <div class="col-md-12 mb-3">
@@ -186,12 +191,17 @@
                     </div>
                     <div class="col-md-6 mb-3">
                         <label for="edit_categoria" class="form-label text-dark fw-bold">Categoría</label>
-                        <select name="category" id="edit_categoria" class="form-select" required>
-                            <option value="">Seleccione una categoría</option>
-                            @foreach ($categories as $cat)
-                                <option value="{{ $cat->name }}">{{ $cat->name }}</option>
-                            @endforeach
-                        </select>
+                        <div class="input-group">
+                            <select name="category" id="edit_categoria" class="form-select" required>
+                                <option value="">Seleccione una categoría</option>
+                                @foreach ($categories as $cat)
+                                    <option value="{{ $cat->name }}">{{ $cat->name }}</option>
+                                @endforeach
+                            </select>
+                            <button type="button" class="btn btn-outline-primary" onclick="openQuickCategoryModal(event)" title="Agregar nueva categoría">
+                                <i class="bi bi-plus-lg"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label for="edit_unidad_medida" class="form-label">Unidad de Medida</label>
@@ -353,5 +363,159 @@
     });
 </script>
 
+<!-- Modal Rápido Crear Categoría -->
+<div class="modal fade" id="quickCategoryModal" tabindex="-1" aria-labelledby="quickCategoryModalLabel" aria-hidden="true" style="z-index: 1065;">
+    <div class="modal-dialog">
+        <div class="modal-content shadow-lg">
+            <form id="quickCategoryForm">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title text-dark fw-bold"><i class="bi bi-tags-fill me-2 text-primary"></i>Nueva Categoría Rápida</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="quickCategoryAlert" class="alert alert-danger d-none" role="alert"></div>
+                    <div class="mb-3">
+                        <label for="quick_category_name" class="form-label text-dark fw-bold">Nombre de la Categoría <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" placeholder="Ej. Lubricantes, Filtros..." id="quick_category_name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quick_category_description" class="form-label text-dark fw-bold">Descripción</label>
+                        <textarea class="form-control" placeholder="Descripción opcional" id="quick_category_description" name="description" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary px-4" id="btnSaveQuickCategory">
+                        <span class="spinner-border spinner-border-sm d-none" id="spinnerQuickCategory" role="status" aria-hidden="true"></span>
+                        Guardar Categoría
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
+<script type="text/javascript">
+    let activeProductModalId = null;
+
+    function openQuickCategoryModal(e) {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        if ($('#createModal').hasClass('show')) {
+            activeProductModalId = '#createModal';
+            $('#createModal').modal('hide');
+        } else if ($('#editModal').hasClass('show')) {
+            activeProductModalId = '#editModal';
+            $('#editModal').modal('hide');
+        } else {
+            activeProductModalId = null;
+        }
+
+        $('#quick_category_name').val('');
+        $('#quick_category_description').val('');
+        $('#quickCategoryAlert').addClass('d-none');
+
+        setTimeout(function() {
+            $('#quickCategoryModal').modal('show');
+        }, 200);
+    }
+
+    $(document).ready(function() {
+        $('#quickCategoryModal').on('hidden.bs.modal', function () {
+            if (activeProductModalId) {
+                const targetModal = activeProductModalId;
+                activeProductModalId = null;
+                setTimeout(function() {
+                    $(targetModal).modal('show');
+                }, 200);
+            }
+        });
+
+        $('#quickCategoryForm').on('submit', function(e) {
+            e.preventDefault();
+            const nameInput = $('#quick_category_name').val().trim();
+            const descInput = $('#quick_category_description').val().trim();
+            const alertBox = $('#quickCategoryAlert');
+            const btnSave = $('#btnSaveQuickCategory');
+            const spinner = $('#spinnerQuickCategory');
+
+            if (!nameInput) {
+                alertBox.removeClass('d-none').text('Por favor ingrese el nombre de la categoría.');
+                return;
+            }
+
+            alertBox.addClass('d-none');
+            btnSave.prop('disabled', true);
+            spinner.removeClass('d-none');
+
+            $.ajax({
+                url: "{{ route('categories.store') }}",
+                type: "POST",
+                data: {
+                    _token: "{{ csrf_token() }}",
+                    name: nameInput,
+                    description: descInput
+                },
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                success: function(response) {
+                    btnSave.prop('disabled', false);
+                    spinner.addClass('d-none');
+
+                    if (response.success && response.category) {
+                        const catName = response.category.name;
+                        
+                        // Añadir opción a los select de categoría
+                        let existsInCreate = $('#category option[value="' + catName + '"]').length > 0;
+                        if (!existsInCreate) {
+                            $('#category').append(new Option(catName, catName));
+                        }
+                        $('#category').val(catName);
+
+                        let existsInEdit = $('#edit_categoria option[value="' + catName + '"]').length > 0;
+                        if (!existsInEdit) {
+                            $('#edit_categoria').append(new Option(catName, catName));
+                        }
+                        if ($('#editModal').hasClass('show')) {
+                            $('#edit_categoria').val(catName);
+                        }
+
+                        // Limpiar formulario y cerrar modal rápido
+                        $('#quick_category_name').val('');
+                        $('#quick_category_description').val('');
+                        $('#quickCategoryModal').modal('hide');
+
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Categoría agregada',
+                                text: 'La categoría "' + catName + '" ha sido creada y seleccionada.',
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                        }
+                    } else {
+                        alertBox.removeClass('d-none').text(response.message || 'Error al guardar la categoría.');
+                    }
+                },
+                error: function(xhr) {
+                    btnSave.prop('disabled', false);
+                    spinner.addClass('d-none');
+                    let errMsg = 'Ocurrió un error al registrar la categoría.';
+                    if (xhr.responseJSON && xhr.responseJSON.errors && xhr.responseJSON.errors.name) {
+                        errMsg = xhr.responseJSON.errors.name[0];
+                    } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errMsg = xhr.responseJSON.message;
+                    }
+                    alertBox.removeClass('d-none').text(errMsg);
+                }
+            });
+        });
+    });
+</script>
 @endsection

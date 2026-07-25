@@ -40,11 +40,19 @@ class CategoryController extends Controller
             'description.max' => 'La descripción no debe exceder 500 caracteres.',
         ]);
 
-        Category::create([
+        $category = Category::create([
             'name' => trim($request->name),
             'description' => $request->filled('description') ? trim($request->description) : null,
             'deleted' => 0,
         ]);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'category' => $category,
+                'message' => 'Categoría registrada correctamente.',
+            ]);
+        }
 
         return redirect()->route('categories.index')->with('success', 'Categoría registrada correctamente.');
     }
