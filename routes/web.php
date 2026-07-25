@@ -33,6 +33,7 @@ use App\Http\Controllers\FlowMeterController;
 use App\Http\Controllers\MermaController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\SupplierPaymentController;
+use App\Http\Controllers\PaymentMethodController;
 use Illuminate\Support\Facades\Artisan;
 
 /*
@@ -180,6 +181,7 @@ Route::group(['middleware' => 'auth'], function () {
     });
 
     Route::resource('plaques', PlaqueController::class);
+    Route::resource('payment-methods', PaymentMethodController::class);
 
     Route::resource('collaborators', CollaboratorController::class);
 

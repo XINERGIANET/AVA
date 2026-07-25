@@ -192,7 +192,7 @@
                         // Determina qué grupos/subgrupos del sidebar deben quedar abiertos
                         // según la ruta actual, para que no se cierren al navegar entre páginas.
                         $cfgStructureOpen = request()->routeIs('sedes.*', 'tanques.*', 'isles.*', 'fuelpumps.*');
-                        $cfgCatalogOpen = request()->routeIs('products.*', 'plaques.*', 'suppliers.*', 'clients.*');
+                        $cfgCatalogOpen = request()->routeIs('products.*', 'plaques.*', 'suppliers.*', 'clients.*', 'payment-methods.*');
                         $cfgPeopleOpen = request()->routeIs('collaborators.*', 'users.*');
                         $cfgOpen = $cfgStructureOpen || $cfgCatalogOpen || $cfgPeopleOpen;
 
@@ -325,6 +325,13 @@
                                                 <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
                                                 <i class="sidenav-mini-icon"> CL </i>
                                                 <span class="item-name">Clientes</span>
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link {{ request()->routeIs('payment-methods.*') ? 'active' : '' }}" href="{{ route('payment-methods.index') }}">
+                                                <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
+                                                <i class="sidenav-mini-icon"> MP </i>
+                                                <span class="item-name">Métodos de Pago</span>
                                             </a>
                                         </li>
                                     </ul>

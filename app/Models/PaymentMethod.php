@@ -27,8 +27,14 @@ class PaymentMethod extends Model
 
 	protected $fillable = [
 		'name',
+		'location_id',
 		'deleted'
 	];
+
+	public function location()
+	{
+		return $this->belongsTo(Location::class);
+	}
 
 	public function payments()
 	{

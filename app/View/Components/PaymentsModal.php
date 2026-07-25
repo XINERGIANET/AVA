@@ -16,7 +16,16 @@ class PaymentsModal extends Component
 
     public function __construct()
     {
-        $this->paymentMethods = PaymentMethod::all();
+        $user = auth()->user();
+        $locationId = $user ? $user->location_id : null;
+        $this->paymentMethods = PaymentMethod::where('deleted', 0)
+            ->where(function ($q) use ($locationId) {
+                $q->whereNull('location_id');
+                if ($locationId) {
+                    $q->orWhere('location_id', $locationId);
+                }
+            })
+            ->get();
     }
 
     /**

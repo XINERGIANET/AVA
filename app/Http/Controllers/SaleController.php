@@ -53,7 +53,14 @@ class SaleController extends Controller
         })->get();
 
         $product_categories = Product::all();
-        $payment_methods = PaymentMethod::where('deleted', 0)->get();
+        $userLocationId = $user->location_id;
+        $payment_methods = PaymentMethod::where('deleted', 0)
+            ->where(function ($q) use ($userLocationId) {
+                $q->whereNull('location_id');
+                if ($userLocationId) {
+                    $q->orWhere('location_id', $userLocationId);
+                }
+            })->get();
 
         // Obtener la sede del usuario autenticado
         $isWorker = ($user->role->nombre === 'worker');
@@ -132,7 +139,14 @@ class SaleController extends Controller
             $request->merge(['client_name' => $client->business_name ? $client->business_name : $client->contact_name]);
         }
 
-        $paymentMethods = PaymentMethod::where('deleted', false)->get();
+        $userLocationId = auth()->user() ? auth()->user()->location_id : null;
+        $paymentMethods = PaymentMethod::where('deleted', false)
+            ->where(function ($q) use ($userLocationId) {
+                $q->whereNull('location_id');
+                if ($userLocationId) {
+                    $q->orWhere('location_id', $userLocationId);
+                }
+            })->get();
         $locations = Location::where('deleted', false)->get();
 
         $currentUser = auth()->user();
