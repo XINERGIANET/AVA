@@ -34,6 +34,7 @@ use App\Http\Controllers\MermaController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\SupplierPaymentController;
 use App\Http\Controllers\PaymentMethodController;
+use App\Http\Controllers\CategoryController;
 use Illuminate\Support\Facades\Artisan;
 
 /*
@@ -182,6 +183,7 @@ Route::group(['middleware' => 'auth'], function () {
 
     Route::resource('plaques', PlaqueController::class);
     Route::resource('payment-methods', PaymentMethodController::class);
+    Route::resource('categories', CategoryController::class);
 
     Route::resource('collaborators', CollaboratorController::class);
 

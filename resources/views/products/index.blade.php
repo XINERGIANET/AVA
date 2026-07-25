@@ -115,8 +115,9 @@
                         <label for="category" class="form-label text-dark fw-bold">Categoría</label>
                         <select name="category" id="category" class="form-select" required>
                             <option value="">Seleccione una categoría</option>
-                            <option>Combustible</option>
-                            <option>Inv. interno</option>
+                            @foreach ($categories as $cat)
+                                <option value="{{ $cat->name }}">{{ $cat->name }}</option>
+                            @endforeach
                         </select>
                     </div>
                     
@@ -184,8 +185,13 @@
                         <input type="text" class="form-control" id="edit_tipo" name="type">
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label for="edit_categoria" class="form-label">Categoría</label>
-                        <input type="text" class="form-control" id="edit_categoria" name="category">
+                        <label for="edit_categoria" class="form-label text-dark fw-bold">Categoría</label>
+                        <select name="category" id="edit_categoria" class="form-select" required>
+                            <option value="">Seleccione una categoría</option>
+                            @foreach ($categories as $cat)
+                                <option value="{{ $cat->name }}">{{ $cat->name }}</option>
+                            @endforeach
+                        </select>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label for="edit_unidad_medida" class="form-label">Unidad de Medida</label>

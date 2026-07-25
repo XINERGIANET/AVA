@@ -9,6 +9,7 @@ use App\Models\Tank;
 use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Models\AgreementDetail;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -25,7 +26,8 @@ class ProductController extends Controller
         $locations = Location::where('deleted', 0) ->when(auth()->user()->role->nombre != 'master' && auth()->user()->location_id, function ($query) {
             $query->where('id', auth()->user()->location_id);
         })->get();
-        return view('products.index', compact('products', 'locations'));
+        $categories = Category::where('deleted', 0)->orderBy('name')->get();
+        return view('products.index', compact('products', 'locations', 'categories'));
     }
 
     /**
