@@ -1753,10 +1753,14 @@
                     if (seen[key]) return;
                     seen[key] = true;
 
+                    const stockVal = parseFloat(product.stock !== undefined ? product.stock : (tank.stored_quantity !== undefined ? tank.stored_quantity : 0));
+
                     directSaleProducts.push({
                         id: product.id,
                         name: product.name,
                         price: parseFloat(product.price || 0),
+                        stock: stockVal,
+                        measurement_unit: product.measurement_unit || '',
                         tank_id: tank.id || '',
                         pump_id: pump ? pump.id : '',
                         order_detail_id: product.order_detail_id || '',
@@ -1780,10 +1784,15 @@
                     nameSeen[product.name] = (nameSeen[product.name] || 0) + 1;
                     label = `${product.name} (Tanque ${product.tank_id || nameSeen[product.name]})`;
                 }
+
+                const stockFormatted = parseFloat(product.stock || 0).toFixed(3);
+                label = `${label} (Stock: ${stockFormatted})`;
+
                 return {
                     id: product.id,
                     label: label,
                     price: product.price,
+                    stock: product.stock,
                     tank_id: product.tank_id || '',
                     pump_id: product.pump_id || '',
                     order_detail_id: product.order_detail_id || '',
@@ -2117,7 +2126,6 @@
                         }
 
                         appendEditableProductRow();
-                        ToastMessage.fire({ text: 'Producto inicial cargado' });
                         return;
                     }
 
