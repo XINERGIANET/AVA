@@ -70,10 +70,11 @@ class SaleController extends Controller
                 ->where('deleted', 0)
                 ->get();
 
-            // Solo bombas de la isla asignada
+            // Solo bombas de la isla asignada que no estén inoperativas
             $pumps = Pump::with('product')
                 ->where('isle_id', $user->isle_id)
                 ->where('deleted', 0)
+                ->where(function($q) { $q->whereNull('status')->orWhere('status', '!=', 'inoperativo'); })
                 ->get();
         } else {
             // Admin/Master: mostrar todas las islas de la sede
@@ -81,11 +82,12 @@ class SaleController extends Controller
                 ->where('deleted', 0)
                 ->get();
 
-            // Todas las bombas de todas las islas de la sede
+            // Todas las bombas operativas de todas las islas de la sede
             $isleIds = $isles->pluck('id')->toArray();
             $pumps = Pump::with('product')
                 ->whereIn('isle_id', $isleIds)
                 ->where('deleted', 0)
+                ->where(function($q) { $q->whereNull('status')->orWhere('status', '!=', 'inoperativo'); })
                 ->get();
         }
 

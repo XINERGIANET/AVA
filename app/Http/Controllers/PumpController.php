@@ -93,6 +93,7 @@ class PumpController extends Controller
             'isle_id' => $request->isle_id, 
             'product_id' => $request->product_id, 
             'side' => $request->side, 
+            'status' => $request->status ?? 'activo',
             'deleted' => 0, // Por defecto, la bomba está activa
         ]);
 
@@ -145,6 +146,7 @@ class PumpController extends Controller
             'product_id' => 'required|integer|exists:products,id',
             'isle_id' => 'required|integer|exists:isles,id',
             'side' => 'required|integer',
+            'status' => 'nullable|string|in:activo,inoperativo',
         ]);
 
         $fuelpumps = Pump::with('isle')->findOrFail($id);
@@ -167,10 +169,27 @@ class PumpController extends Controller
             'isle_id' => $request->isle_id,
             'product_id' => $request->product_id,
             'side' => $request->side, 
+            'status' => $request->status ?? $fuelpumps->status ?? 'activo',
         ]);
 
         return redirect()->route('fuelpumps.index')
             ->with('success', 'Bomba de combustible actualizada exitosamente.');
+    }
+
+    public function toggleStatus($id)
+    {
+        $fuelpump = Pump::with('isle')->findOrFail($id);
+
+        $user = auth()->user();
+        if ($user->role->nombre !== 'master' && (int) ($fuelpump->isle->location_id ?? 0) !== (int) $user->location_id) {
+            abort(403, 'No tienes permiso para modificar esta bomba.');
+        }
+
+        $newStatus = ($fuelpump->status === 'inoperativo') ? 'activo' : 'inoperativo';
+        $fuelpump->update(['status' => $newStatus]);
+
+        $msg = $newStatus === 'inoperativo' ? 'Surtidor marcado como inoperativo.' : 'Surtidor activado correctamente.';
+        return redirect()->route('fuelpumps.index')->with('success', $msg);
     }
 
     /**

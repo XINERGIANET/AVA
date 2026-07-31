@@ -21,6 +21,7 @@ class Pump extends Model
         'isle_id',
         'product_id',
         'side',
+        'status',
         'deleted',
     ];
 

@@ -193,6 +193,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::resource('tanques', TanqueController::class);
     Route::resource('sedes', SedeController::class);
     Route::resource('isles', IsleController::class);
+    Route::patch('fuelpumps/{id}/status', [PumpController::class, 'toggleStatus'])->name('fuelpumps.status');
     Route::resource('fuelpumps', PumpController::class);
     Route::resource('sides', SideController::class);
     Route::post('vault/from-cash-close', [VaultController::class, 'storeVaultFromCashClose'])->name('vault.from_cash_close');
