@@ -915,10 +915,25 @@
                                         </h6>
                                         <p class="mb-0 caption-sub-title">
                                             @auth
-
-                                                {{ auth()->user()->employee_id ? auth()->user()->employee->name . ' ' . auth()->user()->employee->last_name : 'Sin asignar' }}
+                                                @php
+                                                    $u = auth()->user();
+                                                    $parts = [];
+                                                    if ($u->role && $u->role->nombre) {
+                                                        $parts[] = ucfirst($u->role->nombre);
+                                                    }
+                                                    if ($u->location && $u->location->name) {
+                                                        $parts[] = $u->location->name;
+                                                    } elseif ($u->employee && $u->employee->name) {
+                                                        $parts[] = $u->employee->name;
+                                                    }
+                                                    if ($u->isle && $u->isle->name) {
+                                                        $parts[] = '(' . $u->isle->name . ')';
+                                                    }
+                                                    $subtitle = count($parts) > 0 ? implode(' • ', $parts) : 'Sin asignar';
+                                                @endphp
+                                                {{ $subtitle }}
                                             @else
-                                                Sin empleado asignado
+                                                Invitado
                                             @endauth
                                         </p>
                                     </div>
