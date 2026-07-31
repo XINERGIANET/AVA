@@ -45,11 +45,9 @@ class SaleController extends Controller
         //
         $user = auth()->user();
 
-        // Filtrar clientes que tengan contratos o créditos en la sede del usuario
-        $clients = Client::whereHas('agreements', function ($query) use ($user) {
-            $query->where('location_id', $user->location_id)
-                ->where('deleted', 0)
-                ->whereIn('type', ['contract', 'credit']); // 1=contrato, 2=crédito
+        // Obtener clientes activos para la búsqueda y selección en ventas
+        $clients = Client::where(function ($q) {
+            $q->where('deleted', 0)->orWhereNull('deleted');
         })->get();
 
         $product_categories = Product::all();

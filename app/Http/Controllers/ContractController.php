@@ -793,11 +793,17 @@ class ContractController extends Controller
                 return response()->json([]);
             }
 
+            $targetType = ($type === 'contrato') ? 'contract' : 'credit';
+
             $agreements = Agreement::where('client_id', $clientId)
-                ->where('location_id', $userLocationId)
-                ->where('type', $type === 'contrato' ? 'contract' : 'credit')
-                ->where('deleted', 0)
-                ->select('id', 'total', 'date', 'status')
+                ->where(function ($q) use ($targetType) {
+                    $q->where('type', $targetType)
+                        ->orWhere('type', $targetType === 'contract' ? 'contrato' : 'credito');
+                })
+                ->where(function ($q) {
+                    $q->where('deleted', 0)->orWhere('deleted', false)->orWhereNull('deleted');
+                })
+                ->select('id', 'number', 'total', 'date', 'status')
                 ->get();
 
             Log::info('Agreements encontrados: ' . $agreements->count());

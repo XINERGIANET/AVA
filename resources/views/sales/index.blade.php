@@ -5,7 +5,7 @@
     <style>
         .form-control,
         .form-select {
-            border: 1px solid #aaa;
+            border: 1px solid #000000ff;
         }
 
         .form-control-xs,
@@ -647,9 +647,94 @@
             .sales-actions-bar > * {
                 width: 100%;
             }
-            .sales-actions-bar .btn-success {
-                width: 100%;
-            }
+        /* =========================================================
+           ESTILOS DE ALTO CONTRASTE: TEXTO NEGRO INTENSO Y EN NEGRITA
+           (Elimina cualquier tono plomo/gris en inputs, labels, tablas)
+           ========================================================= */
+        .form-control,
+        .form-select,
+        .form-check-label,
+        .form-label,
+        label,
+        input,
+        select,
+        textarea,
+        button,
+        table,
+        th,
+        td,
+        .input-group-text,
+        .editable-sale-row input,
+        .editable-sale-row select,
+        #tbl-order-items input,
+        #tbl-order-items select,
+        #tbl-order-items td,
+        .sales-order-table input,
+        .sales-order-table select,
+        .sales-order-table td,
+        .sales-order-table th {
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
+            font-weight: 700 !important;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        input[type="email"],
+        select,
+        .form-control,
+        .form-select,
+        .input-group-text {
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
+            font-weight: 700 !important;
+            border-color: #334155 !important;
+            background-color: #ffffff !important;
+            opacity: 1 !important;
+        }
+
+        /* Deshabilitados o Readonly (para que no se vean grises) */
+        input:disabled,
+        input[readonly],
+        select:disabled,
+        .form-control:disabled,
+        .form-control[readonly],
+        .form-select:disabled {
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
+            font-weight: 700 !important;
+            background-color: #f8fafc !important;
+            opacity: 1 !important;
+        }
+
+        /* Opciones de select */
+        select option,
+        .form-select option,
+        .custom-combo-option {
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
+            font-weight: 700 !important;
+            background-color: #ffffff !important;
+        }
+
+        /* Placeholders oscuros y en negrita */
+        ::-webkit-input-placeholder { color: #334155 !important; font-weight: 700 !important; opacity: 1 !important; -webkit-text-fill-color: #334155 !important; }
+        ::-moz-placeholder { color: #334155 !important; font-weight: 700 !important; opacity: 1 !important; }
+        :-ms-input-placeholder { color: #334155 !important; font-weight: 700 !important; opacity: 1 !important; }
+        ::placeholder { color: #334155 !important; font-weight: 700 !important; opacity: 1 !important; }
+        .form-control::placeholder,
+        input::placeholder {
+            color: #334155 !important;
+            -webkit-text-fill-color: #334155 !important;
+            font-weight: 700 !important;
+            opacity: 1 !important;
+        }
+
+        /* Forzar texto muted fuera de barras de estado/totales a ser oscuro y negrita */
+        .text-muted:not(.sales-totals-bar *):not(.badge *):not(.bg-primary *) {
+            color: #1e293b !important;
+            font-weight: 700 !important;
         }
     </style>
 @endsection
@@ -667,6 +752,366 @@
 @endsection
 
 @section('content')
+    <style>
+        /* RESET ABSOLUTO DE VARIABLES DE COLOR CSS */
+        :root, body, html {
+            --bs-body-color: #000000 !important;
+            --bs-body-color-rgb: 0, 0, 0 !important;
+            --bs-secondary-color: #000000 !important;
+            --bs-secondary-rgb: 0, 0, 0 !important;
+            --bs-tertiary-color: #000000 !important;
+            --bs-heading-color: #000000 !important;
+            --sales-text: #000000 !important;
+            --sales-muted: #1e293b !important;
+        }
+
+        /* REGLA PARA FORZAR NEGRO INTENSO EN CONTROLES Y TEXTO (EXCLUYENDO BOTONES Y BADGES DE COLOR) */
+        .sales-create-page label,
+        .sales-create-page .form-label,
+        .sales-create-page .form-check-label,
+        .sales-create-page h1, .sales-create-page h2, .sales-create-page h3, .sales-create-page h4, .sales-create-page h5, .sales-create-page h6,
+        .sales-create-page input:not(.btn),
+        .sales-create-page select,
+        .sales-create-page p,
+        .sales-create-page td,
+        .sales-create-page th {
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
+            font-weight: 700 !important;
+        }
+
+        /* REGLAS ESPECÍFICAS PARA INPUTS, SELECTS, LABELS Y CONTROLES */
+        .sales-create-page input,
+        .sales-create-page select,
+        .sales-create-page textarea,
+        .sales-create-page .form-control,
+        .sales-create-page .form-select,
+        .sales-create-page .input-group-text,
+        .sales-create-page label,
+        .sales-create-page .form-label,
+        .sales-create-page .form-check-label,
+        .sales-create-page th,
+        .sales-create-page td,
+        #tbl-order-items input,
+        #tbl-order-items select,
+        #tbl-order-items td,
+        .editable-sale-row input,
+        .editable-sale-row select {
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
+            font-weight: 700 !important;
+            border-color: #475569 !important;
+            background-color: #ffffff !important;
+            opacity: 1 !important;
+        }
+
+        /* DESHABILITADOS O READONLY (evita que Chrome/Firefox los pinte de plomo) */
+        .sales-create-page input:disabled,
+        .sales-create-page input[readonly],
+        .sales-create-page select:disabled,
+        .sales-create-page .form-control:disabled,
+        .sales-create-page .form-control[readonly],
+        .sales-create-page .form-select:disabled {
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
+            font-weight: 700 !important;
+            background-color: #f8fafc !important;
+            opacity: 1 !important;
+        }
+
+        /* PLACEHOLDERS EN INPUTS */
+        .sales-create-page ::-webkit-input-placeholder { color: #1e293b !important; -webkit-text-fill-color: #1e293b !important; font-weight: 700 !important; opacity: 1 !important; }
+        .sales-create-page ::-moz-placeholder { color: #1e293b !important; font-weight: 700 !important; opacity: 1 !important; }
+        .sales-create-page :-ms-input-placeholder { color: #1e293b !important; font-weight: 700 !important; opacity: 1 !important; }
+        .sales-create-page ::placeholder { color: #1e293b !important; -webkit-text-fill-color: #1e293b !important; font-weight: 700 !important; opacity: 1 !important; }
+        .sales-create-page .form-control::placeholder,
+        .sales-create-page input::placeholder {
+            color: #1e293b !important;
+            -webkit-text-fill-color: #1e293b !important;
+            font-weight: 700 !important;
+            opacity: 1 !important;
+        }
+
+        /* SELECT OPTIONS */
+        .sales-create-page select option,
+        .sales-create-page .form-select option,
+        .sales-create-page .custom-combo-option {
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
+            font-weight: 700 !important;
+            background-color: #ffffff !important;
+        }
+
+        /* TEXTO SILENCIADO (TEXT-MUTED) EXCEPTO TARJETAS DE TOTALES / BOTONES */
+        .sales-create-page .text-muted:not(.sales-totals-bar *):not(.badge *):not(.bg-primary *):not(.btn *) {
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
+            font-weight: 700 !important;
+        }
+
+        /* EXCEPCIÓN CON ALTA ESPECIFICIDAD DE ID: BARRA DE TOTALES EN BLANCO PURO */
+        #chargeSection #sales-totals-banner,
+        #chargeSection #sales-totals-banner *,
+        #chargeSection .sales-totals-bar,
+        #chargeSection .sales-totals-bar *,
+        #sales-totals-banner,
+        #sales-totals-banner *,
+        .sales-totals-bar,
+        .sales-totals-bar * {
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
+            font-weight: 700 !important;
+        }
+
+        #chargeSection #sales-totals-banner .text-muted,
+        #chargeSection #sales-totals-banner .text-primary,
+        #sales-totals-banner .text-muted,
+        #sales-totals-banner .text-primary {
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
+        }
+
+        /* EXCEPCIÓN CON ALTA ESPECIFICIDAD DE ID: BOTONES Y BADGES CON FONDO EN BLANCO PURO */
+        #chargeSection .btn-primary,
+        #chargeSection .btn-primary *,
+        #chargeSection .btn-primary i,
+        #chargeSection .btn-primary span,
+        #chargeSection .btn-success,
+        #chargeSection .btn-success *,
+        #chargeSection .btn-success i,
+        #chargeSection .btn-success span,
+        #chargeSection .btn-danger,
+        #chargeSection .btn-danger *,
+        #chargeSection .btn-danger i,
+        #chargeSection .btn-danger span,
+        #chargeSection .btn-info,
+        #chargeSection .btn-info *,
+        #chargeSection .btn-info i,
+        #chargeSection .bg-primary,
+        #chargeSection .bg-primary *,
+        #chargeSection .bg-primary i,
+        #chargeSection .bg-success,
+        #chargeSection .bg-success *,
+        #chargeSection .bg-success i,
+        #chargeSection .bg-danger,
+        #chargeSection .bg-danger *,
+        #chargeSection .bg-danger i,
+        .sales-create-page .btn-primary,
+        .sales-create-page .btn-primary *,
+        .sales-create-page .btn-primary i,
+        .sales-create-page .btn-primary span,
+        .sales-create-page .btn-success,
+        .sales-create-page .btn-success *,
+        .sales-create-page .btn-success i,
+        .sales-create-page .btn-success span,
+        .sales-create-page .btn-danger,
+        .sales-create-page .btn-danger *,
+        .sales-create-page .btn-danger i,
+        .sales-create-page .btn-danger span,
+        .sales-create-page .bg-primary,
+        .sales-create-page .bg-primary *,
+        .sales-create-page .bg-primary i,
+        .sales-create-page .bg-success,
+        .sales-create-page .bg-success *,
+        .sales-create-page .bg-success i,
+        .sales-create-page .bg-danger,
+        .sales-create-page .bg-danger *,
+        .sales-create-page .bg-danger i,
+        .btn-primary,
+        .btn-primary *,
+        .btn-success,
+        .btn-success *,
+        .btn-danger,
+        .btn-danger * {
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
+            font-weight: 700 !important;
+        }
+
+        /* ESTILOS Y COMPRESIÓN DE ALTA CALIDAD PARA MÓDULO DE VENTAS */
+        body {
+            background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%) !important;
+        }
+
+        .card-custom {
+            border: 1.5px solid #cbd5e1 !important;
+            border-radius: 16px !important;
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.06), 0 4px 10px -2px rgba(15, 23, 42, 0.03) !important;
+            background: #ffffff !important;
+        }
+
+        .sales-panel-title h6 {
+            font-size: 1.15rem !important;
+            font-weight: 800 !important;
+            color: #0f172a !important;
+            letter-spacing: -0.01em !important;
+        }
+
+        /* BARRA DE TOTALES FLOTANTE BALANCEADA Y SIMÉTRICA */
+        #chargeSection #sales-totals-banner,
+        #chargeSection .sales-totals-bar,
+        #sales-totals-banner {
+            margin: 12px 20px 14px auto !important;
+            padding: 10px 22px !important;
+            border-radius: 12px !important;
+            background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #3b82f6 100%) !important;
+            box-shadow: 0 6px 20px -3px rgba(37, 99, 235, 0.35) !important;
+            border: 1px solid rgba(255, 255, 255, 0.25) !important;
+            width: fit-content !important;
+            min-width: 260px !important;
+            max-width: 320px !important;
+        }
+
+        #chargeSection #sales-totals-banner h5,
+        #sales-totals-banner h5 {
+            font-size: 1.05rem !important;
+            letter-spacing: 0.06em !important;
+            margin-bottom: 0 !important;
+        }
+
+        #chargeSection #sales-totals-banner .sales-total-amount,
+        #sales-totals-banner .sales-total-amount {
+            font-size: 1.75rem !important;
+            letter-spacing: -0.02em !important;
+        }
+
+        /* Ocultar resumen duplicado */
+        .sales-checkout-summary {
+            display: none !important;
+        }
+
+        #chargeSection .sales-checkout {
+            margin: 0 20px 20px !important;
+            padding: 18px 20px !important;
+            border-radius: 16px !important;
+            background: #ffffff !important;
+            border: 1.5px solid #cbd5e1 !important;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04) !important;
+        }
+
+        #chargeSection .sales-checkout-head {
+            margin-bottom: 10px !important;
+        }
+
+        #chargeSection #payment-methods-section {
+            margin-top: 10px !important;
+        }
+
+        #chargeSection #payment-methods-section .form-label {
+            margin-bottom: 8px !important;
+            font-size: 0.8rem !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.06em !important;
+            color: #475569 !important;
+        }
+
+        /* METODOS DE PAGO CON DISEÑO INTERACTIVO */
+        #chargeSection .sales-payment-grid {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)) !important;
+            gap: 10px !important;
+        }
+
+        #chargeSection .payment-method-item {
+            width: 100% !important;
+            margin: 0 !important;
+        }
+
+        #chargeSection .sales-payment-card {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            padding: 6px 12px !important;
+            gap: 6px !important;
+            border-radius: 12px !important;
+            border: 1.5px solid #cbd5e1 !important;
+            background: #ffffff !important;
+            transition: all 0.15s ease-in-out !important;
+        }
+
+        #chargeSection .sales-payment-card:hover {
+            border-color: #2563eb !important;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1) !important;
+        }
+
+        #chargeSection .sales-payment-card.active-payment {
+            border-color: #2563eb !important;
+            background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%) !important;
+            box-shadow: 0 3px 10px rgba(37, 99, 235, 0.15) !important;
+        }
+
+        #chargeSection .sales-payment-card .input-group-text {
+            padding: 0 !important;
+            margin: 0 !important;
+            border: 0 !important;
+            background: transparent !important;
+            min-height: auto !important;
+        }
+
+        #chargeSection .sales-payment-card label {
+            font-size: 0.88rem !important;
+            white-space: nowrap !important;
+            margin-bottom: 0 !important;
+            cursor: pointer !important;
+        }
+
+        #chargeSection .sales-payment-card .form-control {
+            width: 90px !important;
+            max-width: 95px !important;
+            min-width: 80px !important;
+            min-height: 34px !important;
+            height: 34px !important;
+            font-size: 0.9rem !important;
+            padding: 2px 8px !important;
+            border-radius: 8px !important;
+            border: 1.5px solid #64748b !important;
+            text-align: right !important;
+            box-shadow: none !important;
+        }
+
+        #chargeSection .sales-payment-card .form-control:focus {
+            border-color: #2563eb !important;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+        }
+
+        /* BARRA DE ACCIONES (GUARDAR VENTA) */
+        #chargeSection .sales-actions-bar {
+            margin-top: 14px !important;
+            padding: 12px 18px !important;
+            border-radius: 14px !important;
+            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%) !important;
+            border: 1.5px solid #cbd5e1 !important;
+        }
+
+        #chargeSection .sales-actions-bar .btn-success {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
+            border: none !important;
+            min-height: 44px !important;
+            height: 44px !important;
+            padding: 6px 28px !important;
+            font-size: 1rem !important;
+            border-radius: 12px !important;
+            box-shadow: 0 4px 16px rgba(22, 163, 74, 0.32) !important;
+            transition: all 0.2s ease !important;
+        }
+
+        #chargeSection .sales-actions-bar .btn-success:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 20px rgba(22, 163, 74, 0.42) !important;
+        }
+
+        /* ESTILOS DE LA TABLA DE PRODUCTOS */
+        .sales-order-table thead th {
+            background-color: #f1f5f9 !important;
+            border-bottom: 2px solid #cbd5e1 !important;
+            color: #1e293b !important;
+            font-size: 0.78rem !important;
+            font-weight: 800 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.06em !important;
+            padding: 12px 14px !important;
+        }
+    </style>
     <div class="container-fluid content-inner mt-0 py-0 px-0 sales-create-page">
         <div id="chargeSection" class="text-dark fw-semibold rounded sales-shell">
             <div class="row g-3 sales-layout">
@@ -691,72 +1136,77 @@
                     <div class="sales-panel sales-config-card card-custom">
                         <div class="sales-panel-header">
                             <div>
-                                <div class="sales-panel-title">
-                                    <i class="bi bi-file-earmark-text"></i>
-                                    <h6>Datos de la venta</h6>
+                                <div class="sales-panel-title align-items-center">
+                                    <div class="p-2 rounded-3 bg-primary text-white me-2 d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 36px; height: 36px;"><i class="bi bi-file-earmark-text-fill text-white fs-5"></i></div>
+                                    <h6 class="mb-0 fw-bold">Datos de la Venta</h6>
                                 </div>
                             </div>
                         </div>
                         <div class="sales-panel-body">
-                        <div class="sales-config-grid">
-                        <div class="sales-field-block">
-                            <label for="tipo-venta" class="form-label text-muted small fw-semibold">Tipo de venta</label>
-                            <select id="tipo-venta" class="form-select form-select-sm border-1 bg-white py-2">
-                                <option value="directa">Venta Directa</option>
-                                <option value="contrato">Contrato</option>
-                            </select>
-                            <input type="hidden" id="type_sale">
-                        </div>
-                        <div id="credit-checkbox-container" class="sales-credit-toggle">
-                            <div class="form-check">
-                                <input type="checkbox" id="is-credit-sale" class="form-check-input"> 
-                                <label class="form-check-label text-muted small" for="is-credit-sale">Venta a Crédito</label>
-                            </div>
-                        </div>
-                        <div class="row g-3">
-                            <div class="col-12">
-                                <label class="form-label small fw-semibold">Documento</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control" id="document" maxlength="11" placeholder="DNI o RUC">
-                                    <button type="button" class="btn btn-outline-primary" id="btn-search-ruc" onclick="searchDocumentApi()"><i class="bi bi-search"></i></button>
+                            <div class="sales-config-grid">
+                                <div class="sales-field-block">
+                                    <label for="tipo-venta" class="form-label text-muted small fw-semibold">Tipo de venta</label>
+                                    <select id="tipo-venta" class="form-select form-select-sm border-1 bg-white py-2">
+                                        <option value="directa">Venta Directa</option>
+                                        <option value="contrato">Contrato</option>
+                                    </select>
+                                    <input type="hidden" id="type_sale">
                                 </div>
                             </div>
-                            <div class="col-12">
-                                <label class="form-label small fw-semibold">Fecha</label>
-                                <input type="date" class="form-control" id="sale_date" value="{{ now()->format('Y-m-d') }}">
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label small fw-semibold">Responsable</label>
-                                <select class="form-select" id="user_id"><option value="">-- Por defecto --</option>@foreach($users ?? [] as $u)<option value="{{ $u->id }}" {{ auth()->id() == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>@endforeach</select>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label small fw-semibold">Cliente</label>
-                                <div class="input-group"><button class="btn btn-outline-secondary" type="button" id="btn_c_varios" onclick="document.getElementById('client_name').value='CLIENTES VARIOS'">C. Varios</button><input type="text" class="form-control" id="client_name" placeholder="Nombre o razón social"></div>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label small fw-semibold">Placa</label>
-                                <input type="text" class="form-control" id="vehicle_plate" placeholder="Opcional">
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- Card de búsqueda de cliente -->
-                        </div>
-                        </div>
-                    </div>
-                    <div id="cliente-search-card" class="sales-panel card-custom" style="display: none;">
-                        <div class="sales-panel-header">
-                            <div class="sales-panel-title">
-                                <i class="bi bi-search"></i>
-                                <h6>Buscar Cliente</h6>
+                            <!-- Block de búsqueda de cliente para contrato -->
+                            <div id="cliente-search-card" class="mt-2 mb-3 p-3 bg-light rounded border border-primary border-opacity-25" style="display: none;">
+                                <label for="search-client" class="form-label text-primary small fw-bold mb-1">
+                                    <i class="bi bi-search me-1"></i>Buscar Cliente (Contrato)
+                                </label>
+                                <div class="input-group">
+                                    <input type="text" id="search-client" class="form-control bg-white border-1 py-2" placeholder="Escriba nombre o RUC/DNI...">
+                                    <button type="button" class="btn btn-primary" id="btn-show-client-list" data-bs-toggle="modal" data-bs-target="#modalClientList" title="Ver lista de clientes">
+                                        <i class="bi bi-list-task me-1"></i>Ver lista
+                                    </button>
+                                </div>
+                                <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">
+                                    <i class="bi bi-info-circle me-1"></i>Escriba para buscar o haga clic en <strong>Ver lista</strong> para ver todos los clientes.
+                                </small>
+                                <button type="button" class="btn btn-outline-primary btn-sm w-100 mt-2 shadow-sm fw-semibold" id="btn-open-contracts-modal" style="display: none;" onclick="reabrirContratosModal()">
+                                    <i class="bi bi-journal-text me-1"></i>Ver Contratos del Cliente
+                                </button>
+                                <input type="hidden" id="client_id" name="client_id">
+                                <input type="hidden" id="current-agreement-id">
+                                <input type="hidden" id="current-order-detail-id">
                             </div>
-                        </div>
-                        <div class="sales-panel-body">
-                            <label class="form-label text-muted small fw-semibold">Cliente:</label>
-                            <input type="text" id="search-client" class="form-control bg-white border-1 py-2" placeholder="Buscar cliente...">
-                            <input type="hidden" id="client_id" name="client_id">
-                            <input type="hidden" id="current-agreement-id">
-                            <input type="hidden" id="current-order-detail-id">
+
+                            <div id="credit-checkbox-container" class="sales-credit-toggle">
+                                <div class="form-check">
+                                    <input type="checkbox" id="is-credit-sale" class="form-check-input"> 
+                                    <label class="form-check-label text-muted small" for="is-credit-sale">Venta a Crédito</label>
+                                </div>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold text-dark mb-1"><i class="bi bi-card-heading text-primary me-1"></i>Documento</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" class="form-control" id="document" maxlength="11" placeholder="DNI o RUC">
+                                        <button type="button" class="btn btn-primary" id="btn-search-ruc" onclick="searchDocumentApi()"><i class="bi bi-search"></i></button>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold text-dark mb-1"><i class="bi bi-calendar-event text-primary me-1"></i>Fecha</label>
+                                    <input type="date" class="form-control form-control-sm" id="sale_date" value="{{ now()->format('Y-m-d') }}">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold text-dark mb-1"><i class="bi bi-person-badge text-primary me-1"></i>Responsable</label>
+                                    <select class="form-select form-select-sm" id="user_id"><option value="">-- Por defecto --</option>@foreach($users ?? [] as $u)<option value="{{ $u->id }}" {{ auth()->id() == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>@endforeach</select>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold text-dark mb-1"><i class="bi bi-car-front text-primary me-1"></i>Placa</label>
+                                    <input type="text" class="form-control form-control-sm" id="vehicle_plate" placeholder="Opcional">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small fw-bold text-dark mb-1"><i class="bi bi-person text-primary me-1"></i>Cliente</label>
+                                    <div class="input-group input-group-sm"><button class="btn btn-outline-primary fw-bold" type="button" id="btn_c_varios" onclick="document.getElementById('client_name').value='CLIENTES VARIOS'">C. Varios</button><input type="text" class="form-control" id="client_name" placeholder="Nombre o razón social"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -768,29 +1218,15 @@
                                 <h6>Contratos del Cliente</h6>
                             </div>
                         </div>
-                        <div class="sales-panel-body" style="max-height: 350px; overflow-y: auto;">
+                        <div class="sales-panel-body" style="max-height: 260px; overflow-y: auto;">
                             <table class="table table-hover small">
                                 <tbody id="tbl-products-contract"></tbody>
                             </table>
                         </div>
                     </div>
 
-                    <!-- Selector de Isla -->
+                    <!-- Selector de Isla (Legacy/Unused) -->
                     <div id="isle-select-card" class="sales-panel card-custom" style="display: none;">
-                        <div class="sales-panel-header">
-                            <div class="sales-panel-title">
-                                <i class="bi bi-geo-alt"></i>
-                                <h6>Seleccione Isla</h6>
-                            </div>
-                        </div>
-                        <div class="sales-panel-body">
-                            <select id="select-isle" class="form-select border-1 bg-white py-2">
-                                <option value="">-- Seleccione --</option>
-                                @foreach ($isles ?? [] as $isle)
-                                    <option value="{{ $isle->id }}">{{ $isle->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
                     </div>
 
                     <!-- Card 2: Productos para venta directa -->
@@ -821,19 +1257,65 @@
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="col-12 col-xl-8 sales-right-column">
+            <div class="col-12 col-xl-8 sales-right-column">
                     <div class="sales-panel sales-cart-panel card-custom d-flex flex-column h-100">
                         <div class="sales-panel-header">
                             <div>
-                                <div class="sales-panel-title">
-                                    <i class="bi bi-cart3"></i>
-                                    <h6>Productos Agregados</h6>
+                                <div class="sales-panel-title align-items-center">
+                                    <div class="p-2 rounded-3 bg-primary text-white me-2 d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 36px; height: 36px;"><i class="bi bi-cart-check-fill text-white fs-5"></i></div>
+                                    <h6 class="mb-0 fw-bold">Productos Agregados</h6>
                                 </div>
                             </div>
-                            <button type="button" class="btn btn-primary btn-sm" id="btn-add-editable-product-row" style="display: none;">
-                                <i class="bi bi-plus-circle me-1"></i>Agregar fila
+                            <button type="button" class="btn btn-primary btn-sm px-3 shadow-sm fw-bold text-white" id="btn-add-editable-product-row" style="display: none;">
+                                <i class="bi bi-plus-circle-fill me-1 text-white"></i><span class="text-white">Agregar fila</span>
                             </button>
+                        </div>
+
+                        <!-- Selector en cascada para Productos Agregados: Isla -> Surtidor -> Lado (Opcional) -->
+                        <div class="px-3 py-2 bg-light border-bottom border-top">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" id="chk-detailed-mode" onchange="toggleDetailedMode()">
+                                    <label class="form-check-label small fw-bold text-dark ms-1" style="cursor: pointer;" for="chk-detailed-mode">
+                                        <i class="bi bi-funnel-fill text-primary me-1"></i>¿Deseas un registro detallado por surtidor e isla?
+                                    </label>
+                                </div>
+                                <small class="text-muted" style="font-size: 0.75rem;" id="detailed-mode-status-text">
+                                    <i class="bi bi-info-circle me-1"></i>Opcional: Desactivado
+                                </small>
+                            </div>
+
+                            <div id="detailed-selectors-container" class="row g-2 align-items-center opacity-50" style="pointer-events: none; transition: all 0.3s ease;">
+                                <div class="col-4">
+                                    <label for="select-isle" class="form-label small fw-bold text-dark mb-1">
+                                        <i class="bi bi-geo-alt-fill text-primary me-1"></i>1. Isla
+                                    </label>
+                                    <select id="select-isle" class="form-select form-select-sm border-1 bg-white py-1 fw-bold" disabled onchange="onIsleChange()">
+                                        <option value="">-- Seleccionar Isla --</option>
+                                        @foreach ($isles ?? [] as $isle)
+                                            <option value="{{ $isle->id }}" {{ (isset($assignedIsle) && $assignedIsle == $isle->id) ? 'selected' : '' }}>{{ $isle->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-4">
+                                    <label for="select-pump" class="form-label small fw-bold text-dark mb-1">
+                                        <i class="bi bi-fuel-pump-fill text-primary me-1"></i>2. Surtidor
+                                    </label>
+                                    <select id="select-pump" class="form-select form-select-sm border-1 bg-white py-1 fw-bold" disabled onchange="onPumpChange()">
+                                        <option value="">-- Seleccionar Surtidor --</option>
+                                    </select>
+                                </div>
+                                <div class="col-4">
+                                    <label for="select-side" class="form-label small fw-bold text-dark mb-1">
+                                        <i class="bi bi-signpost-split-fill text-primary me-1"></i>3. Lado
+                                    </label>
+                                    <select id="select-side" class="form-select form-select-sm border-1 bg-white py-1 fw-bold" disabled onchange="onSideChange()">
+                                        <option value="">-- Seleccionar Lado --</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="sales-cart-table-shell">
@@ -861,20 +1343,23 @@
                             </div>
 
                         <!-- Total flotante -->
-                        <div class="total-display sales-totals-bar mt-auto">
-                            <div class="d-flex justify-content-between align-items-end">
-                                <div>
-                                    <h5 class="mb-1 fw-bold text-uppercase">Total</h5>
-                                    <span class="text-muted small"><span id="items-count">0</span> productos</span>
+                        <!-- Total flotante -->
+                        <!-- Total flotante alineado a la derecha -->
+                        <div id="sales-totals-banner" class="total-display sales-totals-bar mt-auto ms-auto">
+                            <div class="d-flex justify-content-between align-items-center gap-4">
+                                <div class="me-3">
+                                    <h5 class="mb-0 fw-bold text-uppercase text-white" style="font-size: 0.9rem;">Total</h5>
+                                    <span class="text-white small" style="font-size: 0.78rem;"><span id="items-count" class="text-white">0</span> productos</span>
                                 </div>
-                                <h2 class="mb-0 fw-bold text-primary sales-total-amount">S/ <span id="total">0.00</span></h2>
+                                <h2 class="mb-0 fw-bold text-white sales-total-amount" style="font-size: 1.75rem;">S/ <span id="total" class="text-white">0.00</span></h2>
                             </div>
                         </div>
 
                         <div class="sales-checkout" id="inline-checkout">
                             <div class="sales-checkout-head">
-                                <div class="sales-panel-title">
-                                    <i class="bi bi-receipt"></i><h6>Datos y pago de la venta</h6>
+                                <div class="sales-panel-title align-items-center">
+                                    <div class="p-2 rounded-3 bg-primary text-white me-2 d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 36px; height: 36px;"><i class="bi bi-wallet2 text-white fs-5"></i></div>
+                                    <h6 class="mb-0 fw-bold">Datos y Pago de la Venta</h6>
                                 </div>
                                 <div class="sales-checkout-summary">
                                     <span class="text-muted small d-block">Total a cobrar</span>
@@ -889,15 +1374,57 @@
                                 <div class="col-md-6 credit-extra-fields" style="display:none"><label class="form-label small fw-semibold">Responsable (Sede)</label><select class="form-select" id="responsible_id"><option value="">-- Seleccione --</option>@foreach($employees ?? [] as $emp)<option value="{{ $emp->id }}">{{ $emp->name }} {{ $emp->last_name }}</option>@endforeach</select></div>
                                 <div class="col-md-6 credit-extra-fields" style="display:none"><label class="form-label small fw-semibold">Detalle</label><input type="text" class="form-control" id="detail" placeholder="Observación"></div>
                             </div>
-                            <div class="mt-4" id="payment-methods-section"><label class="form-label small fw-bold mb-3">Formas de pago</label><div class="sales-payment-grid">
-                                @foreach ($payment_methods as $index => $payment_method)
-                                    <div class="payment-method-item"><div class="sales-payment-card"><div class="input-group-text bg-white"><input type="checkbox" class="form-check-input mt-0 me-2" onchange="togglePaymentMethod(event, '#amount_{{ $payment_method->id }}')" id="cbx_amount_{{ $payment_method->id }}" {{ $index == 0 ? 'checked' : '' }}><label for="cbx_amount_{{ $payment_method->id }}">{{ $payment_method->name }}</label></div><input type="number" step="0.01" min="0" class="form-control text-end" id="amount_{{ $payment_method->id }}" oninput="calculateDifference(event)" {{ $index == 0 ? '' : 'disabled' }} placeholder="0.00"></div></div>
+                            <template id="payment-options-template">
+                                <option value="">Seleccionar cuenta</option>
+                                @foreach ($payment_methods as $index => $pm)
+                                    <option value="{{ $pm->id }}" {{ $index == 0 ? 'selected' : '' }}>{{ $pm->name }}</option>
                                 @endforeach
-                            </div></div>
+                            </template>
+
+                            <div class="mt-3" id="payment-methods-section">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <label class="form-label small fw-bold text-uppercase text-dark mb-0">
+                                        <i class="bi bi-wallet2 me-1 text-primary"></i>MÉTODOS DE PAGO
+                                    </label>
+                                    <button type="button" class="btn btn-outline-primary btn-sm rounded-3 fw-bold px-3 shadow-sm" id="btn-add-payment-row" onclick="addPaymentRow()">
+                                        <i class="bi bi-plus-lg me-1"></i>Agregar otro
+                                    </button>
+                                </div>
+
+                                <div id="dynamic-payment-rows">
+                                    <div class="row g-2 align-items-center mb-2 dynamic-payment-row">
+                                        <div class="col-7 col-md-7">
+                                            <select class="form-select payment-method-select fw-bold border-1 py-2" onchange="validateSelectedPaymentMethods(this)">
+                                                <option value="">Seleccionar cuenta</option>
+                                                @foreach ($payment_methods as $index => $pm)
+                                                    <option value="{{ $pm->id }}" {{ $index == 0 ? 'selected' : '' }}>{{ $pm->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-4 col-md-4">
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light text-muted fw-bold small">S/</span>
+                                                <input type="number" step="0.01" min="0" class="form-control text-end fw-bold py-2 payment-method-amount" oninput="calculateDynamicPaymentTotal()" placeholder="0.00">
+                                            </div>
+                                        </div>
+                                        <div class="col-1 col-md-1 text-center">
+                                            <button type="button" class="btn btn-outline-danger btn-sm rounded-circle btn-remove-payment-row" onclick="removePaymentRow(this)" style="display: none; width: 32px; height: 32px; padding: 0;" title="Eliminar método">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Resumen de Saldo Restante -->
+                                <div id="payment-balance-summary" class="mt-2 p-2 px-3 rounded-3 bg-light border d-flex align-items-center justify-content-between">
+                                    <span class="text-dark small fw-bold"><i class="bi bi-calculator text-primary me-1"></i>Saldo Restante:</span>
+                                    <span id="lbl-saldo-restante" class="badge bg-danger fs-6 px-3 py-1 fw-bold">S/ 0.00</span>
+                                </div>
+                            </div>
                             <div id="vuelto-adicional-container" class="mt-3" style="display:none"><label><input type="checkbox" id="is-vuelto-adicional" class="form-check-input me-1"> Vuelto adicional</label></div>
                             <div id="vuelto-adicional-section" class="mt-2" style="display:none"><label class="form-label small fw-semibold">Vuelto adicional</label><input type="number" step="0.01" class="form-control" name="adicional" id="adicional" placeholder="0.00"></div>
                             <div class="sales-actions-bar">
-                                <div><span class="text-muted small d-block">Estado</span><strong class="fs-5">Lista para registrar</strong></div>
+                                <div><span class="text-muted small d-block mb-1">Estado</span><span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill fs-6 fw-bold"><i class="bi bi-check-circle-fill me-1"></i>Lista para registrar</span></div>
                                 <button type="button" class="btn btn-success btn-lg px-4" id="btn-save"><i class="bi bi-check-circle me-1"></i>Guardar venta <span id="spinner-save" class="spinner-border spinner-border-sm ms-1" style="display:none"></span></button>
                             </div>
                         </div>
@@ -1432,6 +1959,87 @@
         </div>
     </div>
 
+    <!-- Modal Lista de Clientes con Contrato -->
+    <div class="modal fade" id="modalClientList" tabindex="-1" aria-labelledby="modalClientListLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title text-white" id="modalClientListLabel">
+                        <i class="bi bi-person-lines-fill me-2"></i>Lista de Clientes con Contrato
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                            <input type="text" id="filter-client-modal-list" class="form-control" placeholder="Buscar por cliente o N° documento (DNI / RUC)...">
+                        </div>
+                    </div>
+                    <div class="table-responsive" style="max-height: 380px; overflow-y: auto;">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th>Documento</th>
+                                    <th>Cliente / Razón Social</th>
+                                    <th class="text-end">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbl-modal-clients-list">
+                                <!-- Se carga dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Seleccionar Contrato del Cliente -->
+    <div class="modal fade" id="modalSelectContract" tabindex="-1" aria-labelledby="modalSelectContractLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title text-white" id="modalSelectContractLabel">
+                        <i class="bi bi-journal-check me-2"></i>Contratos del Cliente: <span id="modal-contract-client-name" class="fw-bold"></span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-3">
+                    <div id="modal-contract-navigation" class="mb-2" style="display:none;">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-modal-contract-back">
+                            <i class="bi bi-arrow-left me-1"></i>Volver
+                        </button>
+                    </div>
+                    <div class="table-responsive" style="max-height: 380px; overflow-y: auto;">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th>Contrato / Documento</th>
+                                    <th>Fecha</th>
+                                    <th>Estado</th>
+                                    <th class="text-end">Total</th>
+                                    <th class="text-end">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbl-modal-select-contract">
+                                <!-- Se carga dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 @endsection
 
@@ -1538,8 +2146,14 @@
         var paymentMethods = @json($payment_methods);
 
         function setDefaultIsle() {
+            const currentVal = $('#select-isle').val();
+            if (currentVal && currentVal !== '' && currentVal !== 'null') {
+                return currentVal;
+            }
             const defaultIsle = assignedIsle || (Array.isArray(isles) && isles.length > 0 ? isles[0].id : '');
-            $('#select-isle').val(defaultIsle || '');
+            if (defaultIsle) {
+                $('#select-isle').val(defaultIsle);
+            }
             return defaultIsle || '';
         }
 
@@ -1646,6 +2260,9 @@
                     $('#credit-checkbox-container').hide(); // Ocultar checkbox
                     $('#is-credit-sale').prop('checked', false);
                     resetClientSearch();
+                    setTimeout(function() {
+                        $('#search-client').focus();
+                    }, 100);
                 }
 
                 tipoAnterior = tipoVenta;
@@ -1691,24 +2308,24 @@
             $('#search-client').val('');
             $('#client_id').val('');
 
-            $('#search-client').autocomplete({
+            var autocompleteConfig = {
                 source: function(request, response) {
                     var results = $.map(clients, function(item) {
-                        // Validar que las propiedades necesarias existan y no sean null
-                        if (!item || !item.business_name || !item.document) {
+                        if (!item) {
                             return null;
                         }
 
-                        var businessName = item.business_name.toString().toLowerCase();
-                        var document = item.document.toString();
+                        var displayName = (item.business_name || item.contact_name || item.commercial_name || '').toString();
+                        var doc = (item.document || '').toString();
+                        var nameLower = displayName.toLowerCase();
                         var searchTerm = request.term.toLowerCase();
 
-                        if (businessName.includes(searchTerm) || document.includes(request.term)) {
+                        if (nameLower.includes(searchTerm) || doc.includes(request.term)) {
                             return {
-                                label: `${item.business_name}`,
-                                value: item.business_name,
+                                label: `${displayName} ${doc ? '(' + doc + ')' : ''}`,
+                                value: displayName,
                                 id: item.id,
-                                document: item.document
+                                document: doc
                             };
                         }
                     });
@@ -1717,10 +2334,9 @@
                 appendTo: '.container-fluid',
                 select: function(event, ui) {
                     $('#client_id').val(ui.item.id);
-
-                    // Llenar también los campos del panel derecho
                     $('#document').val(ui.item.document);
-                    $('#client').val(ui.item.value);
+                    $('#client_name').val(ui.item.value);
+                    $('#search-client').val(ui.item.value);
 
                     // Cargar contratos específicos del cliente solo si el ID no es nulo
                     if (ui.item.id && ui.item.id !== null) {
@@ -1728,28 +2344,337 @@
                     }
                 },
                 minLength: 2
-            }).autocomplete("instance")._renderItem = function(ul, item) {
-                return $("<li>")
-                    .append(`<div class="d-flex justify-content-between">
-                            <span>${item.label}</span>
-                         </div>`)
-                    .appendTo(ul);
+            };
+
+            if ($('#search-client').length) {
+                $('#search-client').autocomplete(autocompleteConfig).autocomplete("instance")._renderItem = function(ul, item) {
+                    return $("<li>")
+                        .append(`<div class="d-flex justify-content-between">
+                                <span>${item.label}</span>
+                             </div>`)
+                        .appendTo(ul);
+                };
+            }
+
+            if ($('#client_name').length) {
+                $('#client_name').autocomplete(autocompleteConfig).autocomplete("instance")._renderItem = function(ul, item) {
+                    return $("<li>")
+                        .append(`<div class="d-flex justify-content-between">
+                                <span>${item.label}</span>
+                             </div>`)
+                        .appendTo(ul);
+                };
+            }
+        }
+
+        function renderModalClientsList(filterText = '') {
+            const $tbody = $('#tbl-modal-clients-list').empty();
+            const term = (filterText || '').toLowerCase().trim();
+
+            const filtered = (clients || []).filter(function(item) {
+                if (!item) return false;
+                const name = (item.business_name || item.contact_name || item.commercial_name || '').toString().toLowerCase();
+                const doc = (item.document || '').toString().toLowerCase();
+                return name.includes(term) || doc.includes(term);
+            });
+
+            if (filtered.length === 0) {
+                $tbody.append(`
+                    <tr>
+                        <td colspan="3" class="text-center text-muted py-4">
+                            <i class="bi bi-person-x fs-3 d-block mb-1"></i>
+                            No se encontraron clientes registrados.
+                        </td>
+                    </tr>
+                `);
+                return;
+            }
+
+            filtered.forEach(function(item) {
+                const clientDisplayName = item.business_name || item.contact_name || item.commercial_name || 'Sin nombre';
+                const clientDoc = item.document || '-';
+                const safeName = clientDisplayName.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+                const safeDoc = clientDoc.toString().replace(/'/g, "\\'").replace(/"/g, "&quot;");
+
+                $tbody.append(`
+                    <tr style="cursor: pointer;" onclick="selectClientFromModal('${item.id}', '${safeName}', '${safeDoc}')">
+                        <td><span class="badge bg-secondary px-2 py-1">${clientDoc}</span></td>
+                        <td class="fw-semibold">${clientDisplayName}</td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-primary">
+                                <i class="bi bi-check2-circle me-1"></i>Seleccionar
+                            </button>
+                        </td>
+                    </tr>
+                `);
+            });
+        }
+
+        function selectClientFromModal(clientId, clientName, clientDoc) {
+            $('#client_id').val(clientId);
+            $('#document').val(clientDoc);
+            $('#client_name').val(clientName);
+            $('#search-client').val(clientName);
+
+            if (clientId && clientId !== 'null') {
+                cargarContratosCliente(clientId);
+            }
+
+            const modalEl = document.getElementById('modalClientList');
+            if (modalEl) {
+                const bsModal = bootstrap.Modal.getInstance(modalEl);
+                if (bsModal) {
+                    bsModal.hide();
+                } else {
+                    $(modalEl).modal('hide');
+                }
+            }
+        }
+
+        $(document).ready(function() {
+            $('#modalClientList').on('shown.bs.modal', function () {
+                $('#filter-client-modal-list').val('').focus();
+                renderModalClientsList('');
+            });
+
+            $('#filter-client-modal-list').on('input', function () {
+                renderModalClientsList($(this).val());
+            });
+
+            if ($('#select-isle').val()) {
+                onIsleChange();
+            }
+        });
+
+        // ---------------------------------------------------------
+        // CASCADA DE SELECTORES: ISLA -> SURTIDOR -> LADO
+        // ---------------------------------------------------------
+        function onIsleChange() {
+            var selectedIsle = $('#select-isle').val();
+            var $pumpSelect = $('#select-pump');
+            var $sideSelect = $('#select-side');
+
+            $pumpSelect.empty().append('<option value="">-- Seleccionar --</option>');
+            $sideSelect.empty().append('<option value="">-- Seleccionar --</option>').prop('disabled', true);
+
+            if (!selectedIsle || !Array.isArray(pumps) || !pumps.length) {
+                $pumpSelect.prop('disabled', true);
+                loadProductsBySede();
+                return;
+            }
+
+            var pumpsInIsle = pumps.filter(function(p) {
+                var pIsleId = p.isle_id !== undefined && p.isle_id !== null ? p.isle_id : (p.isle ? p.isle.id : null);
+                return String(pIsleId) === String(selectedIsle)
+                    && (p.deleted == 0 || p.deleted === false || p.deleted === null || p.deleted === undefined);
+            });
+
+            if (!pumpsInIsle.length) {
+                $pumpSelect.prop('disabled', true);
+                loadProductsBySede();
+                return;
+            }
+
+            var uniqueMachineNames = [];
+            pumpsInIsle.forEach(function(p) {
+                var mName = p.name || ('Surtidor #' + p.id);
+                if (!uniqueMachineNames.includes(mName)) {
+                    uniqueMachineNames.push(mName);
+                }
+            });
+
+            uniqueMachineNames.forEach(function(mName) {
+                $pumpSelect.append('<option value="' + mName + '">' + mName + '</option>');
+            });
+
+            $pumpSelect.prop('disabled', false);
+            loadProductsBySede();
+        }
+
+        function onPumpChange() {
+            var selectedIsle = $('#select-isle').val();
+            var selectedMachineName = $('#select-pump').val();
+            var $sideSelect = $('#select-side');
+
+            $sideSelect.empty().append('<option value="">-- Seleccionar Lado --</option>');
+
+            if (!selectedIsle || !selectedMachineName || !Array.isArray(pumps) || !pumps.length) {
+                $sideSelect.prop('disabled', true);
+                return;
+            }
+
+            var matchingPumps = pumps.filter(function(p) {
+                var pIsleId = p.isle_id !== undefined && p.isle_id !== null ? p.isle_id : (p.isle ? p.isle.id : null);
+                var mName = p.name || ('Surtidor #' + p.id);
+                return String(pIsleId) === String(selectedIsle)
+                    && mName === selectedMachineName
+                    && (p.deleted == 0 || p.deleted === false || p.deleted === null || p.deleted === undefined);
+            });
+
+            if (!matchingPumps.length) {
+                $sideSelect.prop('disabled', true);
+                return;
+            }
+
+            var uniqueSides = [];
+            matchingPumps.forEach(function(p) {
+                var sVal = p.side || 1;
+                if (!uniqueSides.includes(sVal)) {
+                    uniqueSides.push(sVal);
+                }
+            });
+            uniqueSides.sort(function(a, b) { return a - b; });
+
+            uniqueSides.forEach(function(sVal) {
+                $sideSelect.append('<option value="' + sVal + '">Lado ' + sVal + '</option>');
+            });
+
+            $sideSelect.prop('disabled', false);
+        }
+
+        function onSideChange() {
+            var chosenSide = $('#select-side').val();
+            var selectedIsle = $('#select-isle').val();
+            var selectedMachineName = $('#select-pump').val();
+            if (!chosenSide || !selectedIsle || !selectedMachineName) return;
+
+            var sidePumps = pumps.filter(function(p) {
+                var pIsleId = p.isle_id !== undefined && p.isle_id !== null ? p.isle_id : (p.isle ? p.isle.id : null);
+                var mName = p.name || ('Surtidor #' + p.id);
+                return String(pIsleId) === String(selectedIsle)
+                    && mName === selectedMachineName
+                    && String(p.side || 1) === String(chosenSide)
+                    && (p.deleted == 0 || p.deleted === false || p.deleted === null || p.deleted === undefined);
+            });
+
+            if (!sidePumps.length) return;
+
+            var chosenPump = sidePumps[0];
+            var productId = chosenPump.product_id;
+
+            appendEditableProductRow(productId, chosenSide, selectedIsle, selectedMachineName, chosenPump.id);
+        }
+
+        function toggleDetailedMode() {
+            var isChecked = $('#chk-detailed-mode').is(':checked');
+            var $container = $('#detailed-selectors-container');
+            var $statusText = $('#detailed-mode-status-text');
+            var $isleSelect = $('#select-isle');
+            var $pumpSelect = $('#select-pump');
+            var $sideSelect = $('#select-side');
+
+            if (isChecked) {
+                $container.removeClass('opacity-50').css('pointer-events', 'auto');
+                $isleSelect.prop('disabled', false);
+                $statusText.html('<i class="bi bi-check-circle-fill text-success me-1"></i>Modo detallado activo');
+                if ($isleSelect.val()) {
+                    onIsleChange();
+                }
+            } else {
+                $container.addClass('opacity-50').css('pointer-events', 'none');
+                $isleSelect.prop('disabled', true);
+                $pumpSelect.empty().append('<option value="">-- Seleccionar Surtidor --</option>').prop('disabled', true);
+                $sideSelect.empty().append('<option value="">-- Seleccionar Lado --</option>').prop('disabled', true);
+                $statusText.html('<i class="bi bi-info-circle me-1"></i>Opcional: Desactivado');
+            }
+        }
+
+        function updateRowPumpBadge($row, productId, chosenPumpId) {
+            let $pumpBadge = $row.find('.row-pump-details');
+            if (!$pumpBadge.length) {
+                $row.find('td:first-child').append('<div class="row-pump-details mt-1"></div>');
+                $pumpBadge = $row.find('.row-pump-details');
+            }
+
+            if (!$('#chk-detailed-mode').is(':checked')) {
+                $pumpBadge.empty();
+                return;
+            }
+
+            var infoText = '';
+            var rowSide = $row.data('side') || $('#select-side').val();
+            var rowIsle = $row.data('isle') || $('#select-isle').val();
+            var rowMachine = $row.data('machine') || $('#select-pump').val();
+
+            if (chosenPumpId && Array.isArray(pumps)) {
+                var found = pumps.find(p => String(p.id) === String(chosenPumpId));
+                if (found) {
+                    var pName = found.name || ('Surtidor #' + found.id);
+                    var sName = found.side ? ('Lado ' + found.side) : '';
+                    var iName = found.isle ? (found.isle.name || ('Isla #' + found.isle_id)) : '';
+                    var parts = [];
+                    if (pName) parts.push(pName);
+                    if (sName) parts.push(sName);
+                    if (iName) parts.push(iName);
+                    infoText = parts.join(' • ');
+                }
+            }
+            if (!infoText) {
+                var details = getPumpDetailsForProduct(productId, rowIsle, rowSide, rowMachine);
+                if (details) infoText = details.full_info;
+            }
+
+            if (infoText) {
+                $pumpBadge.html('<span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-2 px-2 py-1 small fw-bold" style="font-size: 0.75rem;"><i class="bi bi-fuel-pump me-1"></i>' + infoText + '</span>');
+            } else {
+                $pumpBadge.empty();
+            }
+        }
+
+        function buildRowPumpSelectHtml(productId, currentPumpId, rowSide, rowIsle, rowMachine) {
+            if (!$('#chk-detailed-mode').is(':checked')) return '';
+            var details = getPumpDetailsForProduct(productId, rowIsle || $('#select-isle').val(), rowSide || $('#select-side').val(), rowMachine || $('#select-pump').val());
+            var infoText = details ? details.full_info : '';
+            if (!infoText) return '';
+            return '<span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-2 px-2 py-1 small fw-bold" style="font-size: 0.75rem;"><i class="bi bi-fuel-pump me-1"></i>' + infoText + '</span>';
+        }
+
+        function getPumpDetailsForProduct(productId, selectedIsleId, selectedSide, selectedMachineName) {
+            if (!Array.isArray(pumps) || !pumps.length || !productId) return null;
+            
+            let matches = pumps.filter(function(p) {
+                var pIsleId = p.isle_id !== undefined && p.isle_id !== null ? p.isle_id : (p.isle ? p.isle.id : null);
+                var mName = p.name || ('Surtidor #' + p.id);
+                var isIsleMatch = !selectedIsleId || String(pIsleId) === String(selectedIsleId);
+                var isMachineMatch = !selectedMachineName || mName === selectedMachineName;
+                var isSideMatch = !selectedSide || String(p.side || 1) === String(selectedSide);
+
+                return String(p.product_id) === String(productId)
+                    && isIsleMatch
+                    && isMachineMatch
+                    && isSideMatch
+                    && (p.deleted == 0 || p.deleted === false || p.deleted === null || p.deleted === undefined);
+            });
+
+            if (!matches.length) return null;
+
+            const formattedList = matches.map(function(m) {
+                const pumpName = m.name || ('Surtidor #' + m.id);
+                const sideName = m.side ? ('Lado ' + m.side) : '';
+                const isleName = m.isle ? (m.isle.name || ('Isla #' + m.isle_id)) : (m.isle_id ? ('Isla #' + m.isle_id) : '');
+
+                const parts = [];
+                if (pumpName) parts.push(pumpName);
+                if (sideName) parts.push(sideName);
+                if (isleName) parts.push(isleName);
+                return parts.join(' • ');
+            });
+
+            return {
+                pump_id: matches[0].id,
+                full_info: formattedList.join(' | ')
             };
         }
 
         function buildDirectSaleProducts(data) {
-            const selectedIsle = parseInt($('#select-isle').val());
+            const selectedIsle = $('#select-isle').val();
             const seen = {};
             directSaleProducts = [];
 
             (Array.isArray(data) ? data : []).forEach(function(tank) {
                 (tank.products || []).forEach(function(product) {
-                    const pump = Array.isArray(pumps) ? pumps.find(function(p) {
-                        return parseInt(p.product_id) === parseInt(product.id)
-                            && (!selectedIsle || parseInt(p.isle_id) === selectedIsle)
-                            && (p.deleted == 0 || p.deleted === false);
-                    }) : null;
-                    const key = product.id + '-' + (tank.id || '') + '-' + (pump ? pump.id : '');
+                    const pumpInfoObj = getPumpDetailsForProduct(product.id, selectedIsle);
+                    const key = product.id + '-' + (tank.id || '') + '-' + (pumpInfoObj ? pumpInfoObj.pump_id : '');
                     if (seen[key]) return;
                     seen[key] = true;
 
@@ -1762,23 +2687,46 @@
                         stock: stockVal,
                         measurement_unit: product.measurement_unit || '',
                         tank_id: tank.id || '',
-                        pump_id: pump ? pump.id : '',
+                        pump_id: pumpInfoObj ? pumpInfoObj.pump_id : '',
+                        pump_info: pumpInfoObj ? pumpInfoObj.full_info : '',
                         order_detail_id: product.order_detail_id || '',
                     });
                 });
             });
         }
 
-        function buildProductOptionsData() {
-            // Cuenta cuántas entradas comparten el mismo nombre para distinguirlas (ej. el mismo
-            // producto disponible en dos tanques distintos) en vez de mostrarlas idénticas.
+        function buildProductOptionsData(filterSide, filterIsle, filterMachineName) {
             const nameCounts = {};
-            directSaleProducts.forEach(function(product) {
+
+            let filteredProducts = directSaleProducts;
+
+            if ($('#chk-detailed-mode').is(':checked') && filterSide && filterIsle && filterMachineName && Array.isArray(pumps) && pumps.length) {
+                const validFuelProductIds = pumps.filter(function(p) {
+                    var pIsleId = p.isle_id !== undefined && p.isle_id !== null ? p.isle_id : (p.isle ? p.isle.id : null);
+                    var mName = p.name || ('Surtidor #' + p.id);
+                    return String(pIsleId) === String(filterIsle)
+                        && mName === filterMachineName
+                        && String(p.side || 1) === String(filterSide)
+                        && (p.deleted == 0 || p.deleted === false || p.deleted === null || p.deleted === undefined);
+                }).map(p => String(p.product_id));
+
+                filteredProducts = directSaleProducts.filter(function(product) {
+                    if (validFuelProductIds.includes(String(product.id))) {
+                        return true;
+                    }
+                    if (!product.pump_id && (!product.tank_id || product.tank_id === '')) {
+                        return true;
+                    }
+                    return false;
+                });
+            }
+
+            filteredProducts.forEach(function(product) {
                 nameCounts[product.name] = (nameCounts[product.name] || 0) + 1;
             });
             const nameSeen = {};
 
-            return directSaleProducts.map(function(product) {
+            return filteredProducts.map(function(product) {
                 let label = product.name;
                 if (nameCounts[product.name] > 1) {
                     nameSeen[product.name] = (nameSeen[product.name] || 0) + 1;
@@ -1795,19 +2743,21 @@
                     stock: product.stock,
                     tank_id: product.tank_id || '',
                     pump_id: product.pump_id || '',
+                    pump_info: product.pump_info || '',
                     order_detail_id: product.order_detail_id || '',
                 };
             });
         }
 
-        function productOptionsHtml(selectedId) {
-            return buildProductOptionsData().map(function(opt) {
+        function productOptionsHtml(selectedId, filterSide, filterIsle, filterMachineName) {
+            return buildProductOptionsData(filterSide, filterIsle, filterMachineName).map(function(opt) {
                 const selected = String(opt.id) === String(selectedId) ? 'selected' : '';
                 return `<option value="${opt.id}"
                     data-price="${opt.price}"
                     data-original-price="${opt.price}"
                     data-tank-id="${opt.tank_id}"
                     data-pump-id="${opt.pump_id}"
+                    data-pump-info="${opt.pump_info || ''}"
                     data-order-detail-id="${opt.order_detail_id}"
                     ${selected}>${opt.label}</option>`;
             }).join('');
@@ -1819,22 +2769,23 @@
             return match ? match.label : '(Seleccione un producto...)';
         }
 
-        function productComboMenuHtml(selectedId) {
+        function productComboMenuHtml(selectedId, filterSide, filterIsle, filterMachineName) {
             const placeholderActive = !selectedId ? 'is-active' : '';
             let html = `<button type="button" class="custom-combo-option is-placeholder ${placeholderActive}" data-value="">(Seleccione un producto...)</button>`;
-            html += buildProductOptionsData().map(function(opt) {
+            html += buildProductOptionsData(filterSide, filterIsle, filterMachineName).map(function(opt) {
                 const active = String(opt.id) === String(selectedId) ? 'is-active' : '';
                 return `<button type="button" class="custom-combo-option ${active}"
                     data-value="${opt.id}"
                     data-price="${opt.price}"
                     data-tank-id="${opt.tank_id}"
                     data-pump-id="${opt.pump_id}"
+                    data-pump-info="${opt.pump_info || ''}"
                     data-order-detail-id="${opt.order_detail_id}">${opt.label}</button>`;
             }).join('');
             return html;
         }
 
-        function appendEditableProductRow(selectedProductId) {
+        function appendEditableProductRow(selectedProductId, filterSide, filterIsle, filterMachineName, chosenPumpId) {
             if (!directSaleProducts.length) {
                 ToastError.fire({
                     title: 'Sin productos',
@@ -1843,19 +2794,28 @@
                 return;
             }
 
-            const product = selectedProductId
-                ? directSaleProducts.find(p => String(p.id) === String(selectedProductId))
-                : null;
+            const availableOptions = buildProductOptionsData(filterSide, filterIsle, filterMachineName);
+            const initialProductId = selectedProductId || (availableOptions.length ? availableOptions[0].id : directSaleProducts[0].id);
+
+            const product = directSaleProducts.find(p => String(p.id) === String(initialProductId));
+
             const price = product ? parseFloat(product.price || 0) : 0;
             const quantity = product ? 1 : 0;
             const subtotal = price * quantity;
             const placeholderSelected = product ? '' : 'selected';
             const comboSelectedId = product ? product.id : null;
+            
+            const rowPumpId = chosenPumpId || (product ? product.pump_id : '');
+            const pumpSelectHtml = buildRowPumpSelectHtml(comboSelectedId, rowPumpId);
+
             const row = `
                 <tr class="editable-sale-row"
                     data-product-id="${product ? product.id : ''}"
                     data-tank-id="${product ? (product.tank_id || '') : ''}"
-                    data-pump-id="${product ? (product.pump_id || '') : ''}"
+                    data-pump-id="${rowPumpId}"
+                    data-side="${filterSide || ''}"
+                    data-isle="${filterIsle || ''}"
+                    data-machine="${filterMachineName || ''}"
                     data-original-price="${price}"
                     data-current-price="${price}"
                     data-subtotal="${subtotal.toFixed(2)}"
@@ -1867,12 +2827,15 @@
                                 <i class="bi bi-chevron-down"></i>
                             </button>
                             <div class="custom-combo-menu">
-                                ${productComboMenuHtml(comboSelectedId)}
+                                ${productComboMenuHtml(comboSelectedId, filterSide, filterIsle, filterMachineName)}
                             </div>
+                        </div>
+                        <div class="row-pump-details mt-1">
+                            ${pumpSelectHtml}
                         </div>
                         <select class="form-select form-select-sm sale-product-select d-none">
                             <option value="" data-price="0" data-original-price="0" ${placeholderSelected} disabled>(Seleccione un producto...)</option>
-                            ${productOptionsHtml(comboSelectedId)}
+                            ${productOptionsHtml(comboSelectedId, filterSide, filterIsle, filterMachineName)}
                         </select>
                     </td>
                     <td>
@@ -1891,7 +2854,10 @@
             `;
 
             $('#tbl-order-items').append(row);
-            recalculateEditableRow($('#tbl-order-items tr').last(), 'quantity');
+            const $newRow = $('#tbl-order-items tr.editable-sale-row').last();
+            if (chosenPumpId) {
+                updateRowPumpBadge($newRow, initialProductId, chosenPumpId);
+            }
             recalculateTotal();
         }
 
@@ -1928,18 +2894,38 @@
             appendEditableProductRow();
         });
 
+        $(document).on('change', '.row-pump-select', function() {
+            const $row = $(this).closest('tr');
+            const chosenPumpId = $(this).val();
+            $row.data('pump-id', chosenPumpId).attr('data-pump-id', chosenPumpId);
+        });
+
         $('#tbl-order-items').on('change', '.sale-product-select', function() {
             const $row = $(this).closest('tr');
             const selected = $(this).find('option:selected');
+            const productId = selected.val();
             const price = parseFloat(selected.data('price')) || 0;
+            const currentPumpId = selected.data('pump-id') || '';
 
-            // La cantidad no se toca aquí: solo se recalcula el precio y el subtotal la mantiene.
             if (parseFloat($row.find('.sale-quantity').val()) <= 0) {
                 $row.find('.sale-quantity').val((1).toFixed(3));
                 $row.data('calc-source', 'quantity');
             }
 
             $row.find('.sale-unit-price').val(price.toFixed(2));
+
+            // Actualizar la lista desplegable de surtidores en la fila
+            let $pumpBadge = $row.find('.row-pump-details');
+            if (!$pumpBadge.length) {
+                $row.find('td:first-child').append('<div class="row-pump-details mt-1"></div>');
+                $pumpBadge = $row.find('.row-pump-details');
+            }
+
+            const newPumpSelectHtml = buildRowPumpSelectHtml(productId, currentPumpId);
+            $pumpBadge.html(newPumpSelectHtml);
+
+            var firstPumpVal = $pumpBadge.find('.row-pump-select').val() || currentPumpId;
+            $row.data('pump-id', firstPumpVal).attr('data-pump-id', firstPumpVal);
 
             if (price === 0) {
                 ToastError.fire({
@@ -2121,11 +3107,8 @@
                                 title: 'Sin productos',
                                 text: 'No hay productos configurados para esta sede.'
                             });
-                            recalculateTotal();
-                            return;
                         }
-
-                        appendEditableProductRow();
+                        recalculateTotal();
                         return;
                     }
 
@@ -2345,6 +3328,108 @@
             });
         }
 
+        var clientAgreementsData = [];
+
+        function reabrirContratosModal() {
+            const clientName = $('#client_name').val() || 'Cliente';
+            $('#modal-contract-client-name').text(clientName);
+            renderModalAgreementsList();
+            const modalEl = document.getElementById('modalSelectContract');
+            if (modalEl) {
+                let bsModal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                bsModal.show();
+            }
+        }
+
+        function renderModalAgreementsList() {
+            $('#modal-contract-navigation').hide();
+            const $tbody = $('#tbl-modal-select-contract').empty();
+            const tipoVenta = $('#tipo-venta').val();
+
+            if (!clientAgreementsData || clientAgreementsData.length === 0) {
+                $tbody.append(`
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">
+                            <i class="bi bi-journal-x fs-3 d-block mb-1"></i>
+                            No hay ${tipoVenta === 'contrato' ? 'contratos' : 'créditos'} disponibles para este cliente.
+                        </td>
+                    </tr>
+                `);
+                return;
+            }
+
+            clientAgreementsData.forEach(function(agreement) {
+                const fechaFormateada = new Date(agreement.date).toLocaleDateString('es-PE');
+                const estadoTexto = agreement.status == 0 ? 'Activo' : 'Inactivo';
+                const estadoClass = agreement.status == 0 ? 'bg-success' : 'bg-danger';
+                const numContract = agreement.number ? agreement.number : String(agreement.id).padStart(5, '0');
+
+                $tbody.append(`
+                    <tr style="cursor: pointer;" onclick="modalCargarProductosContrato(${agreement.id}, '${numContract}')">
+                        <td><strong class="text-primary">${tipoVenta === 'contrato' ? 'Contrato' : 'Crédito'} #${numContract}</strong></td>
+                        <td>${fechaFormateada}</td>
+                        <td><span class="badge ${estadoClass}">${estadoTexto}</span></td>
+                        <td class="text-end fw-bold">S/ ${parseFloat(agreement.total).toFixed(2)}</td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-primary">
+                                <i class="bi bi-eye me-1"></i>Ver Órdenes
+                            </button>
+                        </td>
+                    </tr>
+                `);
+            });
+        }
+
+        function modalCargarProductosContrato(agreementId, numContract) {
+            $('#current-agreement-id').val(agreementId);
+            const tipoVenta = $('#tipo-venta').val();
+
+            $.ajax({
+                url: "{{ route('orders.by.contract') }}",
+                method: 'GET',
+                data: { agreement_id: agreementId },
+                success: function(data) {
+                    $('#modal-contract-navigation').show();
+                    $('#btn-modal-contract-back').attr('onclick', 'renderModalAgreementsList()');
+
+                    const $tbody = $('#tbl-modal-select-contract').empty();
+
+                    if (data.orders && data.orders.length > 0) {
+                        data.orders.forEach(function(order) {
+                            const fechaFormateada = new Date(order.date).toLocaleDateString('es-PE');
+
+                            $tbody.append(`
+                                <tr style="cursor: pointer;" onclick="modalCargarProductosOrden(${order.id})">
+                                    <td><strong class="text-primary">Orden #${order.number}</strong></td>
+                                    <td>${fechaFormateada}</td>
+                                    <td><span class="badge bg-info text-dark">Disponible</span></td>
+                                    <td class="text-end fw-bold">S/ ${parseFloat(order.total).toFixed(2)}</td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-sm btn-success">
+                                            <i class="bi bi-box-seam me-1"></i>Ver Productos
+                                        </button>
+                                    </td>
+                                </tr>
+                            `);
+                        });
+                    } else {
+                        $tbody.append(`<tr><td colspan="5" class="text-center text-muted py-3">No hay órdenes disponibles en este ${tipoVenta}.</td></tr>`);
+                    }
+                }
+            });
+        }
+
+        function modalCargarProductosOrden(orderId) {
+            cargarProductosOrden(orderId);
+            const modalEl = document.getElementById('modalSelectContract');
+            if (modalEl) {
+                const bsModal = bootstrap.Modal.getInstance(modalEl);
+                if (bsModal) {
+                    bsModal.hide();
+                }
+            }
+        }
+
         function cargarContratosCliente(clienteId) {
             const tipoVenta = $('#tipo-venta').val();
 
@@ -2356,20 +3441,22 @@
                     type: tipoVenta
                 },
                 success: function(data) {
+                    clientAgreementsData = data || [];
                     $('#tbl-products-contract').empty();
 
                     if (data.length > 0) {
-                        // Mostrar lista de contratos/créditos
+                        $('#btn-open-contracts-modal').show();
+                        // Mostrar lista de contratos/créditos en panel lateral
                         data.forEach(function(agreement) {
-                            const fechaFormateada = new Date(agreement.date).toLocaleDateString(
-                                'es-PE');
+                            const fechaFormateada = new Date(agreement.date).toLocaleDateString('es-PE');
                             const estadoTexto = agreement.status == 0 ? 'Activo' : 'Inactivo';
                             const estadoClass = agreement.status == 0 ? 'text-success' : 'text-danger';
+                            const numContract = agreement.number ? agreement.number : String(agreement.id).padStart(5, '0');
 
                             $('#tbl-products-contract').append(`
                             <tr onclick="cargarProductosContrato(${agreement.id})" style="cursor: pointer;" class="table-row-hover">
                                 <td>
-                                    <strong>${tipoVenta === 'contrato' ? 'Contrato' : 'Crédito'} #${agreement.id}</strong><br>
+                                    <strong>${tipoVenta === 'contrato' ? 'Contrato' : 'Crédito'} #${numContract}</strong><br>
                                     <small class="text-muted">Fecha: ${fechaFormateada}</small>
                                 </td>
                                 <td class="text-end">
@@ -2380,19 +3467,19 @@
                         `);
                         });
 
-                        // 👉 NO OCULTAR la búsqueda, solo mostrar el card de contratos
                         $('#products-contract-credit').show();
-
-                        // Cambiar título del card
-                        $('#products-contract-credit h6').text(tipoVenta === 'contrato' ?
-                            'Contratos del Cliente' : 'Créditos del Cliente');
+                        $('#products-contract-credit h6').text(tipoVenta === 'contrato' ? 'Contratos del Cliente' : 'Créditos del Cliente');
 
                         ToastMessage.fire({
                             title: 'Cliente Seleccionado',
                             text: `Se encontraron ${data.length} ${tipoVenta === 'contrato' ? 'contratos' : 'créditos'}`
                         });
 
+                        // Abrir modal espacioso automáticamente
+                        reabrirContratosModal();
+
                     } else {
+                        $('#btn-open-contracts-modal').hide();
                         $('#tbl-products-contract').append(
                             `<tr><td colspan="2" class="text-center text-muted">No hay ${tipoVenta === 'contrato' ? 'contratos' : 'créditos'} disponibles para este cliente</td></tr>`
                         );
@@ -3143,14 +4230,8 @@
             $('#lbl-charge-total').text(totalFormatted);
             $('#lbl-charge-total-pay').text(totalFormatted);
 
-            // Actualizar dinámicamente el primer método de pago que esté checkeado
-            $('input[type="checkbox"][id^="cbx_amount_"]').each(function() {
-                if ($(this).is(':checked')) {
-                    var paymentId = $(this).attr('id').replace('cbx_amount_', '');
-                    $('#amount_' + paymentId).val(total.toFixed(2));
-                    return false; // Break del each
-                }
-            });
+            // Actualizar dinámicamente las filas de métodos de pago
+            updateDynamicPaymentAmounts(total);
 
             $('#difference').val('0.00');
             $('#cash').val('');
@@ -3294,7 +4375,7 @@
             // Limpiar campos
             $(nameEl).val('');
             $(addressEl).val('');
-            $('#client').val('');
+            $('#client_name').val('');
 
             // Validar longitud del documento
             if (doc.length !== 8 && doc.length !== 11) {
@@ -3325,7 +4406,7 @@
 
                         $(nameEl).val(fullName);
                         $(addressEl).val(data.domicilio?.direccion || '');
-                        $('#client').val(fullName);
+                        $('#client_name').val(fullName);
                     } else {
                         ToastError.fire({
                             text: response.message || 'No se encontró información en SUNAT/RENIEC'
@@ -3396,38 +4477,131 @@
             });
         }
 
-        function calculateDifference(e) {
+        function validateSelectedPaymentMethods(selectElem) {
+            var selectedVal = $(selectElem).val();
+            if (!selectedVal) return;
+
+            var count = 0;
+            $('#dynamic-payment-rows .payment-method-select').each(function() {
+                if ($(this).val() === selectedVal) {
+                    count++;
+                }
+            });
+
+            if (count > 1) {
+                ToastError.fire({
+                    title: 'Método repetido',
+                    text: 'Este método de pago ya ha sido seleccionado en otra fila'
+                });
+                $(selectElem).val('');
+                calculateDynamicPaymentTotal();
+            }
+        }
+
+        function addPaymentRow() {
+            var optionsHtml = $('#payment-options-template').html();
+            var rowHtml = `
+                <div class="row g-2 align-items-center mb-2 dynamic-payment-row">
+                    <div class="col-7 col-md-7">
+                        <select class="form-select payment-method-select fw-bold border-1 py-2" onchange="validateSelectedPaymentMethods(this)">
+                            ${optionsHtml}
+                        </select>
+                    </div>
+                    <div class="col-4 col-md-4">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted fw-bold small">S/</span>
+                            <input type="number" step="0.01" min="0" class="form-control text-end fw-bold py-2 payment-method-amount" oninput="calculateDynamicPaymentTotal()" placeholder="0.00">
+                        </div>
+                    </div>
+                    <div class="col-1 col-md-1 text-center">
+                        <button type="button" class="btn btn-outline-danger btn-sm rounded-circle btn-remove-payment-row" onclick="removePaymentRow(this)" style="width: 32px; height: 32px; padding: 0;" title="Eliminar método">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            var $newRow = $(rowHtml);
+            $('#dynamic-payment-rows').append($newRow);
+
+            var usedVals = [];
+            $('#dynamic-payment-rows .payment-method-select').each(function() {
+                var v = $(this).val();
+                if (v) usedVals.push(v);
+            });
+
+            var $select = $newRow.find('.payment-method-select');
+            $select.find('option').each(function() {
+                var val = $(this).val();
+                if (val && !usedVals.includes(val)) {
+                    $select.val(val);
+                    return false;
+                }
+            });
+
+            updatePaymentRemoveButtons();
+            calculateDynamicPaymentTotal();
+        }
+
+        function removePaymentRow(btn) {
+            $(btn).closest('.dynamic-payment-row').remove();
+            updatePaymentRemoveButtons();
+            calculateDynamicPaymentTotal();
+        }
+
+        function updatePaymentRemoveButtons() {
+            var rows = $('#dynamic-payment-rows .dynamic-payment-row');
+            if (rows.length <= 1) {
+                rows.find('.btn-remove-payment-row').hide();
+            } else {
+                rows.find('.btn-remove-payment-row').show();
+            }
+        }
+
+        function calculateDynamicPaymentTotal() {
             var total = parseFloat($('#total').text()) || 0;
             var totalPayments = 0;
 
-            // Calcular dinámicamente el total de todos los métodos de pago activos
-            $('input[id^="amount_"]').each(function() {
-                var paymentId = $(this).attr('id').replace('amount_', '');
-                var checkbox = $('#cbx_amount_' + paymentId);
-                
-                // Solo sumar si el checkbox está marcado
-                if (checkbox.is(':checked')) {
-                    var amount = parseFloat($(this).val()) || 0;
-                    totalPayments += amount;
-                }
+            $('#dynamic-payment-rows .dynamic-payment-row').each(function() {
+                var amt = parseFloat($(this).find('.payment-method-amount').val()) || 0;
+                totalPayments += amt;
             });
 
             var difference = total - totalPayments;
             $('#difference').val(difference.toFixed(2));
 
-            // Calcular vuelto adicional automáticamente si el checkbox está marcado
+            // Actualizar badge de Saldo Restante
+            var $lblSaldo = $('#lbl-saldo-restante');
+            if (Math.abs(difference) < 0.01) {
+                $lblSaldo.removeClass('bg-danger bg-warning bg-info').addClass('bg-success').text('S/ 0.00 (Completado)');
+            } else if (difference > 0) {
+                $lblSaldo.removeClass('bg-success bg-info bg-warning').addClass('bg-danger').text('Falta S/ ' + difference.toFixed(2));
+            } else {
+                var sobrante = Math.abs(difference);
+                $lblSaldo.removeClass('bg-success bg-danger bg-warning').addClass('bg-info').text('Vuelto S/ ' + sobrante.toFixed(2));
+            }
+
             if ($('#is-vuelto-adicional').is(':checked')) {
-                // Si el total pagado es mayor que el total de la venta, hay vuelto adicional
                 if (totalPayments > total) {
                     var adicional = totalPayments - total;
                     $('#adicional').val(adicional.toFixed(2));
                 } else {
-                    // Si el total pagado es menor o igual, no hay vuelto adicional
                     $('#adicional').val('0.00');
                 }
             }
 
             calculateChange();
+        }
+
+        function updateDynamicPaymentAmounts(total) {
+            var rows = $('#dynamic-payment-rows .dynamic-payment-row');
+            if (rows.length === 1) {
+                rows.find('.payment-method-amount').val(total.toFixed(2));
+            }
+            calculateDynamicPaymentTotal();
+        }
+
+        function calculateDifference(e) {
+            calculateDynamicPaymentTotal();
         }
 
         function calculateDiscount(e) {
@@ -3436,41 +4610,23 @@
             var total = isNaN(parseFloat($('#lbl-charge-total').text())) ? 0 : parseFloat($('#lbl-charge-total').text());
 
             if (e.target.id == 'percentage') {
-
                 var discount = (total * percentage) / 100;
                 var total_pay = total - discount;
-
                 $('#discount').val(discount.toFixed(2));
-
-
-
             } else if (e.target.id == 'discount') {
-
                 var percentage = (discount / total) * 100;
                 var total_pay = total - discount;
-
                 $('#percentage').val(percentage.toFixed(2));
-
             }
 
             $('#lbl-charge-discount').text(discount.toFixed(2));
             $('#lbl-charge-total-pay').text(total_pay.toFixed(2));
 
             calculateDifference();
-
         }
 
         function calculateChange(e) {
-            // Buscar el primer método de pago que esté checkeado y con valor
-            var firstPaymentAmount = 0;
-            $('input[type="checkbox"][id^="cbx_amount_"]').each(function() {
-                if ($(this).is(':checked')) {
-                    var paymentId = $(this).attr('id').replace('cbx_amount_', '');
-                    firstPaymentAmount = parseFloat($('#amount_' + paymentId).val()) || 0;
-                    return false; // Break del each
-                }
-            });
-
+            var firstPaymentAmount = parseFloat($('#dynamic-payment-rows .payment-method-amount').first().val()) || 0;
             var cash = isNaN(parseFloat($('#cash').val())) ? 0 : parseFloat($('#cash').val());
             var change = cash - firstPaymentAmount;
 
@@ -3481,18 +4637,12 @@
             }
         }
 
-
         function resetChargeModal() {
             $('voucher_type').prop('checked', false);
             $('#voucher_type_1').prop('checked', true);
             $('#document').val('');
             $('#name').val('');
             $('#address').val('');
-
-            // Resetear dinámicamente todos los checkboxes y inputs de métodos de pago
-            $('input[type="checkbox"][id^="cbx_amount_"]').prop('checked', false);
-            $('input[id^="amount_"]').val('');
-            $('input[id^="operation_number_"]').val('');
 
             $('#cbx_credit').prop('checked', false);
             $('#payment_days').val('');
@@ -3511,30 +4661,6 @@
             $('#vuelto-adicional-section').hide();
             $('#adicional').val('0.00');
             $('#chargeModal').modal('hide');
-        }
-
-
-        function togglePaymentMethod(event, inputSelector) {
-            // Habilitar o deshabilitar el input según el checkbox
-            if (event.target.checked) {
-                $(inputSelector).prop('disabled', false).focus();
-            } else {
-                $(inputSelector).prop('disabled', true).val('');
-            }
-
-            // Si tras este cambio queda un único método de pago marcado, se le
-            // asigna automáticamente el total a cobrar (igual que al abrir el
-            // cobro). Si queda más de uno marcado, el/los recién marcados
-            // arrancan en 0 para que el usuario reparta el monto a mano.
-            var checkedBoxes = $('input[type="checkbox"][id^="cbx_amount_"]:checked');
-            if (checkedBoxes.length === 1) {
-                var total = parseFloat($('#total').text()) || 0;
-                var onlyPaymentId = checkedBoxes.first().attr('id').replace('cbx_amount_', '');
-                $('#amount_' + onlyPaymentId).val(total.toFixed(2));
-            }
-
-            // Recalcular diferencia
-            calculateDifference();
         }
 
         function guardarVenta() {
@@ -3559,8 +4685,6 @@
                 let clientName = $('#client_name').val();
                 vehiclePlate = $('#vehicle_plate').val()?.trim() || null;
                 if (!clientName || clientName.trim() === '') {
-                    $('#client_name').val($('#client').val());
-                    clientName = $('#client_name').val();
                     ToastError.fire({
                         title: 'Error',
                         text: 'Debe ingresar el nombre del cliente para venta a crédito'
@@ -3574,25 +4698,38 @@
             let paymentMethods = [];
 
             if (tipoVenta === 'directa' && !isCreditSale) {
-                // Verificar dinámicamente todos los métodos de pago activos
-                $('input[type="checkbox"][id^="cbx_amount_"]').each(function() {
-                    if ($(this).is(':checked')) {
-                        var paymentId = $(this).attr('id').replace('cbx_amount_', '');
-                        var amount = parseFloat($('#amount_' + paymentId).val()) || 0;
+                var usedMethods = [];
+                var duplicateFound = false;
 
-                        if (amount > 0) {
-                            totalPayments += amount;
-                            paymentMethods.push({
-                                payment_method_id: parseInt(paymentId),
-                                amount: amount,
-                                adicional: adicional,
-                                voucher_type: $('input[name="voucher_type"]:checked').val(),
-                                voucher_id: null,
-                                number: null
-                            });
+                // Verificar dinámicamente las filas de métodos de pago
+                $('#dynamic-payment-rows .dynamic-payment-row').each(function() {
+                    var paymentId = $(this).find('.payment-method-select').val();
+                    var amount = parseFloat($(this).find('.payment-method-amount').val()) || 0;
+
+                    if (paymentId && amount > 0) {
+                        if (usedMethods.includes(paymentId)) {
+                            duplicateFound = true;
                         }
+                        usedMethods.push(paymentId);
+                        totalPayments += amount;
+                        paymentMethods.push({
+                            payment_method_id: parseInt(paymentId),
+                            amount: amount,
+                            adicional: adicional,
+                            voucher_type: $('input[name="voucher_type"]:checked').val(),
+                            voucher_id: null,
+                            number: null
+                        });
                     }
                 });
+
+                if (duplicateFound) {
+                    ToastError.fire({
+                        title: 'Método duplicado',
+                        text: 'No puede registrar una venta con métodos de pago repetidos'
+                    });
+                    return;
+                }
 
                 // Validaciones solo para venta directa
                 if (paymentMethods.length === 0) {
@@ -3851,14 +4988,13 @@
 
             if (tipoVenta === 'contrato') {
                 clientId = $('#client_id').val();
-                clientName = $('#client').val() || $('#search-client').val();
+                clientName = $('#client_name').val() || $('#search-client').val();
 
                 // Obtener el order_detail_id guardado cuando se seleccionó un producto
                 orderDetailId = $('#current-order-detail-id').val() || null;
             } else {
                 // Para venta directa, tomar datos del formulario
-                // Priorizar client_name si existe, sino usar client
-                clientName = $('#client_name').val() || $('#client').val();
+                clientName = $('#client_name').val();
             }
 
             // Determinar el tipo de venta final
@@ -4004,7 +5140,6 @@
 
             // Limpiar campos de cliente
             $('#document').val('');
-            $('#client').val('');
             $('#client_name').val('');
             $('#vehicle_plate').val('');
             $('#address').val('');
@@ -4060,14 +5195,9 @@
             $('#payment-methods-section').show();
             $('#paga-con-section').show();
 
-            // Resetear formas de pago
-            $('input[type="checkbox"][id^="cbx_amount_"]').prop('checked', false);
-            $('input[id^="amount_"]').val('');
-
-            // Marcar el primer método de pago como predeterminado si existe
-            if ($('input[type="checkbox"][id^="cbx_amount_"]').length > 0) {
-                $('input[type="checkbox"][id^="cbx_amount_"]').first().prop('checked', true);
-            }
+            // Resetear formas de pago dinámicas
+            $('#dynamic-payment-rows').empty();
+            addPaymentRow();
 
             // Limpiar diferencia y cambio
             $('#difference').val('0.00');
