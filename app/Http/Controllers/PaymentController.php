@@ -80,8 +80,7 @@ class PaymentController extends Controller
     {
         // Manejar tanto agreement_id como payment_id
         if ($request->has('payment_id')) {
-            // Para ventas directas a crédito
-            $payment = Payment::with('sale.client')->find($request->payment_id);
+            $payment = Payment::with(['sale.client', 'agreement.client'])->find($request->payment_id);
 
             if (!$payment) {
                 return response()->json([
@@ -90,29 +89,44 @@ class PaymentController extends Controller
                 ], 404);
             }
 
-            $total = $payment->amount;
-            
-            // Calcular el total pagado (todos los payments con status paid para esta venta)
-            $totalPagado = Payment::where('sale_id', $payment->sale_id)
-                ->where('status', 'paid')
-                ->where('deleted', 0)
-                ->sum('amount');
-                
+            if ($payment->sale_id) {
+                $total = $payment->amount;
+                $totalPagado = Payment::where('sale_id', $payment->sale_id)
+                    ->where('status', 'paid')
+                    ->where('deleted', 0)
+                    ->sum('amount');
+                $saldo = max(0, $total - $totalPagado);
 
-            $saldo = $total - $totalPagado;
-            
-            // Obtener todos los pagos realizados para esta venta
-            $paymentsPaid = Payment::with('payment_method')
-                ->where('sale_id', $payment->sale_id)
-                ->where('status', 'paid')
-                ->where('deleted', 0)
-                ->orderBy('created_at', 'desc')
-                ->get();
+                $paymentsPaid = Payment::with('payment_method')
+                    ->where('sale_id', $payment->sale_id)
+                    ->where('status', 'paid')
+                    ->where('deleted', 0)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
 
-            // Obtener el nombre del cliente
-            $clientName = $payment->client_name;
-            if (!$clientName && $payment->sale && $payment->sale->client) {
-                $clientName = $payment->sale->client->business_name ?? $payment->sale->client->contact_name;
+                $clientName = $payment->client_name;
+                if (!$clientName && $payment->sale && $payment->sale->client) {
+                    $clientName = $payment->sale->client->business_name ?? $payment->sale->client->contact_name;
+                }
+            } else {
+                $total = $payment->agreement ? $payment->agreement->total : $payment->amount;
+                $totalPagado = Payment::where('agreement_id', $payment->agreement_id)
+                    ->where('status', 'paid')
+                    ->where('deleted', 0)
+                    ->sum('amount');
+                $saldo = max(0, $total - $totalPagado);
+
+                $paymentsPaid = Payment::with('payment_method')
+                    ->where('agreement_id', $payment->agreement_id)
+                    ->where('status', 'paid')
+                    ->where('deleted', 0)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+
+                $clientName = $payment->client_name;
+                if (!$clientName && $payment->agreement && $payment->agreement->client) {
+                    $clientName = $payment->agreement->client->business_name ?? $payment->agreement->client->contact_name;
+                }
             }
 
             return response()->json([

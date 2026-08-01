@@ -93,9 +93,9 @@ class SaleController extends Controller
 
         // Obtener usuarios para el campo "Responsable"
         if ($user->role->nombre === 'master') {
-            $users = User::where('deleted', false)->get();
+            $users = User::with('employee')->where('deleted', false)->get();
         } else {
-            $users = User::whereHas('role', function ($q) {
+            $users = User::with('employee')->whereHas('role', function ($q) {
                 $q->whereIn('nombre', ['worker', 'admin']);
             })
                 ->where('location_id', $user->location_id)
@@ -152,14 +152,17 @@ class SaleController extends Controller
         $currentUser = auth()->user();
         $isMaster = $currentUser->role->nombre === 'master';
 
-        // Filtrar usuarios según el rol
+        // Filtrar usuarios según el rol y sede seleccionada
         if ($isMaster) {
-            // Master ve todos los usuarios
-            $users = User::where('deleted', false)->get();
+            $usersQuery = User::with('employee')->where('deleted', false);
+            if ($location_id) {
+                $usersQuery->where('location_id', $location_id);
+            }
+            $users = $usersQuery->get();
         } else {
-            // Admin u otros solo ven workers de su sede
-            $users = User::whereHas('role', function ($q) {
-                $q->where('nombre', 'worker');
+            // Admin u otros solo ven usuarios de su sede
+            $users = User::with('employee')->whereHas('role', function ($q) {
+                $q->whereIn('nombre', ['worker', 'admin']);
             })
                 ->where('location_id', $currentUser->location_id)
                 ->where('deleted', false)
@@ -194,7 +197,21 @@ class SaleController extends Controller
                 $query->where('client_id', $client_id);
             })
             ->when(!is_null($type_sale) && $type_sale !== '' && $type_sale !== 'all', function ($query) use ($type_sale) {
-                $query->where('type_sale', (int)$type_sale);
+                if ($type_sale === 'directa_descuento') {
+                    $query->where('type_sale', 0)->whereHas('sale_details', function ($q) {
+                        $q->whereNotNull('discounted_price')
+                          ->where('discounted_price', '>', 0)
+                          ->whereRaw('ABS(discounted_price - unit_price) > 0.009');
+                    });
+                } elseif ($type_sale === '0' || $type_sale === 0) {
+                    $query->where('type_sale', 0)->whereDoesntHave('sale_details', function ($q) {
+                        $q->whereNotNull('discounted_price')
+                          ->where('discounted_price', '>', 0)
+                          ->whereRaw('ABS(discounted_price - unit_price) > 0.009');
+                    });
+                } else {
+                    $query->where('type_sale', (int)$type_sale);
+                }
             })
             ->when($voucher_type, function ($query) use ($voucher_type) {
                 $query->whereHas('payments', function ($q) use ($voucher_type) {
@@ -219,9 +236,9 @@ class SaleController extends Controller
 
         // Calcular el total de ventas directas y creditos()(type_sale = 0, 2)
         $totalQuery = clone $query;
-        // Sumar todas las ventas directas (type_sale = 0)
+        // Sumar todas las ventas directas (type_sale = 0 y 3)
         $totalDirectas = (clone $totalQuery)
-            ->where('type_sale', 0)
+            ->whereIn('type_sale', [0, 3])
             ->sum('total');
 
         // Sumar solo los créditos completamente pagados (type_sale = 2)
@@ -356,7 +373,21 @@ class SaleController extends Controller
                     $query->where('client_id', 'like', '%' . $client . '%');
                 })
                 ->when(!is_null($type_sale) && $type_sale !== '' && $type_sale !== 'all', function ($query) use ($type_sale) {
-                    $query->where('type_sale', (int)$type_sale);
+                    if ($type_sale === 'directa_descuento') {
+                        $query->where('type_sale', 0)->whereHas('sale_details', function ($q) {
+                            $q->whereNotNull('discounted_price')
+                              ->where('discounted_price', '>', 0)
+                              ->whereRaw('ABS(discounted_price - unit_price) > 0.009');
+                        });
+                    } elseif ($type_sale === '0' || $type_sale === 0) {
+                        $query->where('type_sale', 0)->whereDoesntHave('sale_details', function ($q) {
+                            $q->whereNotNull('discounted_price')
+                              ->where('discounted_price', '>', 0)
+                              ->whereRaw('ABS(discounted_price - unit_price) > 0.009');
+                        });
+                    } else {
+                        $query->where('type_sale', (int)$type_sale);
+                    }
                 })
                 ->when($type_voucher, function ($query) use ($type_voucher) {
                     $query->whereHas('payments', function ($q) use ($type_voucher) {
@@ -381,18 +412,21 @@ class SaleController extends Controller
             $payment_method_name = '';
             $type_sale_name = '';
 
-            switch ($type_sale) {
-                case 0:
+            switch ((string)$type_sale) {
+                case '0':
                     $type_sale_name = 'Venta Directa';
                     break;
-                case 1:
+                case 'directa_descuento':
+                    $type_sale_name = 'Venta Directa con Descuento';
+                    break;
+                case '1':
                     $type_sale_name = 'Contrato';
                     break;
-                case 2:
+                case '2':
                     $type_sale_name = 'Crédito';
                     break;
                 default:
-                    $type_sale_name = 'Desconocido';
+                    $type_sale_name = 'Todos';
                     break;
             }
 
@@ -475,7 +509,7 @@ class SaleController extends Controller
             'phone' => 'nullable|string|max:20',
             'order_detail_id' => 'nullable|exists:order_details,id',
             'vehicle_plate' => 'nullable|string|max:20',
-            'type_sale' => 'required|in:0,1,2',
+            'type_sale' => 'required|in:0,1,2,3',
             'responsible_id' => 'nullable|exists:employees,id',
             'detail' => 'nullable|string',
             'products' => 'required|array|min:1',
@@ -497,7 +531,7 @@ class SaleController extends Controller
         }
 
         $typeSale = $request->type_sale ?? 0;
-        if ($typeSale == 0) {
+        if ($typeSale == 0 || $typeSale == 3) {
             $validationRules = array_merge($validationRules, [
                 'payment_methods' => 'required|array|min:1',
                 'payment_methods.*.payment_method_id' => 'required|exists:payment_methods,id',
@@ -686,7 +720,7 @@ class SaleController extends Controller
 
             // --- DATOS GENÉRICOS DE PAGO ---
             $numeroTicket = null;
-            if (($request->type_sale ?? 0) == 0 || ($request->type_sale ?? 0) == 2) {
+            if (($request->type_sale ?? 0) == 0 || ($request->type_sale ?? 0) == 3 || ($request->type_sale ?? 0) == 2) {
                 $numeroTicket = $this->generarNumeroTicket();
             }
             $clientName = $request->client_name ?? $request->client ?? null;
@@ -695,7 +729,7 @@ class SaleController extends Controller
                 if ($client) $clientName = $client->business_name ?: $client->contact_name;
             }
 
-            if (($request->type_sale ?? 0) == 0) { 
+            if (($request->type_sale ?? 0) == 0 || ($request->type_sale ?? 0) == 3) { 
                 foreach ($request->payment_methods as $paymentData) {
                     Payment::create([
                         'sale_id' => $sale->id,

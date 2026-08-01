@@ -9,123 +9,152 @@
     ];
 @endphp
 <div class="modal fade" id="paymentsModal" tabindex="-1" aria-labelledby="paymentsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h1 class="modal-title fs-5" id="paymentsModalLabel">Gestión de Pagos</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
+            <!-- Modal Header Sobrio -->
+            <div class="modal-header px-4 py-3 text-white" style="background-color: #1e293b;">
+                <h5 class="modal-title fw-bold text-white d-flex align-items-center mb-0" id="paymentsModalLabel" style="font-size: 1.1rem;">
+                    <i class="bi bi-wallet2 me-2"></i>Gestión de Pagos
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body p-3">
-                <!-- Tabla de pagos existentes -->
-                <div class="row mb-4">
-                    <div class="col-12 d-flex justify-content-center">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>N° Comprobante</th>
-                                    <th>Operación</th>
-                                    <th>Método</th>
-                                    <th>Fecha</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody id="modal-pagos">
-                                <tr>
-                                    <td colspan="7" class="text-center">No hay pagos registrados</td>
-                                </tr>
-                            </tbody>
-                            <tfoot>
-                                <tr>
-                                    <th colspan="6" class="text-end">Saldo Pendiente:</th>
-                                    <th id="modal-saldo" class="text-danger">S/ 0.00</th>
-                                </tr>
-                            </tfoot>
-                        </table>
+            
+            <div class="modal-body p-4" style="background-color: #ffffff;">
+                <!-- Resumen Superior Simétrico en 3 Cajas Blancas de Limpios Bordes -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="p-3 rounded border text-center bg-white shadow-xs">
+                            <small class="text-muted fw-bold text-uppercase d-block mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Monto Total</small>
+                            <span class="fs-5 fw-bold text-dark" id="modal-total-display">S/ 0.00</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 rounded border text-center bg-white shadow-xs">
+                            <small class="text-muted fw-bold text-uppercase d-block mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Total Pagado</small>
+                            <span class="fs-5 fw-bold text-success" id="modal-pagado-display">S/ 0.00</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 rounded border text-center bg-white shadow-xs">
+                            <small class="text-muted fw-bold text-uppercase d-block mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Saldo Pendiente</small>
+                            <span class="fs-5 fw-bold text-danger" id="modal-saldo">S/ 0.00</span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="row" id="payment-form-container">
-                    <div class="col-12">
+                <!-- Disposición Simétrica de 2 Columnas -->
+                <div class="row g-4">
+                    <!-- Columna Izquierda: Historial de Pagos -->
+                    <div class="col-lg-5 border-end pe-lg-4">
+                        <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                            <h6 class="mb-0 fw-bold text-dark d-flex align-items-center">
+                                <i class="bi bi-clock-history me-2 text-secondary"></i>Historial de Pagos
+                            </h6>
+                        </div>
+
+                        <div class="table-responsive rounded border" style="max-height: 380px; overflow-y: auto;">
+                            <table class="table table-hover table-sm align-middle mb-0 text-center">
+                                <thead style="position: sticky; top: 0; z-index: 1;">
+                                    <tr>
+                                        <th class="fw-bold text-uppercase small py-2" style="background-color: #2c3e50 !important; color: white !important;">Ticket</th>
+                                        <th class="fw-bold text-uppercase small py-2" style="background-color: #2c3e50 !important; color: white !important;">Método</th>
+                                        <th class="fw-bold text-uppercase small py-2" style="background-color: #2c3e50 !important; color: white !important;">Fecha</th>
+                                        <th class="fw-bold text-uppercase small py-2" style="background-color: #2c3e50 !important; color: white !important;">Monto</th>
+                                        <th class="fw-bold text-uppercase small py-2" style="background-color: #2c3e50 !important; color: white !important;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="modal-pagos">
+                                    <tr>
+                                        <td colspan="5" class="text-muted py-4">
+                                            No hay pagos registrados
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Columna Derecha: Formulario de Registro -->
+                    <div class="col-lg-7 ps-lg-4" id="payment-form-container">
+                        <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                            <h6 class="mb-0 fw-bold text-dark d-flex align-items-center">
+                                <i class="bi bi-plus-circle me-2 text-success"></i>Registrar Pago
+                            </h6>
+                            <span class="badge bg-white text-dark border fw-normal" style="font-size: 0.75rem;">
+                                Máx. a pagar: <strong id="max-amount" class="text-primary">S/ 0.00</strong>
+                            </span>
+                        </div>
+
                         <form id="paymentForm">
-
-
-                            <!-- Fila 3: Cliente Information -->
-                            <div class="row g-3 mt-2">
+                            <div class="row g-3 mb-3">
                                 <div class="col-md-6">
-                                    <label for="clientName" class="form-label">Cliente</label>
-                                    <input type="text" class="form-control disabled" disabled id="clientName"
-                                        name="client_name" placeholder="Nombre del cliente">
+                                    <label for="clientName" class="form-label small fw-bold text-secondary mb-1">Cliente</label>
+                                    <input type="text" class="form-control form-control-sm bg-white fw-bold" disabled id="clientName"
+                                        name="client_name" placeholder="Cliente" style="color: #1e293b !important;">
                                 </div>
-                            </div>
-
-                            <!-- Fila 4: Métodos de Pago -->
-                            <div class="row g-3 mt-2">
-                                <div class="col-12">
-                                    <label class="form-label fw-bold">Métodos de Pago <span class="text-muted">(Máx: <span
-                                                id="max-amount">S/ 0.00</span>)</span></label>
-                                    <table class="w-50 small">
-                                        @foreach ($paymentMethods as $index => $payment_method)
-                                            <tr class="payment-method-item">
-                                                <td width="150">
-                                                    <input type="checkbox" class="form-check-input me-2 modal-payment-checkbox"
-                                                        onchange="toggleModalPaymentMethod(event, '#modal_amount_{{ $payment_method->id }}')"
-                                                        id="modal_cbx_amount_{{ $payment_method->id }}" {{ $index == 0 ? 'checked' : '' }}>
-                                                    <label class="form-check-label">{{ $payment_method->name }}</label>
-                                                </td>
-                                                <td>
-                                                    <div class="input-group input-group-sm">
-                                                        <span class="input-group-text">S/</span>
-                                                        <input type="number" step="0.01" class="form-control form-control-sm modal-payment-amount"
-                                                            id="modal_amount_{{ $payment_method->id }}" 
-                                                            oninput="validateModalPaymentAmount(event)"
-                                                            {{ $index == 0 ? '' : 'disabled' }} placeholder="0.00">
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </table>
-                                    <div class="invalid-feedback d-block" id="payment-amount-error"></div>
-                                </div>
-                            </div>
-
-                            <div class="row g-3 mt-2">
                                 <div class="col-md-6">
-                                    <label for="foto" class="form-label">Foto (opcional)</label>
-                                    <input type="file" class="form-control" id="foto" name="foto"
-                                        accept="image/*">
+                                    <label for="foto" class="form-label small fw-bold text-secondary mb-1">Foto (opcional)</label>
+                                    <input type="file" class="form-control form-control-sm" id="foto" name="foto" accept="image/*">
                                     <div id="payment-photo-preview" class="mt-2 d-flex flex-wrap gap-2"></div>
                                 </div>
                             </div>
 
-                            <!-- Botón agregar pago -->
-                            <div class="row mt-3">
-                                <div class="col-12">
-                                    <button class="btn btn-success" type="submit" id="btn-register-payment">
-                                        <i class="bi bi-plus-circle"></i> Registrar Pago
-                                    </button>
+                            <!-- Métodos de Pago Simétricos -->
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-secondary mb-2">Métodos de Pago</label>
+                                <div class="p-3 rounded border bg-white">
+                                    <div class="row g-2">
+                                        @foreach ($paymentMethods as $index => $payment_method)
+                                            <div class="col-6">
+                                                <div class="p-2 border rounded bg-white d-flex align-items-center justify-content-between">
+                                                    <div class="form-check mb-0 flex-grow-1 text-truncate">
+                                                        <input type="checkbox" class="form-check-input modal-payment-checkbox me-2"
+                                                            onchange="toggleModalPaymentMethod(event, '#modal_amount_{{ $payment_method->id }}')"
+                                                            id="modal_cbx_amount_{{ $payment_method->id }}" {{ $index == 0 ? 'checked' : '' }}>
+                                                        <label class="form-check-label text-dark small fw-medium" for="modal_cbx_amount_{{ $payment_method->id }}">
+                                                            {{ $payment_method->name }}
+                                                        </label>
+                                                    </div>
+                                                    <div class="input-group input-group-sm ms-1" style="width: 110px;">
+                                                        <span class="input-group-text bg-light text-muted px-1" style="font-size: 0.75rem;">S/</span>
+                                                        <input type="number" step="0.01" class="form-control form-control-sm modal-payment-amount fw-bold px-1"
+                                                            id="modal_amount_{{ $payment_method->id }}" 
+                                                            oninput="validateModalPaymentAmount(event)"
+                                                            {{ $index == 0 ? '' : 'disabled' }} placeholder="0.00">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
                                 </div>
+                                <div class="invalid-feedback d-block fw-bold mt-2" id="payment-amount-error"></div>
+                            </div>
+
+                            <!-- Botón agregar pago -->
+                            <div class="d-flex justify-content-end mt-4">
+                                <button class="btn btn-success btn-sm fw-bold px-4 py-2" type="submit" id="btn-register-payment" style="border-radius: 6px;">
+                                    <i class="bi bi-check-lg me-1"></i> Registrar Pago
+                                </button>
                             </div>
 
                             <!-- Hidden field -->
                             <input type="hidden" id="modal-agreement-id" name="payment_id" value="">
                         </form>
                     </div>
-                </div>
 
-                <!-- Mensaje cuando está completamente pagado -->
-                <div class="row d-none" id="payment-complete-message">
-                    <div class="col-12">
-                        <div class="alert alert-success text-center">
-                            <i class="bi bi-check-circle-fill fs-1"></i>
-                            <h5 class="mt-2">¡Pago Completado!</h5>
-                            <p class="mb-0">Este acuerdo ha sido pagado en su totalidad.</p>
+                    <!-- Mensaje cuando está completamente pagado -->
+                    <div class="col-lg-7 ps-lg-4 d-none" id="payment-complete-message">
+                        <div class="alert alert-success text-center border-0 p-4 rounded">
+                            <i class="bi bi-check-circle-fill text-success" style="font-size: 2.5rem;"></i>
+                            <h5 class="mt-2 fw-bold text-success">¡Pago Completado!</h5>
+                            <p class="mb-0 text-muted small">Este crédito ha sido pagado en su totalidad.</p>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x-circle"></i> Cerrar
+            <div class="modal-footer bg-white px-4 py-2 border-top">
+                <button type="button" class="btn btn-secondary btn-sm px-3" data-bs-dismiss="modal" style="border-radius: 6px;">
+                    <i class="bi bi-x-circle me-1"></i> Cerrar
                 </button>
             </div>
         </div>
@@ -190,8 +219,10 @@
                     currentPagado = parseFloat(response.total_pagado.replace(',', ''));
                     currentSaldo = parseFloat(response.saldo.replace(',', ''));
 
-                    // Actualizar tabla y saldo
+                    // Actualizar resumen y saldo
                     updatePaymentsTable(response.payments);
+                    $('#modal-total-display').text('S/ ' + response.total);
+                    $('#modal-pagado-display').text('S/ ' + response.total_pagado);
                     $('#modal-saldo').text('S/ ' + response.saldo);
                     $('#max-amount').text('S/ ' + response.saldo);
 
@@ -236,22 +267,22 @@
         const tbody = $('#modal-pagos');
 
         if (payments.length === 0) {
-            tbody.html('<tr><td colspan="7" class="text-center">No hay pagos registrados</td></tr>');
+            tbody.html('<tr><td colspan="5" class="text-muted py-4 small">No hay pagos registrados</td></tr>');
             return;
         }
 
         let html = '';
         payments.forEach(function(payment) {
             const fecha = new Date(payment.created_at).toLocaleDateString('es-ES');
+            const metodoPagoNombre = payment.payment_method ? payment.payment_method.name : '-';
             html += `
             <tr>
-                <td>${payment.number || '-'}</td>
-                
-                <td>S/ ${parseFloat(payment.amount).toFixed(2)}</td>
-                <td>${payment.payment_method ? payment.payment_method.name : '-'}</td>
-                <td>${fecha}</td>
+                <td class="fw-bold text-dark small">${payment.number || '-'}</td>
+                <td><span class="badge bg-light text-dark border px-2 py-1" style="font-size: 0.7rem;">${metodoPagoNombre}</span></td>
+                <td class="text-muted small">${fecha}</td>
+                <td class="fw-bold text-success small">S/ ${parseFloat(payment.amount).toFixed(2)}</td>
                 <td>
-                    <button type="button" class="btn btn-sm btn-danger" onclick="deletePayment(${payment.id})" title="Eliminar">
+                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="deletePayment(${payment.id})" title="Eliminar">
                         <i class="bi bi-trash"></i>
                     </button>
                 </td>
@@ -306,11 +337,11 @@
 
         // Validar que la suma no exceda el saldo
         if (totalAmount > currentSaldo) {
-            errorDiv.text(`La suma de los montos (S/ ${totalAmount.toFixed(2)}) no puede ser mayor al saldo pendiente (S/ ${currentSaldo.toFixed(2)})`);
+            errorDiv.text(`La suma (S/ ${totalAmount.toFixed(2)}) supera el saldo pendiente (S/ ${currentSaldo.toFixed(2)})`);
             hasError = true;
             submitBtn.prop('disabled', true);
         } else if (totalAmount <= 0) {
-            errorDiv.text('Debe ingresar al menos un monto mayor a 0');
+            errorDiv.text('Ingrese un monto mayor a 0');
             hasError = true;
             submitBtn.prop('disabled', true);
         }
@@ -369,16 +400,16 @@
         // Validación final antes de enviar
         if (totalAmount > currentSaldo) {
             ToastError.fire({
-                text: `La suma de los montos (S/ ${totalAmount.toFixed(2)}) no puede ser mayor al saldo pendiente (S/ ${currentSaldo.toFixed(2)})`
+                text: `La suma (S/ ${totalAmount.toFixed(2)}) supera el saldo pendiente (S/ ${currentSaldo.toFixed(2)})`
             });
-            return false; // Detener el proceso
+            return false;
         }
 
         if (paymentMethods.length === 0 || totalAmount <= 0) {
             ToastError.fire({
                 text: 'Debe seleccionar al menos un método de pago con un monto mayor a 0'
             });
-            return false; // Detener el proceso
+            return false;
         }
 
         // Mostrar spinner solo en el botón
@@ -454,7 +485,7 @@
             }
         });
 
-        return true; // Asegurar que no se recargue la página
+        return true;
     });
 
     $(document).on('change', '#foto', function() {

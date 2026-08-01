@@ -172,7 +172,7 @@
                                                 <div class="d-flex justify-content-center gap-1">
                                                     @if ($credit->status != 'paid')
                                                         <button class="btn btn-sm btn-success"
-                                                            onclick="openPaymentsModal({{ $credit->id }})" title="Gestionar Pagos">
+                                                            onclick="openPaymentsModal({{ $credit->id }}, 'payment')" title="Gestionar Pagos">
                                                             <i class="bi bi-currency-dollar"></i>
                                                         </button>
                                                     @endif

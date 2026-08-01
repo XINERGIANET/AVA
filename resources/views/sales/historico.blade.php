@@ -93,7 +93,9 @@
                                     <label class="form-label text-dark fw-bold small mb-1">Tipo de venta</label>
                                     <select class="form-select form-select-sm" id="type_sale" name="type_sale">
                                         <option value="">Todos</option>
-                                        <option value="0" {{ request()->type_sale === '0' ? 'selected' : '' }}>Directa</option>
+                                        <option value="0" {{ request()->type_sale === '0' ? 'selected' : '' }}>Venta Directa</option>
+                                        <option value="3" {{ (request()->type_sale === '3' || request()->type_sale === 'directa_descuento') ? 'selected' : '' }}>Venta Directa con Descuento</option>
+                                        <option value="1" {{ request()->type_sale === '1' ? 'selected' : '' }}>Contrato</option>
                                         <option value="2" {{ request()->type_sale === '2' ? 'selected' : '' }}>Crédito</option>
                                     </select>
                                 </div>
@@ -103,9 +105,14 @@
                                     <select class="form-select form-select-sm" id="user_id" name="user_id">
                                         <option value="">Todos</option>
                                         @foreach ($users as $user)
+                                            @php
+                                                $nombrePersona = ($user->employee && !empty(trim($user->employee->name))) 
+                                                    ? trim($user->employee->name . ' ' . ($user->employee->last_name ?? '')) 
+                                                    : $user->name;
+                                            @endphp
                                             <option value="{{ $user->id }}"
                                                 {{ request()->user_id == $user->id ? 'selected' : '' }}>
-                                                {{ $user->name }}
+                                                {{ $nombrePersona }}
                                             </option>
                                         @endforeach
                                     </select>
@@ -158,12 +165,23 @@
                                         <tr data-sale-id="{{ $sale->id }}" data-sale-date="{{ $sale->date->format('Y-m-d') }}">
                                             <td>{{ $sale->payments->pluck('number')->first() ?? 'N/A' }}</td>
                                             <td>
-                                                @if($sale->type_sale === 0)
-                                                    <span class="badge bg-success">Directa</span>
+                                                @if($sale->type_sale === 3)
+                                                    <span class="badge bg-info text-dark">Venta Directa con Descuento</span>
+                                                @elseif($sale->type_sale === 0)
+                                                    @php
+                                                        $hasDiscount = $sale->sale_details->contains(function($detail) {
+                                                            return !is_null($detail->discounted_price) && $detail->discounted_price > 0 && abs((float)$detail->discounted_price - (float)$detail->unit_price) > 0.009;
+                                                        });
+                                                    @endphp
+                                                    @if($hasDiscount)
+                                                        <span class="badge bg-info text-dark">Venta Directa con Descuento</span>
+                                                    @else
+                                                        <span class="badge bg-success">Venta Directa</span>
+                                                    @endif
                                                 @elseif($sale->type_sale === 1)
                                                     <span class="badge bg-primary">Contrato</span>
                                                 @elseif($sale->type_sale === 2)
-                                                    <span class="badge bg-warning">Crédito</span>
+                                                    <span class="badge bg-warning text-dark">Crédito</span>
                                                 @else
                                                     <span class="badge bg-secondary">N/A</span>
                                                 @endif

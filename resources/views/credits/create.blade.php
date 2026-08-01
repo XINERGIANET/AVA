@@ -117,7 +117,7 @@
                                     </td>
                                     <td>
                                         <button class="btn btn-sm btn-success"
-                                            onclick="openPaymentsModal({{ $credit->id }})" title="Gestionar Pagos">
+                                            onclick="openPaymentsModal({{ $credit->id }}, 'payment')" title="Gestionar Pagos">
                                             <i class="bi bi-currency-dollar"></i>
                                         </button>
                                         <button class="btn btn-danger btn-sm btn-eliminar" data-id="{{ $credit->id }}"

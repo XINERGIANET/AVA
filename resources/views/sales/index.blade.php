@@ -805,7 +805,7 @@
             opacity: 1 !important;
         }
 
-        /* DESHABILITADOS O READONLY (evita que Chrome/Firefox los pinte de plomo) */
+        /* DESHABILITADOS O READONLY (fondo plomo bloqueado con texto negro legible) */
         .sales-create-page input:disabled,
         .sales-create-page input[readonly],
         .sales-create-page select:disabled,
@@ -815,8 +815,18 @@
             color: #000000 !important;
             -webkit-text-fill-color: #000000 !important;
             font-weight: 700 !important;
-            background-color: #f8fafc !important;
+            background-color: #e9ecef !important;
+            border-color: #cbd5e1 !important;
             opacity: 1 !important;
+            cursor: not-allowed !important;
+        }
+
+        #btn_c_varios:disabled {
+            background-color: #e2e8f0 !important;
+            color: #64748b !important;
+            -webkit-text-fill-color: #64748b !important;
+            border-color: #cbd5e1 !important;
+            cursor: not-allowed !important;
         }
 
         /* PLACEHOLDERS EN INPUTS */
@@ -1100,16 +1110,55 @@
             box-shadow: 0 6px 20px rgba(22, 163, 74, 0.42) !important;
         }
 
-        /* ESTILOS DE LA TABLA DE PRODUCTOS */
-        .sales-order-table thead th {
-            background-color: #f1f5f9 !important;
-            border-bottom: 2px solid #cbd5e1 !important;
-            color: #1e293b !important;
-            font-size: 0.78rem !important;
+        /* ESTILOS Y CONTRASTE PARA MODALES SWEETALERT2 */
+        .swal2-popup {
+            border-radius: 18px !important;
+            padding: 24px !important;
+            box-shadow: 0 20px 45px rgba(15, 23, 42, 0.25) !important;
+        }
+        .swal2-title {
+            color: #0f172a !important;
             font-weight: 800 !important;
-            text-transform: uppercase !important;
-            letter-spacing: 0.06em !important;
-            padding: 12px 14px !important;
+            font-size: 1.35rem !important;
+        }
+        .swal2-html-container {
+            color: #475569 !important;
+            font-weight: 600 !important;
+            font-size: 0.95rem !important;
+        }
+        .swal2-actions {
+            gap: 12px !important;
+            margin-top: 20px !important;
+        }
+        .swal2-confirm {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
+            font-weight: 800 !important;
+            font-size: 0.95rem !important;
+            padding: 12px 24px !important;
+            border-radius: 12px !important;
+            border: none !important;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4) !important;
+        }
+        .swal2-confirm:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
+            box-shadow: 0 6px 18px rgba(37, 99, 235, 0.5) !important;
+        }
+        .swal2-cancel {
+            background: #e2e8f0 !important;
+            color: #0f172a !important;
+            -webkit-text-fill-color: #0f172a !important;
+            font-weight: 800 !important;
+            font-size: 0.95rem !important;
+            padding: 12px 24px !important;
+            border-radius: 12px !important;
+            border: 1px solid #cbd5e1 !important;
+        }
+        .swal2-cancel:hover {
+            background: #cbd5e1 !important;
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
         }
     </style>
     <div class="container-fluid content-inner mt-0 py-0 px-0 sales-create-page">
@@ -1148,6 +1197,7 @@
                                     <label for="tipo-venta" class="form-label text-muted small fw-semibold">Tipo de venta</label>
                                     <select id="tipo-venta" class="form-select form-select-sm border-1 bg-white py-2">
                                         <option value="directa">Venta Directa</option>
+                                        <option value="directa_descuento">Venta Directa con Descuento</option>
                                         <option value="contrato">Contrato</option>
                                     </select>
                                     <input type="hidden" id="type_sale">
@@ -1196,7 +1246,19 @@
                                 </div>
                                 <div class="col-6">
                                     <label class="form-label small fw-bold text-dark mb-1"><i class="bi bi-person-badge text-primary me-1"></i>Responsable</label>
-                                    <select class="form-select form-select-sm" id="user_id"><option value="">-- Por defecto --</option>@foreach($users ?? [] as $u)<option value="{{ $u->id }}" {{ auth()->id() == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>@endforeach</select>
+                                    <select class="form-select form-select-sm" id="user_id">
+                                        <option value="">-- Por defecto --</option>
+                                        @foreach($users ?? [] as $u)
+                                            @php
+                                                $nombrePersona = ($u->employee && !empty(trim($u->employee->name))) 
+                                                    ? trim($u->employee->name . ' ' . ($u->employee->last_name ?? '')) 
+                                                    : $u->name;
+                                            @endphp
+                                            <option value="{{ $u->id }}" {{ auth()->id() == $u->id ? 'selected' : '' }}>
+                                                {{ $nombrePersona }}
+                                            </option>
+                                        @endforeach
+                                    </select>
                                 </div>
                                 <div class="col-6">
                                     <label class="form-label small fw-bold text-dark mb-1"><i class="bi bi-car-front text-primary me-1"></i>Placa</label>
@@ -1204,7 +1266,7 @@
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label small fw-bold text-dark mb-1"><i class="bi bi-person text-primary me-1"></i>Cliente</label>
-                                    <div class="input-group input-group-sm"><button class="btn btn-outline-primary fw-bold" type="button" id="btn_c_varios" onclick="document.getElementById('client_name').value='CLIENTES VARIOS'">C. Varios</button><input type="text" class="form-control" id="client_name" placeholder="Nombre o razón social"></div>
+                                    <div class="input-group input-group-sm"><button class="btn btn-outline-primary fw-bold" type="button" id="btn_c_varios" onclick="document.getElementById('client_name').value='CLIENTES VARIOS'" disabled>C. Varios</button><input type="text" class="form-control" id="client_name" value="CLIENTES VARIOS" placeholder="Nombre o razón social" disabled></div>
                                 </div>
                             </div>
                         </div>
@@ -2158,11 +2220,19 @@
         }
 
         $(document).ready(function() {
-            if ($('#tipo-venta').val() === 'directa') {
-                $('#type_sale').val('0');
+            const currentTipo = $('#tipo-venta').val();
+            if (currentTipo === 'directa' || currentTipo === 'directa_descuento') {
+                $('#type_sale').val(currentTipo === 'directa_descuento' ? '3' : '0');
                 $('#isle-select-card').hide();
                 $('#products-direct-card').hide();
                 $('#btn-add-editable-product-row').show();
+                if (currentTipo === 'directa') {
+                    $('#client_name').val('CLIENTES VARIOS').prop('disabled', true);
+                    $('#btn_c_varios').prop('disabled', true);
+                } else {
+                    $('#client_name').prop('disabled', false);
+                    $('#btn_c_varios').prop('disabled', false);
+                }
                 setDefaultIsle();
 
                 loadProductsBySede();
@@ -2170,6 +2240,8 @@
             } else {
                 $('#credit-checkbox-container').hide(); // Ocultar checkbox para otros tipos
                 $('#is-credit-sale').prop('checked', false); // Desmarcar checkbox
+                $('#client_name').prop('disabled', false);
+                $('#btn_c_varios').prop('disabled', false);
             }
 
             if ($('#toggleGalonesSubtotal').val() == 'false') {
@@ -2191,11 +2263,23 @@
                 $('#credit-checkbox-container').show();
                 $('.credit-extra-fields').show();
                 $('#type_sale').val('2');
+                $('#client_name').prop('disabled', false);
+                $('#btn_c_varios').prop('disabled', false);
+                if ($('#client_name').val() === 'CLIENTES VARIOS') {
+                    $('#client_name').val('');
+                }
                 resetPaymentMethods();
                 recalculateTotal();
             } else {
                 $('#payment-methods-section').show();
                 $('#type_sale').val('0');
+                if ($('#tipo-venta').val() === 'directa') {
+                    $('#client_name').val('CLIENTES VARIOS').prop('disabled', true);
+                    $('#btn_c_varios').prop('disabled', true);
+                } else {
+                    $('#client_name').prop('disabled', false);
+                    $('#btn_c_varios').prop('disabled', false);
+                }
                 $('.credit-extra-fields').hide();
                 $('#credit_number').val('');
                 $('#voucher_code').val('');
@@ -2225,9 +2309,10 @@
             function aplicarTipoVenta(tipoVenta) {
                 const map = {
                     directa: 0,
+                    directa_descuento: 3,
                     contrato: 1
                 };
-                $('#type_sale').val(map[tipoVenta]);
+                $('#type_sale').val(map[tipoVenta] !== undefined ? map[tipoVenta] : 0);
                 $('#cliente-search-card').hide();
                 $('#products-contract-credit').hide();
                 $('#products-direct-card').hide();
@@ -2241,7 +2326,7 @@
                 $('#area').val('');
                 $('#current-order-detail-id').val('');
 
-                if (tipoVenta === 'directa') {
+                if (tipoVenta === 'directa' || tipoVenta === 'directa_descuento') {
                     // Mostrar productos directos y selector de islas para venta directa
                     $('#products-direct-card').hide();
                     $('#btn-add-editable-product-row').show();
@@ -2250,6 +2335,20 @@
                     $('#payment-methods-section').show(); // Mostrar pagos por defecto
                     $('#paga-con-section').show();
                     $('#isle-select-card').hide();
+
+                    if (tipoVenta === 'directa') {
+                        $('#client_name').val('CLIENTES VARIOS').prop('disabled', true);
+                        $('#btn_c_varios').prop('disabled', true);
+                        $('#tbl-order-items .sale-unit-price').prop('disabled', true);
+                    } else {
+                        $('#client_name').prop('disabled', false);
+                        $('#btn_c_varios').prop('disabled', false);
+                        if ($('#client_name').val() === 'CLIENTES VARIOS') {
+                            $('#client_name').val('');
+                        }
+                        $('#tbl-order-items .sale-unit-price').prop('disabled', false);
+                    }
+
                     setDefaultIsle();
                     loadProductsBySede();
                 } else {
@@ -2282,8 +2381,10 @@
                         text: 'Se eliminarán todos los productos cargados.',
                         icon: 'warning',
                         showCancelButton: true,
-                        confirmButtonText: 'Sí, cambiar',
-                        cancelButtonText: 'Cancelar'
+                        confirmButtonText: '<i class="bi bi-check-lg me-1"></i> Sí, cambiar',
+                        cancelButtonText: '<i class="bi bi-x-lg me-1"></i> Cancelar',
+                        confirmButtonColor: '#2563eb',
+                        cancelButtonColor: '#64748b'
                     }).then((r) => {
                         if (r.isConfirmed) {
                             $('#tbl-order-items').empty();
@@ -2795,12 +2896,12 @@
             }
 
             const availableOptions = buildProductOptionsData(filterSide, filterIsle, filterMachineName);
-            const initialProductId = selectedProductId || (availableOptions.length ? availableOptions[0].id : directSaleProducts[0].id);
+            const initialProductId = (selectedProductId !== undefined && selectedProductId !== null) ? selectedProductId : null;
 
-            const product = directSaleProducts.find(p => String(p.id) === String(initialProductId));
+            const product = initialProductId ? directSaleProducts.find(p => String(p.id) === String(initialProductId)) : null;
 
             const price = product ? parseFloat(product.price || 0) : 0;
-            const quantity = product ? 1 : 0;
+            const quantity = 1;
             const subtotal = price * quantity;
             const placeholderSelected = product ? '' : 'selected';
             const comboSelectedId = product ? product.id : null;
@@ -2839,7 +2940,7 @@
                         </select>
                     </td>
                     <td>
-                        <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end sale-unit-price" value="${price.toFixed(2)}">
+                        <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end sale-unit-price" value="${price.toFixed(2)}" ${$('#tipo-venta').val() === 'directa' ? 'disabled' : ''}>
                     </td>
                     <td>
                         <input type="number" step="0.001" min="0" class="form-control form-control-sm text-end sale-quantity" value="${quantity.toFixed(3)}">
@@ -2913,6 +3014,11 @@
             }
 
             $row.find('.sale-unit-price').val(price.toFixed(2));
+            if ($('#tipo-venta').val() === 'directa') {
+                $row.find('.sale-unit-price').prop('disabled', true);
+            } else {
+                $row.find('.sale-unit-price').prop('disabled', false);
+            }
 
             // Actualizar la lista desplegable de surtidores en la fila
             let $pumpBadge = $row.find('.row-pump-details');
@@ -3039,7 +3145,7 @@
         });
 
         function loadProductsBySede() {
-            const isDirecta = $('#tipo-venta').val() === 'directa';
+            const isDirecta = $('#tipo-venta').val() === 'directa' || $('#tipo-venta').val() === 'directa_descuento';
             // 1. Determinar isla seleccionada
             const selectedIsle = setDefaultIsle();
             
@@ -3100,13 +3206,15 @@
                     $('#tbl-products').empty(); 
                     buildDirectSaleProducts(data);
 
-                    if ($('#tipo-venta').val() === 'directa') {
+                    if ($('#tipo-venta').val() === 'directa' || $('#tipo-venta').val() === 'directa_descuento') {
                         $('#tbl-order-items').empty();
                         if (directSaleProducts.length === 0) {
                             ToastError.fire({
                                 title: 'Sin productos',
                                 text: 'No hay productos configurados para esta sede.'
                             });
+                        } else {
+                            appendEditableProductRow();
                         }
                         recalculateTotal();
                         return;
@@ -4294,7 +4402,7 @@
 
             // Mostrar/ocultar métodos de pago y 'Paga con' según tipo de venta
             const isCreditSale = $('#is-credit-sale').is(':checked');
-            if (tipoVenta === 'directa' && !isCreditSale) {
+            if ((tipoVenta === 'directa' || tipoVenta === 'directa_descuento') && !isCreditSale) {
                 $('#payment-methods-section').show();
                 $('#paga-con-section').show();
             } else {
@@ -4314,7 +4422,7 @@
             // Controlar visibilidad de secciones según tipo de venta
             const tipoVenta = $('#tipo-venta').val();
             const isCreditSale = $('#is-credit-sale').is(':checked');
-            if (tipoVenta === 'directa' && !isCreditSale) {
+            if ((tipoVenta === 'directa' || tipoVenta === 'directa_descuento') && !isCreditSale) {
                 $('#payment-methods-section').show();
                 $('#paga-con-section').show();
             } else {
@@ -4328,7 +4436,7 @@
             const tipoVenta = $('#tipo-venta').val();
             const isCreditSale = $('#is-credit-sale').is(':checked');
             setCurrentSaleDate();
-            if (tipoVenta === 'directa' && !isCreditSale) {
+            if ((tipoVenta === 'directa' || tipoVenta === 'directa_descuento') && !isCreditSale) {
                 $('#payment-methods-section').show();
                 $('#paga-con-section').show();
             } else {
@@ -4680,8 +4788,10 @@
                 return;
             }
 
+            const isDirectaSaleType = (tipoVenta === 'directa' || tipoVenta === 'directa_descuento');
+
             // Validar nombre de cliente para crédito
-            if (tipoVenta === 'directa' && isCreditSale) {
+            if (isDirectaSaleType && isCreditSale) {
                 let clientName = $('#client_name').val();
                 vehiclePlate = $('#vehicle_plate').val()?.trim() || null;
                 if (!clientName || clientName.trim() === '') {
@@ -4693,11 +4803,11 @@
                 }
             }
 
-            // Validar formas de pago solo para venta directa
+            // Validar formas de pago solo para venta directa o venta directa con descuento
             let totalPayments = 0;
             let paymentMethods = [];
 
-            if (tipoVenta === 'directa' && !isCreditSale) {
+            if (isDirectaSaleType && !isCreditSale) {
                 var usedMethods = [];
                 var duplicateFound = false;
 
@@ -5208,8 +5318,16 @@
             $('input[name="voucher_type"]').prop('checked', false);
             $('#voucher_type_1').prop('checked', true);
 
-            if ($('#tipo-venta').val() === 'directa') {
+            const currentTipoForm = $('#tipo-venta').val();
+            if (currentTipoForm === 'directa' || currentTipoForm === 'directa_descuento') {
                 $('#btn-add-editable-product-row').show();
+                if (currentTipoForm === 'directa') {
+                    $('#client_name').val('CLIENTES VARIOS').prop('disabled', true);
+                    $('#btn_c_varios').prop('disabled', true);
+                } else {
+                    $('#client_name').prop('disabled', false);
+                    $('#btn_c_varios').prop('disabled', false);
+                }
                 setDefaultIsle();
                 loadProductsBySede();
             }
