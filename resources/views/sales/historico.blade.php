@@ -35,12 +35,12 @@
                                 <div class="col-md-2">
                                     <label class="form-label text-dark fw-bold small mb-1">Fecha inicial</label>
                                     <input type="date" class="form-control form-control-sm" id="start_date" name="start_date"
-                                        value="{{ request()->start_date ?? '' }}">
+                                        value="{{ $start_date ?? '' }}">
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label text-dark fw-bold small mb-1">Fecha final</label>
                                     <input type="date" id="end_date" class="form-control form-control-sm" name="end_date"
-                                        value="{{ request()->end_date ?? '' }}">
+                                        value="{{ $end_date ?? '' }}">
                                 </div>
 
                                 @if($isMaster)
@@ -141,8 +141,37 @@
                                 </div>
                             </div>
                         </form>
+                    @if(isset($productTotals) && count($productTotals) > 0)
+                    <div class="px-3 pt-3">
+                        <div class="row g-3 mb-2">
+                            @foreach($productTotals as $pTotal)
+                                @php
+                                    $pName = $pTotal->product->name ?? 'Producto';
+                                    $unit = $pTotal->product->measurement_unit ?? 'GL';
+                                    $colors = ['#2563eb', '#059669', '#d97706', '#7c3aed', '#db2777', '#0891b2'];
+                                    $color = $colors[$loop->index % count($colors)];
+                                @endphp
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="card border-0 shadow-sm rounded-3 p-3 bg-white h-100" style="border-left: 4px solid {{ $color }} !important;">
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <div>
+                                                <small class="text-muted fw-bold text-uppercase d-block mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">{{ $pName }}</small>
+                                                <span class="fs-5 fw-bold text-dark">{{ number_format($pTotal->total_quantity, 3, '.', ',') }} <small class="fs-6 text-muted fw-normal">{{ $unit }}</small></span>
+                                            </div>
+                                            <div class="badge p-2 rounded-circle ms-2" style="background-color: {{ $color }}15; color: {{ $color }};">
+                                                <i class="bi bi-fuel-pump fs-4"></i>
+                                            </div>
+                                        </div>
+                                        <div class="mt-2 pt-2 border-top d-flex justify-content-between align-items-center">
+                                            <small class="text-muted" style="font-size: 0.75rem;">Monto acumulado:</small>
+                                            <small class="fw-bold text-dark" style="font-size: 0.8rem;">S/ {{ number_format($pTotal->total_amount, 2, '.', ',') }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
-
+                    @endif
 
                     <div class="card-body p-3">
                         <div class="table-responsive">

@@ -123,8 +123,8 @@ class SaleController extends Controller
 
     public function historico(Request $request)
     {
-        $start_date = $request->start_date;
-        $end_date = $request->end_date;
+        $start_date = $request->has('start_date') ? $request->start_date : now()->format('Y-m-d');
+        $end_date = $request->has('end_date') ? $request->end_date : now()->format('Y-m-d');
         $location_id = $request->location_id;
         $number = $request->number;
         $paymentmethod = $request->payment_method_id;
@@ -248,7 +248,7 @@ class SaleController extends Controller
             ->get()
             ->filter(function ($sale) {
                 $totalPagado = Payment::where('sale_id', $sale->id)
-                    ->where('status', 'paid')
+            ->where('status', 'paid')
                     ->where('deleted', false)
                     ->sum('amount');
                 return $totalPagado >= $sale->total && $totalPagado > 0;
@@ -257,9 +257,37 @@ class SaleController extends Controller
 
         $total = $totalDirectas + $totalCreditosPagados;
 
+        // Calcular galones/cantidades vendidas por producto para las ventas filtradas
+        $filteredSaleIds = (clone $query)->pluck('id');
+        $productTotals = \App\Models\SaleDetail::whereIn('sale_id', $filteredSaleIds)
+            ->where('deleted', false)
+            ->whereHas('product', function ($q) {
+                $q->where('deleted', false);
+            })
+            ->select('product_id', DB::raw('SUM(quantity) as total_quantity'), DB::raw('SUM(subtotal) as total_amount'))
+            ->groupBy('product_id')
+            ->with('product')
+            ->get();
+
         $sales = $query->paginate(20);
 
-        return view('sales.historico', compact('sales', 'paymentMethods', 'locations', 'users', 'total', 'isMaster'));
+        return view('sales.historico', compact(
+            'sales',
+            'paymentMethods',
+            'locations',
+            'users',
+            'isMaster',
+            'start_date',
+            'end_date',
+            'location_id',
+            'number',
+            'client_id',
+            'type_sale',
+            'voucher_type',
+            'user_id',
+            'total',
+            'productTotals'
+        ));
     }
 
     public function updateDate(Request $request, $id)
