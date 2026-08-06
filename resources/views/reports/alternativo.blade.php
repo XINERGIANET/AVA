@@ -239,12 +239,19 @@
                 <form method="GET" action="{{ route('dashboard.index') }}">
                     <div class="form-group mb-4">
                         <label class="filter-label">SEDE</label>
-                        <select name="location_id" class="form-control" style="border-radius: 8px;">
-                            <option value="">Todas las Sedes</option>
-                            @foreach($locations as $loc)
-                                <option value="{{ $loc->id }}" {{ $locationId == $loc->id ? 'selected' : '' }}>{{ $loc->name }}</option>
-                            @endforeach
-                        </select>
+                        @if($isLocationFixed)
+                            <select class="form-control bg-light" style="border-radius: 8px;" disabled>
+                                <option value="{{ $locationId }}" selected>{{ $activeLocationName ?: 'Sede Asignada' }}</option>
+                            </select>
+                            <input type="hidden" name="location_id" value="{{ $locationId }}">
+                        @else
+                            <select name="location_id" class="form-control" style="border-radius: 8px;">
+                                <option value="">Todas las Sedes</option>
+                                @foreach($locations as $loc)
+                                    <option value="{{ $loc->id }}" {{ $locationId == $loc->id ? 'selected' : '' }}>{{ $loc->name }}</option>
+                                @endforeach
+                            </select>
+                        @endif
                     </div>
                     <div class="form-group mb-4">
                         <label class="filter-label">AÑO</label>
@@ -494,6 +501,7 @@
                                     <th class="small text-uppercase text-muted fw-bold">Cliente / Cat.</th>
                                     <th class="small text-uppercase text-muted fw-bold">Sede</th>
                                     <th class="small text-uppercase text-muted fw-bold text-end">Monto</th>
+                                    <th class="small text-uppercase text-muted fw-bold text-center th-acciones" style="display: none; width: 10%;">Acción</th>
                                 </tr>
                             </thead>
                             <tbody id="kpiModalTableBody">
@@ -554,20 +562,37 @@
                             tableBody.innerHTML = '';
                             let sumTotal = 0;
 
+                            const thAcciones = document.querySelector('#kpiDetailModal .th-acciones');
+                            if (thAcciones) {
+                                thAcciones.style.display = data.can_delete ? 'table-cell' : 'none';
+                            }
+
+                            const cols = data.can_delete ? 6 : 5;
+
                             if (!data.items || data.items.length === 0) {
-                                tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4"><i class="fas fa-inbox me-2 fs-4 d-block mb-2"></i>No se encontraron registros para esta selección.</td></tr>`;
+                                tableBody.innerHTML = `<tr><td colspan="${cols}" class="text-center text-muted py-4"><i class="fas fa-inbox me-2 fs-4 d-block mb-2"></i>No se encontraron registros para esta selección.</td></tr>`;
                             } else {
                                 data.items.forEach(item => {
                                     const rawVal = parseFloat(item.monto.replace(/,/g, '')) || 0;
                                     sumTotal += rawVal;
 
                                     const tr = document.createElement('tr');
+                                    let actionBtnTd = '';
+                                    if (data.can_delete) {
+                                        if (item.sale_id) {
+                                            actionBtnTd = `<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger btn-delete-sale" data-sale-id="${item.sale_id}" title="Eliminar Venta"><i class="fas fa-trash-alt"></i></button></td>`;
+                                        } else {
+                                            actionBtnTd = `<td class="text-center text-muted">-</td>`;
+                                        }
+                                    }
+
                                     tr.innerHTML = `
                                         <td class="small font-weight-bold text-secondary">${item.fecha}</td>
                                         <td class="small font-weight-bold text-dark">${item.numero}</td>
                                         <td class="small text-muted">${item.cliente}</td>
                                         <td class="small text-muted">${item.sede}</td>
                                         <td class="small font-weight-bold text-end text-primary">S/ ${item.monto}</td>
+                                        ${actionBtnTd}
                                     `;
                                     tableBody.appendChild(tr);
                                 });
@@ -585,6 +610,43 @@
                         tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4">Error al obtener el detalle.</td></tr>`;
                         modalContent.style.display = 'block';
                     });
+            });
+        });
+
+        // Event listener delegado para botones de eliminación
+        tableBody.addEventListener('click', function(e) {
+            const btn = e.target.closest('.btn-delete-sale');
+            if (!btn) return;
+
+            const saleId = btn.dataset.saleId;
+            if (!saleId) return;
+
+            if (!confirm('¿Está seguro de eliminar esta venta? El ingreso se descontará de inmediato del Dashboard.')) {
+                return;
+            }
+
+            btn.disabled = true;
+
+            fetch(`/sales/${saleId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    window.location.reload();
+                } else {
+                    alert(res.message || 'No se pudo eliminar la venta.');
+                    btn.disabled = false;
+                }
+            })
+            .catch(err => {
+                alert('Error al procesar la eliminación.');
+                btn.disabled = false;
             });
         });
 

@@ -18,9 +18,26 @@ class DashboardController extends Controller
 
         $user = auth()->user();
         $isMaster = $user->role->nombre === 'master';
-        // No-master siempre ve su propia sede: se ignora cualquier location_id
-        // que venga en el request para que no pueda mirar cifras de otra sede.
-        $locationId = $isMaster ? $request->input('location_id') : $user->location_id;
+
+        // Determinar si la sede viene fijada desde la barra superior o rol de usuario
+        if (!$isMaster) {
+            $locationId = $user->location_id;
+            $isLocationFixed = true;
+        } else {
+            if (!empty($user->location_id)) {
+                $locationId = $user->location_id;
+                $isLocationFixed = true;
+            } else {
+                $locationId = $request->input('location_id');
+                $isLocationFixed = false;
+            }
+        }
+
+        $activeLocationName = '';
+        if ($locationId) {
+            $loc = Location::find($locationId);
+            if ($loc) $activeLocationName = $loc->name;
+        }
 
         $locations = $isMaster
             ? Location::where('deleted', 0)->get()
@@ -125,7 +142,7 @@ class DashboardController extends Controller
         ];
 
         return view('reports.alternativo', compact(
-            'thisYear', 'thisMonth', 'locationId', 'locations',
+            'thisYear', 'thisMonth', 'locationId', 'locations', 'isLocationFixed', 'activeLocationName',
             'ventasTotalesMes', 'ventasHoy', 'cantidadVentasHoy',
             'gastosTotales', 'ingresosCaja', 'rentabilidad', 'balanceActual', 'rentabilidadPorcentaje',
             'efectivo', 'yapePlin', 'transferencias', 'creditos',
@@ -141,7 +158,13 @@ class DashboardController extends Controller
 
         $user = auth()->user();
         $isMaster = $user->role->nombre === 'master';
-        $locationId = $isMaster ? $request->input('location_id') : $user->location_id;
+        $canDelete = in_array($user->role->nombre ?? '', ['master', 'admin'], true);
+        
+        if (!$isMaster) {
+            $locationId = $user->location_id;
+        } else {
+            $locationId = !empty($user->location_id) ? $user->location_id : $request->input('location_id');
+        }
 
         $title = 'Detalle de Registros';
         $data = [];
@@ -157,6 +180,7 @@ class DashboardController extends Controller
 
                 $data = $q->orderBy('date', 'desc')->orderBy('id', 'desc')->get()->map(function ($s) {
                     return [
+                        'sale_id' => $s->id,
                         'fecha' => $s->date ? $s->date->format('d/m/Y') : 'N/A',
                         'numero' => ($s->voucher_code ?? $s->type_sale ?? 'Venta') . ' #' . $s->id,
                         'cliente' => $s->client->business_name ?? $s->client->contact_name ?? $s->client_name ?? 'Cliente Genérico',
@@ -254,6 +278,7 @@ class DashboardController extends Controller
                     'payments.amount'
                 )->orderBy('payments.created_at', 'desc')->get()->map(function ($p) {
                     return [
+                        'sale_id' => $p->sale_id,
                         'fecha' => date('d/m/Y H:i', strtotime($p->created_at)),
                         'numero' => ($p->voucher_code ?? $p->type_sale ?? 'Venta') . ' #' . $p->sale_id,
                         'cliente' => $p->business_name ?? $p->contact_name ?? $p->sale_client_name ?? 'Cliente Genérico',
@@ -268,6 +293,7 @@ class DashboardController extends Controller
         return response()->json([
             'success' => true,
             'title' => $title,
+            'can_delete' => $canDelete,
             'items' => $data
         ]);
     }

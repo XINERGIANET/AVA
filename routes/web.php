@@ -83,20 +83,24 @@ Route::group(['middleware' => 'auth'], function () {
 
         $locationId = request()->input('location_id');
 
-        if (!\App\Models\Location::where('id', $locationId)->where('deleted', 0)->exists()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Sede no válida.'
-            ], 422);
+        if (!empty($locationId)) {
+            if (!\App\Models\Location::where('id', $locationId)->where('deleted', 0)->exists()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sede no válida.'
+                ], 422);
+            }
+            $user->location_id = $locationId;
+        } else {
+            $user->location_id = null;
         }
 
-        $user->location_id = $locationId;
         $user->save();
 
         return response()->json([
             'success' => true,
             'message' => 'Sede actualizada correctamente',
-            'location_id' => $locationId
+            'location_id' => $user->location_id
         ]);
     })->name('user.changeLocation');
 

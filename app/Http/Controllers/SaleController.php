@@ -1093,6 +1093,14 @@ class SaleController extends Controller
      */
     public function destroy($id)
     {
+        $currentUser = auth()->user();
+        if (!in_array($currentUser->role->nombre ?? '', ['master', 'admin'], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tiene permisos para eliminar ventas. Esta acción requiere rol de Administrador.'
+            ], 403);
+        }
+
         $sale = Sale::findOrFail($id);
 
         DB::beginTransaction();
