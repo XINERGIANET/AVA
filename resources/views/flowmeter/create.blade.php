@@ -18,51 +18,77 @@
     <div class="card shadow-sm border-0" style="border-radius: 10px;">
         <div class="card-body">
                 {{-- SECCIÓN DE FILTROS --}}
-            <!-- Toolbar de Filtros -->
-            <div class="row g-2 align-items-end mb-4">
-                <div class="col-md-3">
-                    <label class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Sede</label>
-                    <form method="GET" action="{{ route('flowmeters.create') }}" id="form-location-filter">
-                        <select name="location_id" class="form-select form-select-sm" onchange="document.getElementById('form-location-filter').submit()">
+            <!-- Toolbar de Filtros y Acciones -->
+            <form method="GET" action="{{ route('flowmeters.create') }}" id="form-filter">
+                <div class="row g-2 align-items-end mb-4">
+                    <div class="col-md-2">
+                        <label class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Sede</label>
+                        <select name="location_id" class="form-select form-select-sm">
                             @foreach($locations as $location)
                                 <option value="{{ $location->id }}" {{ $currentLocationId == $location->id ? 'selected' : '' }}>
                                     {{ $location->name }}
                                 </option>
                             @endforeach
                         </select>
-                    </form>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">
+                            <i class="bi bi-calendar-event me-1 text-primary"></i>Fecha
+                        </label>
+                        <input type="date" name="date" id="filter_date" class="form-control form-control-sm fw-bold border-primary" 
+                            value="{{ $selectedDate }}"
+                            onchange="document.getElementById('post_date').value = this.value">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Isla</label>
+                        <select id="filter_isle" class="form-select form-select-sm">
+                            <option value="all">Todas las Islas</option>
+                            @foreach($islas as $isla)
+                                <option value="{{ $isla->id }}">{{ $isla->name ?? $isla->nombre }}</option> 
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Máquina / Surtidor</label>
+                        <select id="filter_pump_name" class="form-select form-select-sm">
+                            <option value="all">Todas las Máquinas</option>
+                            @php
+                                $uniquePumpNames = $islas->pluck('sides')->flatten()->pluck('name')->filter()->unique()->sort();
+                            @endphp
+                            @foreach($uniquePumpNames as $pumpName)
+                                <option value="{{ $pumpName }}">{{ $pumpName }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Lado</label>
+                        <select id="filter_side_number" class="form-select form-select-sm">
+                            <option value="all">Todos</option>
+                            @php
+                                $uniqueSides = $islas->pluck('sides')->flatten()->pluck('side')->unique()->sort();
+                            @endphp
+                            @foreach($uniqueSides as $sideNum)
+                                <option value="{{ $sideNum }}">Lado {{ $sideNum }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <button type="submit" class="btn btn-primary btn-sm px-2 fw-medium w-100" style="border-radius: 6px;" title="Filtrar lecturas por fecha">
+                            <i class="bi bi-funnel me-1"></i> Filtrar
+                        </button>
+                    </div>
+                    <div class="col-md-2 text-end ms-auto">
+                        <button type="submit" form="form-contometros" class="btn btn-success btn-sm px-3 fw-medium w-100" style="border-radius: 6px;">
+                            <i class="bi bi-save me-1"></i> Guardar Registros
+                        </button>
+                    </div>
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Isla</label>
-                    <select id="filter_isle" class="form-select form-select-sm">
-                        <option value="all">Todas las Islas</option>
-                        @foreach($islas as $isla)
-                            <option value="{{ $isla->id }}">{{ $isla->name ?? $isla->nombre }}</option> 
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Lado</label>
-                    <select id="filter_side_number" class="form-select form-select-sm">
-                        <option value="all">Todos los Lados</option>
-                        @php
-                            $uniqueSides = $islas->pluck('sides')->flatten()->pluck('side')->unique()->sort();
-                        @endphp
-                        @foreach($uniqueSides as $sideNum)
-                            <option value="{{ $sideNum }}">Lado {{ $sideNum }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-3 text-end">
-                    <button type="submit" form="form-contometros" class="btn btn-success btn-sm px-3 fw-medium w-100" style="border-radius: 6px;">
-                        <i class="bi bi-save me-1"></i> Guardar Registros
-                    </button>
-                </div>
-            </div>
+            </form>
 
             <form action="{{ route('flowmeters.store') }}" method="POST" id="form-contometros">
                 @csrf
                 <input type="hidden" name="location_id" value="{{ $currentLocationId }}">
+                <input type="hidden" name="date" id="post_date" value="{{ $selectedDate }}">
 
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0" style="border: 1px solid #e9ecef;">
@@ -80,7 +106,7 @@
                         @foreach($islas as $isla)
                         <tbody class="tbody-isla" data-isle-id="{{ $isla->id }}">
                             @foreach($isla->sides as $lado)
-                            <tr class="row-lado" data-side-number="{{ $lado->side }}">
+                            <tr class="row-lado" data-side-number="{{ $lado->side }}" data-pump-name="{{ $lado->name }}">
                                 
                                 <td class="text-center fw-bold">
                                     {{ $lado->name ?? 'Surtidor '.$lado->id }}
@@ -97,10 +123,9 @@
 
                                 <td>
                                     <input type="number" step="0.001" 
-                                        class="form-control form-control-sm text-end bg-light input-inicial" 
+                                        class="form-control form-control-sm text-end fw-bold input-inicial" 
                                         name="lecturas[{{ $lado->id }}][inicial]" 
-                                        value="{{ $lado->ultima_lectura ?? 0 }}" 
-                                        readonly tabindex="-1">
+                                        value="{{ $lado->ultima_lectura ?? 0 }}">
                                 </td>
 
                                 <td>
@@ -136,11 +161,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // --- LÓGICA DE FILTROS ---
     const filterIsle = document.getElementById('filter_isle');
+    const filterPump = document.getElementById('filter_pump_name');
     const filterSide = document.getElementById('filter_side_number');
 
     function aplicarFiltros() {
-        const selectedIsleId = filterIsle.value;
-        const selectedSideNum = filterSide.value;
+        const selectedIsleId = filterIsle ? filterIsle.value : 'all';
+        const selectedPumpName = filterPump ? filterPump.value : 'all';
+        const selectedSideNum = filterSide ? filterSide.value : 'all';
         const allTbodies = document.querySelectorAll('.tbody-isla');
 
         allTbodies.forEach(tbody => {
@@ -152,8 +179,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 const rows = tbody.querySelectorAll('.row-lado');
                 rows.forEach(row => {
                     const rowSideNum = row.dataset.sideNumber;
+                    const rowPumpName = row.dataset.pumpName;
                     const isSideMatch = (selectedSideNum === 'all' || selectedSideNum === rowSideNum);
-                    if (isSideMatch) {
+                    const isPumpMatch = (selectedPumpName === 'all' || selectedPumpName === rowPumpName);
+
+                    if (isSideMatch && isPumpMatch) {
                         row.style.display = '';
                         visibleRowsCount++;
                     } else {
@@ -167,16 +197,26 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    filterIsle.addEventListener('change', aplicarFiltros);
-    filterSide.addEventListener('change', aplicarFiltros);
+    if (filterIsle) filterIsle.addEventListener('change', aplicarFiltros);
+    if (filterPump) filterPump.addEventListener('change', aplicarFiltros);
+    if (filterSide) filterSide.addEventListener('change', aplicarFiltros);
 
     // --- CÁLCULOS ---
+    const inputsInicial = document.querySelectorAll('.input-inicial');
     const inputsFinal = document.querySelectorAll('.input-final');
 
     inputsFinal.forEach(input => {
         input.addEventListener('input', calcularFila);
         // Calcular al inicio
         if(input.value) calcularFila.call(input); 
+    });
+
+    inputsInicial.forEach(input => {
+        input.addEventListener('input', function() {
+            const row = this.closest('tr');
+            const finalInput = row.querySelector('.input-final');
+            if (finalInput) calcularFila.call(finalInput);
+        });
     });
 
     function calcularFila() {

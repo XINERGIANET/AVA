@@ -33,9 +33,11 @@ class DashboardController extends Controller
         $cajaQuery = DB::table('cash_closes')->whereYear('created_at', $thisYear);
         
         $paymentsQuery = DB::table('payments')
+            ->join('sales', 'payments.sale_id', '=', 'sales.id')
+            ->join('payment_methods', 'payments.payment_method_id', '=', 'payment_methods.id')
             ->whereYear('payments.created_at', $thisYear)
             ->where('payments.deleted', 0)
-            ->join('payment_methods', 'payments.payment_method_id', '=', 'payment_methods.id');
+            ->where('sales.deleted', 0);
 
         if ($thisMonth != 'all') {
             $salesQuery->whereMonth('date', $thisMonth);
@@ -50,7 +52,7 @@ class DashboardController extends Controller
             // In transactions, location is location_id
             $gastosQuery->where('location_id', $locationId);
             $cajaQuery->where('location_id', $locationId);
-            $paymentsQuery->join('sales', 'payments.sale_id', '=', 'sales.id')->where('sales.location_id', $locationId);
+            $paymentsQuery->where('sales.location_id', $locationId);
         }
 
         $ventasTotalesMes = $salesQuery->sum('total');
@@ -129,5 +131,144 @@ class DashboardController extends Controller
             'efectivo', 'yapePlin', 'transferencias', 'creditos',
             'chartGalones', 'chartVentasTeoricas'
         ));
+    }
+
+    public function details(Request $request)
+    {
+        $type = $request->input('type');
+        $thisYear = $request->input('year', date('Y'));
+        $thisMonth = $request->input('month', date('m'));
+
+        $user = auth()->user();
+        $isMaster = $user->role->nombre === 'master';
+        $locationId = $isMaster ? $request->input('location_id') : $user->location_id;
+
+        $title = 'Detalle de Registros';
+        $data = [];
+
+        switch ($type) {
+            case 'ventas':
+                $title = 'Detalle de Ventas (' . ($thisMonth == 'all' ? 'Año ' . $thisYear : 'Mes ' . $thisMonth . '/' . $thisYear) . ')';
+                $q = Sale::with(['client', 'location'])
+                    ->whereYear('date', $thisYear)
+                    ->where('deleted', 0);
+                if ($thisMonth != 'all') $q->whereMonth('date', $thisMonth);
+                if ($locationId) $q->where('location_id', $locationId);
+
+                $data = $q->orderBy('date', 'desc')->orderBy('id', 'desc')->get()->map(function ($s) {
+                    return [
+                        'fecha' => $s->date ? $s->date->format('d/m/Y') : 'N/A',
+                        'numero' => ($s->voucher_code ?? $s->type_sale ?? 'Venta') . ' #' . $s->id,
+                        'cliente' => $s->client->business_name ?? $s->client->contact_name ?? $s->client_name ?? 'Cliente Genérico',
+                        'sede' => $s->location->name ?? 'N/A',
+                        'monto' => number_format($s->total, 2)
+                    ];
+                });
+                break;
+
+            case 'gastos':
+                $title = 'Detalle de Gastos (' . ($thisMonth == 'all' ? 'Año ' . $thisYear : 'Mes ' . $thisMonth . '/' . $thisYear) . ')';
+                $q = DB::table('transactions')
+                    ->leftJoin('locations', 'transactions.location_id', '=', 'locations.id')
+                    ->where('type', 'scc')
+                    ->whereYear('date', $thisYear);
+                if ($thisMonth != 'all') $q->whereMonth('date', $thisMonth);
+                if ($locationId) $q->where('location_id', $locationId);
+
+                $data = $q->orderBy('date', 'desc')->orderBy('transactions.id', 'desc')->get()->map(function ($t) {
+                    return [
+                        'fecha' => $t->date ? date('d/m/Y', strtotime($t->date)) : 'N/A',
+                        'numero' => $t->description ?? 'Gasto de caja',
+                        'cliente' => $t->category ?? 'General',
+                        'sede' => $t->name ?? 'N/A',
+                        'monto' => number_format($t->amount, 2)
+                    ];
+                });
+                break;
+
+            case 'caja':
+                $title = 'Detalle de Ingresos de Caja (' . ($thisMonth == 'all' ? 'Año ' . $thisYear : 'Mes ' . $thisMonth . '/' . $thisYear) . ')';
+                $q = DB::table('cash_closes')
+                    ->leftJoin('locations', 'cash_closes.location_id', '=', 'locations.id')
+                    ->whereYear('cash_closes.created_at', $thisYear);
+                if ($thisMonth != 'all') $q->whereMonth('cash_closes.created_at', $thisMonth);
+                if ($locationId) $q->where('cash_closes.location_id', $locationId);
+
+                $data = $q->orderBy('cash_closes.created_at', 'desc')->get()->map(function ($c) {
+                    return [
+                        'fecha' => date('d/m/Y H:i', strtotime($c->created_at)),
+                        'numero' => 'Cierre #' . $c->id,
+                        'cliente' => $c->observation ?? 'Cierre de caja',
+                        'sede' => $c->name ?? 'N/A',
+                        'monto' => number_format($c->real_cash_amount ?? 0, 2)
+                    ];
+                });
+                break;
+
+            case 'efectivo':
+            case 'yape_plin':
+            case 'transferencias':
+            case 'creditos':
+                $titles = [
+                    'efectivo' => 'Detalle de Pagos en Efectivo',
+                    'yape_plin' => 'Detalle de Pagos Yape / Plin',
+                    'transferencias' => 'Detalle de Pagos por Transferencia',
+                    'creditos' => 'Detalle de Pendientes / Crédito',
+                ];
+                $title = ($titles[$type] ?? 'Detalle de Pagos') . ' (' . ($thisMonth == 'all' ? 'Año ' . $thisYear : 'Mes ' . $thisMonth . '/' . $thisYear) . ')';
+
+                $q = DB::table('payments')
+                    ->join('sales', 'payments.sale_id', '=', 'sales.id')
+                    ->join('payment_methods', 'payments.payment_method_id', '=', 'payment_methods.id')
+                    ->leftJoin('clients', 'sales.client_id', '=', 'clients.id')
+                    ->leftJoin('locations', 'sales.location_id', '=', 'locations.id')
+                    ->whereYear('payments.created_at', $thisYear)
+                    ->where('payments.deleted', 0)
+                    ->where('sales.deleted', 0);
+
+                if ($thisMonth != 'all') $q->whereMonth('payments.created_at', $thisMonth);
+                if ($locationId) $q->where('sales.location_id', $locationId);
+
+                if ($type === 'efectivo') {
+                    $q->where('payment_methods.name', 'like', '%Efectivo%');
+                } elseif ($type === 'yape_plin') {
+                    $q->where(function ($sub) {
+                        $sub->where('payment_methods.name', 'like', '%Yape%')->orWhere('payment_methods.name', 'like', '%Plin%');
+                    });
+                } elseif ($type === 'transferencias') {
+                    $q->where('payment_methods.name', 'like', '%Transferencia%');
+                } elseif ($type === 'creditos') {
+                    $q->where('payment_methods.name', 'like', '%Credito%');
+                }
+
+                $data = $q->select(
+                    'payments.created_at',
+                    'sales.voucher_code',
+                    'sales.type_sale',
+                    'sales.id as sale_id',
+                    'sales.client_name as sale_client_name',
+                    'clients.business_name',
+                    'clients.contact_name',
+                    'locations.name as location_name',
+                    'payment_methods.name as pm_name',
+                    'payments.amount'
+                )->orderBy('payments.created_at', 'desc')->get()->map(function ($p) {
+                    return [
+                        'fecha' => date('d/m/Y H:i', strtotime($p->created_at)),
+                        'numero' => ($p->voucher_code ?? $p->type_sale ?? 'Venta') . ' #' . $p->sale_id,
+                        'cliente' => $p->business_name ?? $p->contact_name ?? $p->sale_client_name ?? 'Cliente Genérico',
+                        'sede' => $p->location_name ?? 'N/A',
+                        'metodo' => $p->pm_name,
+                        'monto' => number_format($p->amount, 2)
+                    ];
+                });
+                break;
+        }
+
+        return response()->json([
+            'success' => true,
+            'title' => $title,
+            'items' => $data
+        ]);
     }
 }

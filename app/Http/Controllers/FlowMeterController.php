@@ -42,25 +42,42 @@ class FlowMeterController extends Controller
             ? Location::where('deleted', 0)->get()
             : Location::where('deleted', 0)->where('id', $currentUser->location_id)->get();
 
-        // No-master siempre ve/registra su propia sede, sin importar qué
-        // location_id venga en el request.
         $currentLocationId = $isMaster
             ? $request->input('location_id', $currentUser->location_id)
             : $currentUser->location_id;
 
+        $selectedDate = $request->input('date', date('Y-m-d'));
+
         $islas = Isle::where('location_id', $currentLocationId)
+            ->where('deleted', 0)
             ->with(['sides' => function($query) {
-                $query->orderByRaw('CAST(side AS UNSIGNED) ASC')
-                    ->orderBy('name', 'asc')
+                $query->where('deleted', 0)
                     ->with('product'); 
             }])->get();
 
         foreach ($islas as $isla) {
+            $sortedSides = $isla->sides->sort(function($a, $b) {
+                // 1. Nombre de la máquina
+                $c = strcmp($a->name ?? '', $b->name ?? '');
+                if ($c !== 0) return $c;
+
+                // 2. Nombre del producto
+                $pNameA = $a->product->name ?? '';
+                $pNameB = $b->product->name ?? '';
+                $c = strcmp($pNameA, $pNameB);
+                if ($c !== 0) return $c;
+
+                // 3. Número de lado
+                return ((int)$a->side) <=> ((int)$b->side);
+            })->values();
+            $isla->setRelation('sides', $sortedSides);
+
             foreach ($isla->sides as $lado) {
                 
                 $lastMeasurement = Measurement::where('pump_id', $lado->id)
                     ->where('location_id', $currentLocationId)
                     ->where('deleted', 0)
+                    ->whereDate('date', '<=', $selectedDate)
                     ->orderBy('date', 'desc') 
                     ->orderBy('id', 'desc')   
                     ->first();
@@ -77,7 +94,7 @@ class FlowMeterController extends Controller
             }
         }
 
-        return view('flowmeter.create', compact('islas', 'locations', 'currentLocationId'));
+        return view('flowmeter.create', compact('islas', 'locations', 'currentLocationId', 'selectedDate'));
     }
 
     /**
@@ -90,7 +107,8 @@ class FlowMeterController extends Controller
     {
         $request->validate([
             'lecturas' => 'required|array',
-            'location_id' => 'required|integer|exists:locations,id'
+            'location_id' => 'required|integer|exists:locations,id',
+            'date' => 'nullable|date'
         ]);
 
         $currentUser = auth()->user();
@@ -102,7 +120,7 @@ class FlowMeterController extends Controller
             return back()->with('error', 'Solo puedes registrar contómetros de tu propia sede.');
         }
 
-        $date = now()->format('Y-m-d');
+        $date = $request->input('date') ?: now()->format('Y-m-d');
 
         try {
             DB::beginTransaction();
@@ -262,7 +280,33 @@ class FlowMeterController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $request->validate([
+            'date' => 'required|date',
+            'amount_initial' => 'required|numeric',
+            'amount_final' => 'required|numeric',
+        ]);
+
+        $measurement = Measurement::findOrFail($id);
+
+        $currentUser = auth()->user();
+        $isMaster = $currentUser->role->nombre === 'master';
+
+        if (!$isMaster && (int) $measurement->location_id !== (int) $currentUser->location_id) {
+            return back()->with('error', 'No tienes permiso para editar este registro.');
+        }
+
+        $initial = floatval($request->input('amount_initial'));
+        $final = floatval($request->input('amount_final'));
+        $difference = $initial - $final;
+
+        $measurement->update([
+            'date' => $request->input('date'),
+            'amount_initial' => $initial,
+            'amount_final' => $final,
+            'amount_difference' => $difference,
+        ]);
+
+        return redirect()->back()->with('success', 'Registro de contómetro actualizado correctamente.');
     }
 
     /**
@@ -273,6 +317,17 @@ class FlowMeterController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $measurement = Measurement::findOrFail($id);
+
+        $currentUser = auth()->user();
+        $isMaster = $currentUser->role->nombre === 'master';
+
+        if (!$isMaster && (int) $measurement->location_id !== (int) $currentUser->location_id) {
+            return back()->with('error', 'No tienes permiso para eliminar este registro.');
+        }
+
+        $measurement->update(['deleted' => 1]);
+
+        return redirect()->back()->with('success', 'Registro de contómetro eliminado correctamente.');
     }
 }

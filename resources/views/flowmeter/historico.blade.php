@@ -132,6 +132,7 @@
                                         <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Inicial</th>
                                         <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Final</th>
                                         <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Diferencia</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody class="text-center">
@@ -157,6 +158,27 @@
                                                     {{ number_format($diff, 3) }}
                                                 </span>
                                             </td>
+                                            <td>
+                                                <div class="d-flex justify-content-center gap-1">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary btn-edit-measurement"
+                                                        data-id="{{ $measurement->id }}"
+                                                        data-date="{{ $measurement->date ? $measurement->date->format('Y-m-d') : '' }}"
+                                                        data-initial="{{ $measurement->amount_initial }}"
+                                                        data-final="{{ $measurement->amount_final }}"
+                                                        data-pump="{{ ($measurement->pump->isle->name ?? 'Isla') . ' - Lado ' . ($measurement->pump->side ?? '-') . ' (' . ($measurement->pump->product->name ?? 'Producto') . ')' }}"
+                                                        title="Editar">
+                                                        <i class="bi bi-pencil-square"></i>
+                                                    </button>
+
+                                                    <form action="{{ route('flowmeters.destroy', $measurement->id) }}" method="POST" onsubmit="return confirm('¿Está seguro de eliminar esta lectura?');" style="display: inline-block;">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
                                         </tr>
                                     @empty
                                         <tr>
@@ -173,4 +195,103 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal Editar Lectura de Contómetro -->
+    <div class="modal fade" id="editMeasurementModal" tabindex="-1" aria-labelledby="editMeasurementModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold" id="editMeasurementModalLabel">
+                        <i class="bi bi-pencil-square me-2"></i>Editar Contómetro
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="editMeasurementForm" method="POST" action="">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label text-dark fw-bold small">Surtidor / Lado</label>
+                            <input type="text" id="edit_pump_info" class="form-control form-control-sm bg-light" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-dark fw-bold small">Fecha</label>
+                            <input type="date" name="date" id="edit_date" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-dark fw-bold small">Valor Inicial</label>
+                                <input type="number" step="0.001" name="amount_initial" id="edit_amount_initial" class="form-control form-control-sm text-end fw-bold" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-dark fw-bold small">Valor Final</label>
+                                <input type="number" step="0.001" name="amount_final" id="edit_amount_final" class="form-control form-control-sm text-end fw-bold border-primary" required>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label text-dark fw-bold small">Diferencia (Inicial - Final)</label>
+                            <input type="number" step="0.001" id="edit_amount_difference" class="form-control form-control-sm text-end fw-bold" readonly>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary btn-sm fw-medium px-4">
+                            <i class="bi bi-save me-1"></i> Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const editModal = new bootstrap.Modal(document.getElementById('editMeasurementModal'));
+        const editForm = document.getElementById('editMeasurementForm');
+        const editPumpInfo = document.getElementById('edit_pump_info');
+        const editDate = document.getElementById('edit_date');
+        const editInitial = document.getElementById('edit_amount_initial');
+        const editFinal = document.getElementById('edit_amount_final');
+        const editDifference = document.getElementById('edit_amount_difference');
+
+        function calcModalDiff() {
+            const initVal = parseFloat(editInitial.value) || 0;
+            const finalVal = parseFloat(editFinal.value) || 0;
+            const diff = initVal - finalVal;
+            editDifference.value = diff.toFixed(3);
+
+            editDifference.className = 'form-control form-control-sm text-end fw-bold';
+            if (Math.abs(diff) <= 0.02) {
+                editDifference.classList.add('bg-success', 'text-white');
+            } else if (diff < -0.02) {
+                editDifference.classList.add('bg-danger', 'text-white');
+            } else {
+                editDifference.classList.add('bg-warning', 'text-dark');
+            }
+        }
+
+        editInitial.addEventListener('input', calcModalDiff);
+        editFinal.addEventListener('input', calcModalDiff);
+
+        document.querySelectorAll('.btn-edit-measurement').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const id = this.dataset.id;
+                const date = this.dataset.date;
+                const initial = this.dataset.initial;
+                const final = this.dataset.final;
+                const pump = this.dataset.pump;
+
+                editForm.action = `/flowmeters/${id}`;
+                editPumpInfo.value = pump;
+                editDate.value = date;
+                editInitial.value = initial;
+                editFinal.value = final;
+
+                calcModalDiff();
+                editModal.show();
+            });
+        });
+    });
+    </script>
 @endsection

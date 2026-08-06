@@ -27,33 +27,47 @@
                       <div class="col-md-3">
                           <label for="filter_isle" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Isla</label>
                           <select name="isle_id" id="filter_isle" class="form-select form-select-sm">
-                              <option value="">Todas</option>
+                              <option value="">Todas las Islas</option>
                               @foreach ($isles as $isle)
                                   <option value="{{ $isle->id }}" {{ request('isle_id') == $isle->id ? 'selected' : '' }}>{{ $isle->name }}</option>
                               @endforeach
                           </select>
                       </div>
                       <div class="col-md-3">
+                          <label for="filter_search" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Máquina / Surtidor</label>
+                          <select name="search" id="filter_search" class="form-select form-select-sm">
+                              <option value="">Todas las Máquinas</option>
+                              @foreach ($pumpNames as $pName)
+                                  <option value="{{ $pName }}" {{ request('search') == $pName ? 'selected' : '' }}>{{ $pName }}</option>
+                              @endforeach
+                          </select>
+                      </div>
+                      <div class="col-md-3">
                           <label for="filter_product" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Producto</label>
                           <select name="product_id" id="filter_product" class="form-select form-select-sm">
-                              <option value="">Todos</option>
+                              <option value="">Todos los Productos</option>
                               @foreach ($products as $product)
                                   <option value="{{ $product->id }}" {{ request('product_id') == $product->id ? 'selected' : '' }}>{{ $product->name }}</option>
                               @endforeach
                           </select>
                       </div>
-                      <div class="col-md-4">
-                          <label for="filter_search" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Buscar Nombre</label>
-                          <input type="text" name="search" id="filter_search" class="form-control form-control-sm" placeholder="Ej. Surtidor 1..." value="{{ request('search') }}">
+                      <div class="col-md-1">
+                          <label for="filter_side" class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Lado</label>
+                          <select name="side" id="filter_side" class="form-select form-select-sm">
+                              <option value="">Todos</option>
+                              <option value="1" {{ request('side') == '1' ? 'selected' : '' }}>1</option>
+                              <option value="2" {{ request('side') == '2' ? 'selected' : '' }}>2</option>
+                          </select>
                       </div>
-                      <div class="col-md-2">
-                          <button type="submit" class="btn btn-secondary btn-sm w-100"><i class="bi bi-search me-1"></i>Filtrar</button>
+                      <div class="col-md-2 d-flex gap-1">
+                          <button type="submit" class="btn btn-primary btn-sm w-100" style="border-radius: 6px;"><i class="bi bi-funnel me-1"></i>Filtrar</button>
+                          <a href="{{ route('fuelpumps.index') }}" class="btn btn-light btn-sm" style="border-radius: 6px;" title="Limpiar Filtros"><i class="bi bi-arrow-counterclockwise"></i></a>
                       </div>
                   </div>
               </form>
           </div>
           <div class="col-md-3 text-end">
-              <button type="button" class="btn btn-success px-3 fw-medium" data-bs-toggle="modal" data-bs-target="#createModal" style="border-radius: 6px;">
+              <button type="button" class="btn btn-success btn-sm px-3 fw-medium" data-bs-toggle="modal" data-bs-target="#createModal" style="border-radius: 6px;">
                   <i class="bi bi-plus-lg me-1"></i> Nuevo Surtidor
               </button>
           </div>

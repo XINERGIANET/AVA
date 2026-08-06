@@ -22,33 +22,54 @@ class PumpController extends Controller
 
     public function index(Request $request)
     {
-        $fuelpumps = Pump::with('isle','product')  // Obtener la relación con Isla
-            ->where('deleted', 0)
+        $query = Pump::with(['isle', 'product'])
+            ->where('pumps.deleted', 0)
             ->when(auth()->user()->role->nombre != 'master' && auth()->user()->location_id, function ($query) {
                 $query->whereHas('isle', function ($q) {
                     $q->where('location_id', auth()->user()->location_id);
                 });
             })
             ->when($request->filled('isle_id'), function ($query) use ($request) {
-                $query->where('isle_id', $request->isle_id);
+                $query->where('pumps.isle_id', $request->isle_id);
             })
             ->when($request->filled('product_id'), function ($query) use ($request) {
-                $query->where('product_id', $request->product_id);
+                $query->where('pumps.product_id', $request->product_id);
+            })
+            ->when($request->filled('side'), function ($query) use ($request) {
+                $query->where('pumps.side', $request->side);
             })
             ->when($request->filled('search'), function ($query) use ($request) {
-                $query->where('name', 'like', '%' . $request->search . '%');
-            })
-            ->paginate(15);
+                $query->where('pumps.name', $request->search);
+            });
 
+        $fuelpumps = $query->join('products', 'pumps.product_id', '=', 'products.id')
+            ->select('pumps.*')
+            ->orderBy('pumps.name', 'asc')
+            ->orderBy('products.name', 'asc')
+            ->orderByRaw('CAST(pumps.side AS UNSIGNED) ASC')
+            ->paginate(15)
+            ->withQueryString();
 
         $isles = Isle::with('location')->where('deleted', 0)->when(auth()->user()->role->nombre != 'master' && auth()->user()->location_id, function ($query) {
             $query->whereHas('location', function ($q) {
                 $q->where('location_id', auth()->user()->location_id);
             });
         })->get();
+
         $products = Product::where('deleted', 0)->get();
 
-        return view('fuelpumps.index', compact('fuelpumps', 'isles','products'));
+        $pumpNames = Pump::where('deleted', 0)
+            ->when(auth()->user()->role->nombre != 'master' && auth()->user()->location_id, function ($query) {
+                $query->whereHas('isle', function ($q) {
+                    $q->where('location_id', auth()->user()->location_id);
+                });
+            })
+            ->pluck('name')
+            ->filter()
+            ->unique()
+            ->sort();
+
+        return view('fuelpumps.index', compact('fuelpumps', 'isles', 'products', 'pumpNames'));
     }
 
     /**

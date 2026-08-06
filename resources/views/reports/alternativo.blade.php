@@ -209,6 +209,15 @@
         overflow-y: auto;
         padding: 40px !important;
     }
+    /* Clickable Cards */
+    .kpi-card-clickable, .ribbon-item-clickable {
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .kpi-card-clickable:hover, .ribbon-item-clickable:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.08) !important;
+    }
 </style>
 
 <div class="container-fluid content-inner py-4" id="dashboard-container">
@@ -283,7 +292,7 @@
             <div class="row align-items-stretch mb-4">
                 <!-- Blue Card -->
                 <div class="col-lg-5 col-md-12 mb-3">
-                    <div class="kpi-card kpi-card-blue p-4">
+                    <div class="kpi-card kpi-card-blue p-4 kpi-card-clickable" data-kpi-type="ventas" title="Haz clic para ver el detalle de ventas">
                         <div class="row align-items-center h-100">
                             <div class="col-7">
                                 <div class="d-flex align-items-center mb-2">
@@ -326,7 +335,7 @@
 
                 <!-- Gastos Totales -->
                 <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="kpi-card p-4 text-center">
+                    <div class="kpi-card p-4 text-center kpi-card-clickable" data-kpi-type="gastos" title="Haz clic para ver el detalle de gastos">
                         <div class="pm-icon-box pm-icon-red mx-auto mb-2">
                             <i class="fas fa-hand-holding-usd"></i>
                         </div>
@@ -338,14 +347,14 @@
 
             <!-- ROW 2: RIBBON -->
             <div class="ribbon">
-                <div class="ribbon-item" style="background-color: #d4a373;">
+                <div class="ribbon-item ribbon-item-clickable" data-kpi-type="ventas" style="background-color: #d4a373;" title="Ver ventas">
                     <i class="fas fa-shopping-cart ribbon-icon"></i>
                     <div class="ribbon-text">
                         <div class="ribbon-title">VENTAS</div>
                         <div class="ribbon-value">S/ {{ number_format($ventasTotalesMes, 2) }}</div>
                     </div>
                 </div>
-                <div class="ribbon-item" style="background-color: #10b981;">
+                <div class="ribbon-item ribbon-item-clickable" data-kpi-type="caja" style="background-color: #10b981;" title="Ver ingresos de caja">
                     <i class="fas fa-wallet ribbon-icon"></i>
                     <div class="ribbon-text">
                         <div class="ribbon-title">INGRESOS CAJA</div>
@@ -366,7 +375,7 @@
                         <div class="ribbon-value">S/ {{ number_format($rentabilidad, 2) }}</div>
                     </div>
                 </div>
-                <div class="ribbon-item" style="background-color: #ef4444;">
+                <div class="ribbon-item ribbon-item-clickable" data-kpi-type="gastos" style="background-color: #ef4444;" title="Ver gastos">
                     <i class="fas fa-credit-card ribbon-icon"></i>
                     <div class="ribbon-text">
                         <div class="ribbon-title">GASTOS</div>
@@ -388,7 +397,7 @@
                 <div class="col-lg-5 col-md-12 mb-3">
                     <div class="row h-100">
                         <div class="col-6 mb-3">
-                            <div class="kpi-card pm-card">
+                            <div class="kpi-card pm-card kpi-card-clickable" data-kpi-type="creditos" title="Ver detalle de pendientes / créditos">
                                 <div class="pm-icon-box pm-icon-blue">
                                     <i class="far fa-credit-card"></i>
                                 </div>
@@ -399,7 +408,7 @@
                             </div>
                         </div>
                         <div class="col-6 mb-3">
-                            <div class="kpi-card pm-card">
+                            <div class="kpi-card pm-card kpi-card-clickable" data-kpi-type="efectivo" title="Ver detalle de efectivo">
                                 <div class="pm-icon-box pm-icon-green">
                                     <i class="fas fa-money-bill-wave"></i>
                                 </div>
@@ -410,7 +419,7 @@
                             </div>
                         </div>
                         <div class="col-6 mb-3">
-                            <div class="kpi-card pm-card">
+                            <div class="kpi-card pm-card kpi-card-clickable" data-kpi-type="transferencias" title="Ver detalle de transferencias">
                                 <div class="pm-icon-box pm-icon-blue">
                                     <i class="fas fa-exchange-alt"></i>
                                 </div>
@@ -421,7 +430,7 @@
                             </div>
                         </div>
                         <div class="col-6 mb-3">
-                            <div class="kpi-card pm-card">
+                            <div class="kpi-card pm-card kpi-card-clickable" data-kpi-type="yape_plin" title="Ver detalle de Yape / Plin">
                                 <div class="pm-icon-box pm-icon-purple">
                                     <i class="fas fa-mobile-alt"></i>
                                 </div>
@@ -458,9 +467,127 @@
     </div>
 </div>
 
+<!-- Modal Detalle de KPI -->
+<div class="modal fade" id="kpiDetailModal" tabindex="-1" aria-labelledby="kpiDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content shadow border-0" style="border-radius: 12px;">
+            <div class="modal-header bg-primary text-white" style="border-top-left-radius: 12px; border-top-right-radius: 12px;">
+                <h5 class="modal-title fw-bold" id="kpiDetailModalLabel">
+                    <i class="fas fa-list me-2"></i><span id="kpiModalTitle">Detalle de Registros</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div id="kpiModalLoading" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <p class="text-muted mt-2 small">Cargando desglose de registros...</p>
+                </div>
+                <div id="kpiModalContent" style="display: none;">
+                    <div class="table-responsive" style="max-height: 380px; overflow-y: auto;">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light sticky-top">
+                                <tr>
+                                    <th class="small text-uppercase text-muted fw-bold">Fecha</th>
+                                    <th class="small text-uppercase text-muted fw-bold">Comprobante / Desc.</th>
+                                    <th class="small text-uppercase text-muted fw-bold">Cliente / Cat.</th>
+                                    <th class="small text-uppercase text-muted fw-bold">Sede</th>
+                                    <th class="small text-uppercase text-muted fw-bold text-end">Monto</th>
+                                </tr>
+                            </thead>
+                            <tbody id="kpiModalTableBody">
+                                <!-- Filas dinámicas -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                        <span class="text-muted small fw-bold">Total de registros: <span id="kpiModalTotalCount">0</span></span>
+                        <div class="text-end">
+                            <span class="text-dark fw-bold me-2">SUMA TOTAL:</span>
+                            <span class="fs-5 font-weight-bold text-primary" id="kpiModalTotalAmount">S/ 0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light" style="border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;">
+                <button type="button" class="btn btn-secondary btn-sm px-4" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         
+        // Modal & Click Handler
+        const kpiModal = new bootstrap.Modal(document.getElementById('kpiDetailModal'));
+        const modalTitle = document.getElementById('kpiModalTitle');
+        const modalLoading = document.getElementById('kpiModalLoading');
+        const modalContent = document.getElementById('kpiModalContent');
+        const tableBody = document.getElementById('kpiModalTableBody');
+        const totalCount = document.getElementById('kpiModalTotalCount');
+        const totalAmount = document.getElementById('kpiModalTotalAmount');
+
+        document.querySelectorAll('.kpi-card-clickable, .ribbon-item-clickable').forEach(elem => {
+            elem.addEventListener('click', function() {
+                const type = this.dataset.kpiType;
+                if (!type) return;
+
+                const year = "{{ $thisYear }}";
+                const month = "{{ $thisMonth }}";
+                const locationId = "{{ $locationId }}";
+
+                modalTitle.innerText = "Cargando detalle...";
+                modalLoading.style.display = 'block';
+                modalContent.style.display = 'none';
+                tableBody.innerHTML = '';
+                kpiModal.show();
+
+                const url = `{{ route('dashboard.details') }}?type=${type}&year=${year}&month=${month}&location_id=${locationId}`;
+
+                fetch(url)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            modalTitle.innerText = data.title;
+                            tableBody.innerHTML = '';
+                            let sumTotal = 0;
+
+                            if (!data.items || data.items.length === 0) {
+                                tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4"><i class="fas fa-inbox me-2 fs-4 d-block mb-2"></i>No se encontraron registros para esta selección.</td></tr>`;
+                            } else {
+                                data.items.forEach(item => {
+                                    const rawVal = parseFloat(item.monto.replace(/,/g, '')) || 0;
+                                    sumTotal += rawVal;
+
+                                    const tr = document.createElement('tr');
+                                    tr.innerHTML = `
+                                        <td class="small font-weight-bold text-secondary">${item.fecha}</td>
+                                        <td class="small font-weight-bold text-dark">${item.numero}</td>
+                                        <td class="small text-muted">${item.cliente}</td>
+                                        <td class="small text-muted">${item.sede}</td>
+                                        <td class="small font-weight-bold text-end text-primary">S/ ${item.monto}</td>
+                                    `;
+                                    tableBody.appendChild(tr);
+                                });
+                            }
+
+                            totalCount.innerText = data.items ? data.items.length : 0;
+                            totalAmount.innerText = `S/ ${sumTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                            
+                            modalLoading.style.display = 'none';
+                            modalContent.style.display = 'block';
+                        }
+                    })
+                    .catch(err => {
+                        modalLoading.style.display = 'none';
+                        tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4">Error al obtener el detalle.</td></tr>`;
+                        modalContent.style.display = 'block';
+                    });
+            });
+        });
+
         // Colors
         const dangerColor = '#ef4444';
         const successColor = '#10b981';

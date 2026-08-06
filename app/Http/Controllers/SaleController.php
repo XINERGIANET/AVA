@@ -1094,9 +1094,20 @@ class SaleController extends Controller
     public function destroy($id)
     {
         $sale = Sale::findOrFail($id);
-        $sale->update(['deleted' => true]);
 
-        return response()->json(['success' => true, 'message' => 'Venta eliminada lógicamente.']);
+        DB::beginTransaction();
+        try {
+            $sale->update(['deleted' => true]);
+
+            // Marcar también sus registros de pago como eliminados
+            Payment::where('sale_id', $sale->id)->update(['deleted' => 1]);
+
+            DB::commit();
+            return response()->json(['success' => true, 'message' => 'Venta eliminada lógicamente.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Error al eliminar la venta: ' . $e->getMessage()], 500);
+        }
     }
 
     public function consultarSunat(Request $request)
