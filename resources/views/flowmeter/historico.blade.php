@@ -139,9 +139,7 @@
                                     @forelse ($measurements as $measurement)
                                         @php
                                             $diff = floatval($measurement->amount_difference ?? 0);
-                                            $badgeClass = abs($diff) <= 0.02
-                                                ? 'bg-success'
-                                                : ($diff < -0.02 ? 'bg-danger' : 'bg-warning text-dark');
+                                            $badgeClass = $diff >= 0 ? 'bg-success' : 'bg-danger';
                                         @endphp
                                         <tr>
                                             <td>{{ ($measurements->currentPage() - 1) * $measurements->perPage() + $loop->iteration }}</td>
@@ -229,7 +227,7 @@
                             </div>
                         </div>
                         <div class="mb-2">
-                            <label class="form-label text-dark fw-bold small">Diferencia (Inicial - Final)</label>
+                            <label class="form-label text-dark fw-bold small">Diferencia (Final - Inicial)</label>
                             <input type="number" step="0.001" id="edit_amount_difference" class="form-control form-control-sm text-end fw-bold" readonly>
                         </div>
                     </div>
@@ -258,16 +256,14 @@
         function calcModalDiff() {
             const initVal = parseFloat(editInitial.value) || 0;
             const finalVal = parseFloat(editFinal.value) || 0;
-            const diff = initVal - finalVal;
+            const diff = finalVal - initVal;
             editDifference.value = diff.toFixed(3);
 
             editDifference.className = 'form-control form-control-sm text-end fw-bold';
-            if (Math.abs(diff) <= 0.02) {
-                editDifference.classList.add('bg-success', 'text-white');
-            } else if (diff < -0.02) {
+            if (diff < 0) {
                 editDifference.classList.add('bg-danger', 'text-white');
             } else {
-                editDifference.classList.add('bg-warning', 'text-dark');
+                editDifference.classList.add('bg-success', 'text-white');
             }
         }
 

@@ -133,7 +133,7 @@ class FlowMeterController extends Controller
 
                     $initial   = floatval($data['inicial'] ?? 0);
                     $final     = floatval($data['final']);
-                    $difference = $initial - $final;
+                    $difference = $final - $initial;
 
                     Measurement::create([
                         'location_id'       => $locationId,
@@ -297,7 +297,7 @@ class FlowMeterController extends Controller
 
         $initial = floatval($request->input('amount_initial'));
         $final = floatval($request->input('amount_final'));
-        $difference = $initial - $final;
+        $difference = $final - $initial;
 
         $measurement->update([
             'date' => $request->input('date'),

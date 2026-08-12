@@ -233,26 +233,24 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        let ventaFisica = inicial - final;
+        let ventaFisica = final - inicial;
         
         const inputVenta = row.querySelector('.input-venta');
         if (inputVenta) {
             inputVenta.value = ventaFisica.toFixed(3);
         }
 
-        const diferencia = inicial - final;        
+        const diferencia = final - inicial;        
         const inputDiferencia = row.querySelector('.input-diferencia');
         
         inputDiferencia.value = diferencia.toFixed(3);
 
         inputDiferencia.className = 'form-control form-control-sm text-end fw-bold input-diferencia'; 
         
-        if (Math.abs(diferencia) <= 0.02) {
-            inputDiferencia.classList.add('bg-success', 'text-white'); // Verde (Ok)
-        } else if (diferencia < -0.02) {
-            inputDiferencia.classList.add('bg-danger', 'text-white'); // Rojo (Falta / Negativo)
+        if (diferencia < 0) {
+            inputDiferencia.classList.add('bg-danger', 'text-white'); // Rojo si Final < Inicial (Lectura inválida)
         } else {
-            inputDiferencia.classList.add('bg-warning', 'text-dark'); // Amarillo (Sobra / Positivo)
+            inputDiferencia.classList.add('bg-success', 'text-white'); // Verde si Final >= Inicial (Lectura correcta)
         }
     }
 });
