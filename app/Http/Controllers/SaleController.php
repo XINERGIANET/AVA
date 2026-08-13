@@ -1370,6 +1370,101 @@ class SaleController extends Controller
         }
     }
 
+    /**
+     * Obtener el resumen de galones por contómetro, ventas a crédito y ventas con descuento para autocalcular el saldo de venta directa.
+     */
+    public function getFlowmeterGallonsSummary(Request $request)
+    {
+        try {
+            $pumpId = $request->input('pump_id');
+            $date = $request->input('date', date('Y-m-d'));
+            $user = auth()->user();
+            $locationId = $request->input('location_id', $user ? $user->location_id : null);
+
+            if (!$pumpId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Se requiere el ID del surtidor (pump_id).'
+                ], 400);
+            }
+
+            // 1. Obtener la medición de contómetro para esta fecha y surtidor
+            $measurement = Measurement::where('pump_id', $pumpId)
+                ->when($locationId, function ($q) use ($locationId) {
+                    $q->where('location_id', $locationId);
+                })
+                ->where('deleted', 0)
+                ->whereDate('date', $date)
+                ->first();
+
+            // Si no hay medición del día exacto, buscar la más reciente del surtidor
+            if (!$measurement) {
+                $measurement = Measurement::where('pump_id', $pumpId)
+                    ->when($locationId, function ($q) use ($locationId) {
+                        $q->where('location_id', $locationId);
+                    })
+                    ->where('deleted', 0)
+                    ->whereDate('date', '<=', $date)
+                    ->orderBy('date', 'desc')
+                    ->orderBy('id', 'desc')
+                    ->first();
+            }
+
+            $flowmeterTotal = $measurement ? floatval($measurement->amount_difference) : 0.0;
+
+            // 2. Sumar galones de Ventas a Crédito / Contrato (type_sale = 1 ó 2) para ese surtidor y fecha
+            $creditGallons = SaleDetail::whereHas('sale', function ($query) use ($locationId, $date) {
+                if ($locationId) {
+                    $query->where('location_id', $locationId);
+                }
+                $query->where('deleted', 0)
+                    ->whereDate('date', $date)
+                    ->whereIn('type_sale', [1, 2]);
+            })
+                ->where('pump_id', $pumpId)
+                ->sum('quantity');
+
+            // 3. Sumar galones de Ventas Directas con Descuento (type_sale = 0 con descuento)
+            $discountGallons = SaleDetail::whereHas('sale', function ($query) use ($locationId, $date) {
+                if ($locationId) {
+                    $query->where('location_id', $locationId);
+                }
+                $query->where('deleted', 0)
+                    ->whereDate('date', $date)
+                    ->where('type_sale', 0);
+            })
+                ->where('pump_id', $pumpId)
+                ->whereNotNull('discounted_price')
+                ->where('discounted_price', '>', 0)
+                ->whereRaw('ABS(discounted_price - unit_price) > 0.009')
+                ->sum('quantity');
+
+            // 4. Saldo autocalculado para Venta Directa
+            $remainingDirectGallons = max(0, $flowmeterTotal - $creditGallons - $discountGallons);
+
+            return response()->json([
+                'success' => true,
+                'pump_id' => (int) $pumpId,
+                'date' => $date,
+                'has_measurement' => $measurement ? true : false,
+                'flowmeter_total' => round($flowmeterTotal, 3),
+                'credit_gallons' => round(floatval($creditGallons), 3),
+                'discount_gallons' => round(floatval($discountGallons), 3),
+                'remaining_direct_gallons' => round(floatval($remainingDirectGallons), 3),
+                'measurement_info' => $measurement ? [
+                    'initial' => floatval($measurement->amount_initial),
+                    'final' => floatval($measurement->amount_final),
+                    'difference' => floatval($measurement->amount_difference)
+                ] : null
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al calcular resumen de contómetros: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function excelByIsle(Request $request)
     {
         $date = $request->date ?? now()->format('Y-m-d');

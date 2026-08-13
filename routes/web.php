@@ -166,6 +166,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('recalibration/update-quantities', [RecalibrationController::class, 'updateQuantities'])->name('recalibration.updateQuantities');
     
     // Rutas para mediciones de contómetro
+    Route::get('/sales/flowmeter-summary', [SaleController::class, 'getFlowmeterGallonsSummary'])->name('sales.flowmeter_summary');
     Route::get('/sales/measurements/isles', [SaleController::class, 'getIslesByLocation'])->name('sales.measurements.isles');
     Route::get('/sales/measurements/pumps', [SaleController::class, 'getPumpsByIsle'])->name('sales.measurements.pumps');
     Route::get('/sales/measurements/last', [SaleController::class, 'getLastMeasurement'])->name('sales.measurements.last');

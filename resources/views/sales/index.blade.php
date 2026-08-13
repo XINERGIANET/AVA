@@ -1380,6 +1380,46 @@
                             </div>
                         </div>
 
+                        <!-- Card de Desglose de Galones de Contómetro -->
+                        <div id="flowmeter-summary-card" class="px-3 py-2 bg-white border-bottom shadow-sm" style="display: none;">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 fw-bold">
+                                    <i class="bi bi-speedometer2 me-1"></i> Balance de Galones por Contómetro
+                                </span>
+                                <small class="text-muted fw-semibold" id="flowmeter-date-text"></small>
+                            </div>
+                            <div class="row g-2 text-center" style="font-size: 0.8rem;">
+                                <div class="col-3">
+                                    <div class="p-2 rounded bg-light border">
+                                        <div class="text-muted small fw-bold">1. Contómetro</div>
+                                        <div class="fw-bold text-dark fs-6" id="fm-total-gallons">0.000</div>
+                                        <div class="text-muted" style="font-size: 0.68rem;">Galones Medidos</div>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="p-2 rounded bg-light-subtle border border-warning border-opacity-50">
+                                        <div class="text-warning-emphasis small fw-bold">2. (-) Crédito</div>
+                                        <div class="fw-bold text-warning fs-6" id="fm-credit-gallons">0.000</div>
+                                        <div class="text-muted" style="font-size: 0.68rem;">Galones Contrato</div>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="p-2 rounded bg-light-subtle border border-info border-opacity-50">
+                                        <div class="text-info-emphasis small fw-bold">3. (-) Desc. Directo</div>
+                                        <div class="fw-bold text-info fs-6" id="fm-discount-gallons">0.000</div>
+                                        <div class="text-muted" style="font-size: 0.68rem;">Directa c/Descuento</div>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="p-2 rounded bg-success-subtle border border-success border-opacity-50">
+                                        <div class="text-success small fw-bold">4. (=) Venta Directa</div>
+                                        <div class="fw-bold text-success fs-6" id="fm-remaining-gallons">0.000</div>
+                                        <div class="text-success" style="font-size: 0.68rem;">Saldo Auto-calculado</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="sales-cart-table-shell">
                         <div class="flex-grow-1 sales-table-wrap">
                             <table class="table table-borderless table-hover small mb-0 sales-order-table">
@@ -2995,10 +3035,65 @@
             appendEditableProductRow();
         });
 
+        function loadFlowmeterSummary(pumpId) {
+            if (!pumpId) {
+                $('#flowmeter-summary-card').slideUp();
+                return;
+            }
+            const saleDate = $('#sale_date').val() || new Date().toISOString().split('T')[0];
+            
+            $.ajax({
+                url: "{{ route('sales.flowmeter_summary') }}",
+                type: 'GET',
+                data: {
+                    pump_id: pumpId,
+                    date: saleDate
+                },
+                success: function(response) {
+                    if (response && response.success && response.has_measurement) {
+                        $('#flowmeter-summary-card').slideDown();
+                        $('#flowmeter-date-text').text('Medición: ' + response.date);
+                        $('#fm-total-gallons').text(parseFloat(response.flowmeter_total).toFixed(3));
+                        $('#fm-credit-gallons').text(parseFloat(response.credit_gallons).toFixed(3));
+                        $('#fm-discount-gallons').text(parseFloat(response.discount_gallons).toFixed(3));
+                        $('#fm-remaining-gallons').text(parseFloat(response.remaining_direct_gallons).toFixed(3));
+
+                        if ($('#tipo-venta').val() === 'directa' && response.remaining_direct_gallons > 0) {
+                            const $lastRow = $('#tbl-order-items tr.editable-sale-row').last();
+                            if ($lastRow.length) {
+                                const currentQty = parseFloat($lastRow.find('.sale-quantity').val()) || 0;
+                                if (currentQty === 1 || currentQty === 0) {
+                                    $lastRow.find('.sale-quantity').val(parseFloat(response.remaining_direct_gallons).toFixed(3));
+                                    recalculateEditableRow($lastRow[0], 'quantity');
+                                    recalculateTotal();
+                                }
+                            }
+                        }
+                    } else {
+                        $('#flowmeter-summary-card').slideUp();
+                    }
+                },
+                error: function(err) {
+                    console.warn('No se pudo cargar resumen de contómetros:', err);
+                    $('#flowmeter-summary-card').slideUp();
+                }
+            });
+        }
+
         $(document).on('change', '.row-pump-select', function() {
             const $row = $(this).closest('tr');
             const chosenPumpId = $(this).val();
             $row.data('pump-id', chosenPumpId).attr('data-pump-id', chosenPumpId);
+            if (chosenPumpId) {
+                loadFlowmeterSummary(chosenPumpId);
+            }
+        });
+
+        $('#sale_date').on('change', function() {
+            const activePumpId = $('#tbl-order-items tr.editable-sale-row').first().data('pump-id') || $('#select-pump').val();
+            if (activePumpId) {
+                loadFlowmeterSummary(activePumpId);
+            }
         });
 
         $('#tbl-order-items').on('change', '.sale-product-select', function() {
@@ -3032,6 +3127,9 @@
 
             var firstPumpVal = $pumpBadge.find('.row-pump-select').val() || currentPumpId;
             $row.data('pump-id', firstPumpVal).attr('data-pump-id', firstPumpVal);
+            if (firstPumpVal) {
+                loadFlowmeterSummary(firstPumpVal);
+            }
 
             if (price === 0) {
                 ToastError.fire({
