@@ -196,8 +196,7 @@
                         $cfgPeopleOpen = request()->routeIs('collaborators.*', 'users.*');
                         $cfgOpen = $cfgStructureOpen || $cfgCatalogOpen || $cfgPeopleOpen;
 
-                        $supplyOpen = request()->routeIs('purchases.*', 'discharges.*', 'storages.*', 'supplier_payments.*')
-                            || (request()->routeIs('transfers.*') && !request()->routeIs('transfers.historico'))
+                        $supplyOpen = request()->routeIs('purchases.*', 'storages.*', 'supplier_payments.*')
                             || (request()->routeIs('flowmeters.*') && !request()->routeIs('flowmeters.historico'));
 
                         $salesOpen = (request()->routeIs('sales.*') && !request()->routeIs('sales.historico'))
@@ -405,22 +404,7 @@
                                         <span class="item-name">Cuentas por Pagar</span>
                                     </a>
                                 </li>
-                                <li class="nav-item">
-                                    <a class="nav-link {{ request()->routeIs('discharges.*') ? 'active' : '' }}" href="{{ route('discharges.index') }}">
-                                        <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
-                                        <i class="sidenav-mini-icon"> DC </i>
-                                        <span class="item-name">Descargas</span>
-                                    </a>
-                                </li>
-                                @if(auth()->user()->role->nombre === 'master')
-                                <li class="nav-item">
-                                    <a class="nav-link {{ request()->routeIs('transfers.index') ? 'active' : '' }}" href="{{ route('transfers.index') }}">
-                                        <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
-                                        <i class="sidenav-mini-icon"> TT </i>
-                                        <span class="item-name">Traspaso Tanques</span>
-                                    </a>
-                                </li>
-                                @endif
+
                                 <li class="nav-item">
                                     <a class="nav-link {{ request()->routeIs('storages.*') ? 'active' : '' }}" href="{{ route('storages.index') }}">
                                         <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
