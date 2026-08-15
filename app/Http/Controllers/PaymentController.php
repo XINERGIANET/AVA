@@ -42,7 +42,7 @@ class PaymentController extends Controller
             ->when($number, fn($query) => $query->where('number', 'like', "%$number%"))
             ->when($client_id, fn($query) => $query->where('client_id', $client_id))
             ->when($voucher_type, fn($query) => $query->where('voucher_type', $voucher_type))
-            ->when(auth()->user()->role->nombre != 'master' && auth()->user()->location_id, function ($query) {
+            ->when(auth()->user()->location_id, function ($query) {
                 $locationId = auth()->user()->location_id;
                 $query->where(function ($q) use ($locationId) {
                     $q->whereHas('sale', fn($q2) => $q2->where('location_id', $locationId))
@@ -527,8 +527,7 @@ class PaymentController extends Controller
         $payment_method_id = $request->input('payment_method_id');
 
         $currentUser = auth()->user();
-        $isMaster = $currentUser->role->nombre === 'master';
-        $location_id = $isMaster ? $request->input('location_id') : $currentUser->location_id;
+        $location_id = $request->input('location_id') ?: $currentUser->location_id;
 
         try {
             return Excel::download(new PaymentsExport($start_date, $end_date, $number, $client_name, $voucher_type, $payment_method_id, $location_id), 'Pagos.xlsx');
@@ -551,8 +550,7 @@ class PaymentController extends Controller
             $payment_method_id = $request->payment_method_id;
 
             $currentUser = auth()->user();
-            $isMaster = $currentUser->role->nombre === 'master';
-            $location_id = $isMaster ? $request->location_id : $currentUser->location_id;
+            $location_id = $request->location_id ?: $currentUser->location_id;
 
             $query = Payment::with('payment_method', 'client')
                 ->when($start_date, fn($query) => $query->whereDate('date', '>=', $start_date))
