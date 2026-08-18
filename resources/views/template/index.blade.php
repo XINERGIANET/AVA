@@ -196,7 +196,7 @@
                         $cfgPeopleOpen = request()->routeIs('collaborators.*', 'users.*');
                         $cfgOpen = $cfgStructureOpen || $cfgCatalogOpen || $cfgPeopleOpen;
 
-                        $supplyOpen = request()->routeIs('purchases.*', 'storages.*', 'supplier_payments.*')
+                        $supplyOpen = request()->routeIs('purchases.*', 'purchase_plans.*', 'storages.*', 'supplier_payments.*')
                             || (request()->routeIs('flowmeters.*') && !request()->routeIs('flowmeters.historico'));
 
                         $salesOpen = (request()->routeIs('sales.*') && !request()->routeIs('sales.historico'))
@@ -390,6 +390,13 @@
                                 </i>
                             </a>
                             <ul class="sub-nav collapse {{ $supplyOpen ? 'show' : '' }}" id="sidebar-supply" data-bs-parent="#sidebar-menu">
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->routeIs('purchase_plans.*') ? 'active' : '' }}" href="{{ route('purchase_plans.index') }}">
+                                        <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>
+                                        <i class="sidenav-mini-icon"> PC </i>
+                                        <span class="item-name">Planificación Compras</span>
+                                    </a>
+                                </li>
                                 <li class="nav-item">
                                     <a class="nav-link {{ request()->routeIs('purchases.index') || request()->routeIs('purchases.create') ? 'active' : '' }}" href="{{ route('purchases.index') }}">
                                         <i class="icon"><svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>

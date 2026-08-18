@@ -35,6 +35,7 @@ use App\Http\Controllers\LoanController;
 use App\Http\Controllers\SupplierPaymentController;
 use App\Http\Controllers\PaymentMethodController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\PurchasePlanController;
 use Illuminate\Support\Facades\Artisan;
 
 /*
@@ -214,6 +215,13 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/purchases/pdf_report', [PurchaseController::class, 'pdf'])->name('purchases.pdf');
     Route::get('/purchases/pdf_report_general', [PurchaseController::class, 'pdf_general'])->name('purchases.pdfGeneral');
     Route::get('purchases/excel', [PurchaseController::class, 'excel'])->name('purchases.excel');
+    // PLANIFICACIÓN DE COMPRAS
+    Route::get('purchase-plans/sede-info', [PurchasePlanController::class, 'getSedeInfo'])->name('purchase_plans.sede_info');
+    Route::get('purchase-plans/{id}/pdf', [PurchasePlanController::class, 'pdf'])->name('purchase_plans.pdf');
+    Route::post('purchase-plans/{id}/review', [PurchasePlanController::class, 'review'])->name('purchase_plans.review');
+    Route::post('purchase-plans/{id}/purchased', [PurchasePlanController::class, 'updatePurchased'])->name('purchase_plans.purchased');
+    Route::resource('purchase-plans', PurchasePlanController::class)->names('purchase_plans');
+
     Route::resource('purchases', PurchaseController::class);
     Route::get('/buscar-supplier', [PurchaseController::class, 'buscarSuppliers'])->name('buscar.suppliers');
     Route::get('/buscar-product', [PurchaseController::class, 'buscarProducts'])->name('buscar.products');
