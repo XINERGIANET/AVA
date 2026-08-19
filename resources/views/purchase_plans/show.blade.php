@@ -53,6 +53,10 @@
                             <span class="fw-bold text-dark">{{ $plan->location->name ?? '---' }}</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between px-0">
+                            <span class="text-muted">Proveedor:</span>
+                            <span class="fw-bold text-dark">{{ $plan->supplier ? $plan->supplier->company_name : 'No asignado' }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between px-0">
                             <span class="text-muted">Fecha Programada:</span>
                             <span class="fw-bold text-dark">{{ $plan->scheduled_date->format('d/m/Y') }}</span>
                         </li>
@@ -98,6 +102,29 @@
                         <div class="mt-3">
                             <label class="fw-bold text-danger small">Justificación de Desviación en Compra Real:</label>
                             <div class="p-2 bg-danger bg-opacity-10 text-danger rounded small border border-danger">{{ $plan->justification_notes }}</div>
+                        </div>
+                    @endif
+
+                    @if(!empty($plan->voucher_images) && count($plan->voucher_images) > 0)
+                        <div class="mt-3">
+                            <label class="fw-bold text-dark small"><i class="bi bi-paperclip text-primary me-1"></i>Comprobantes / Vouchers Adjuntos ({{ count($plan->voucher_images) }}):</label>
+                            <div class="list-group list-group-flush border rounded mt-1">
+                                @foreach($plan->voucher_images as $vImg)
+                                    @php
+                                        $isPdf = str_ends_with(strtolower($vImg['path'] ?? ''), '.pdf');
+                                    @endphp
+                                    <a href="{{ asset('storage/' . $vImg['path']) }}" target="_blank" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2 px-3">
+                                        <div class="d-flex align-items-center overflow-hidden">
+                                            <i class="bi {{ $isPdf ? 'bi-file-earmark-pdf-fill text-danger' : 'bi-image-fill text-primary' }} fs-5 me-2"></i>
+                                            <div class="text-truncate">
+                                                <span class="fw-bold text-dark d-block text-truncate" style="font-size: 0.82rem;">{{ $vImg['name'] ?? 'Comprobante' }}</span>
+                                                <small class="text-muted" style="font-size: 0.7rem;">Subido: {{ isset($vImg['uploaded_at']) ? \Carbon\Carbon::parse($vImg['uploaded_at'])->format('d/m/Y H:i') : '' }}</small>
+                                            </div>
+                                        </div>
+                                        <span class="badge bg-light text-primary border"><i class="bi bi-box-arrow-up-right"></i> Ver</span>
+                                    </a>
+                                @endforeach
+                            </div>
                         </div>
                     @endif
                 </div>

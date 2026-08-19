@@ -10,6 +10,7 @@ use App\Models\Tank;
 use App\Models\Isle;
 use App\Models\PaymentMethod;
 use App\Models\Payment;
+use App\Models\Supplier;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -22,10 +23,10 @@ class PurchasePlanController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $isMasterOrManager = in_array($user->role->nombre, ['master', 'gerente', 'admin']);
+        $isMaster = ($user->role && strtolower($user->role->nombre) === 'master');
         $activeLocationId = $user->location_id;
 
-        $query = PurchasePlan::with(['location', 'user', 'reviewer', 'details.product', 'details.tank'])
+        $query = PurchasePlan::with(['location', 'supplier', 'user', 'reviewer', 'details.product', 'details.tank'])
             ->where('deleted', 0)
             ->when($activeLocationId, function ($q) use ($activeLocationId) {
                 $q->where('location_id', $activeLocationId);
@@ -65,16 +66,19 @@ class PurchasePlanController extends Controller
             ->when($activeLocationId, fn($q) => $q->where('id', $activeLocationId))
             ->get();
 
+        $suppliers = Supplier::where('deleted', '0')->orWhere('deleted', 0)->orderBy('company_name', 'asc')->get();
+
         return view('purchase_plans.index', compact(
             'plans',
             'locations',
+            'suppliers',
             'totalPlans',
             'pendingPlans',
             'approvedPlans',
             'rejectedPlans',
             'confirmationRate',
             'avgCompliance',
-            'isMasterOrManager'
+            'isMaster'
         ));
     }
 
@@ -165,10 +169,14 @@ class PurchasePlanController extends Controller
             })
             ->distinct()
             ->get();
+            
+        // Proveedores activos
+        $suppliers = Supplier::where('deleted', '0')->orWhere('deleted', 0)->orderBy('company_name', 'asc')->get();
 
         return view('purchase_plans.create', compact(
             'locations',
             'selectedLocationId',
+            'suppliers',
             'tanks',
             'availableMoney',
             'vaultMoney',
@@ -239,10 +247,10 @@ class PurchasePlanController extends Controller
         return response()->json([
             'success' => true,
             'tanks' => $tanks,
-            'availableMoney' => $availableMoney,
-            'vaultMoney' => $vaultMoney,
-            'cashMoney' => $cashMoney,
-            'paymentMethods' => $paymentMethodsBreakdown
+            'available_money' => $availableMoney,
+            'vault_money' => $vaultMoney,
+            'cash_money' => $cashMoney,
+            'payment_methods' => $paymentMethodsBreakdown
         ]);
     }
 
@@ -250,6 +258,7 @@ class PurchasePlanController extends Controller
     {
         $request->validate([
             'location_id' => 'required|exists:locations,id',
+            'supplier_id' => 'nullable|exists:suppliers,id',
             'scheduled_date' => 'required|date',
             'available_money' => 'required|numeric|min:0',
             'items' => 'required|array|min:1',
@@ -261,6 +270,7 @@ class PurchasePlanController extends Controller
         try {
             $plan = PurchasePlan::create([
                 'location_id' => $request->location_id,
+                'supplier_id' => $request->supplier_id,
                 'user_id' => Auth::id(),
                 'scheduled_date' => $request->scheduled_date,
                 'available_money' => $request->available_money,
@@ -304,7 +314,7 @@ class PurchasePlanController extends Controller
 
     public function show($id)
     {
-        $plan = PurchasePlan::with(['location', 'user', 'reviewer', 'details.product', 'details.tank'])
+        $plan = PurchasePlan::with(['location', 'supplier', 'user', 'reviewer', 'details.product', 'details.tank'])
             ->findOrFail($id);
 
         return view('purchase_plans.show', compact('plan'));
@@ -312,18 +322,28 @@ class PurchasePlanController extends Controller
 
     public function review(Request $request, $id)
     {
+        $user = Auth::user();
+        if (!$user->role || strtolower($user->role->nombre) !== 'master') {
+            return back()->with('error', 'Acceso denegado: Únicamente el usuario Master puede autorizar o rechazar solicitudes de compra.');
+        }
+
         $plan = PurchasePlan::findOrFail($id);
         $request->validate([
             'action' => 'required|in:approve,reject',
+            'supplier_id' => 'nullable|exists:suppliers,id',
             'manager_notes' => 'nullable|string',
             'approved_quantities' => 'nullable|array',
         ]);
 
         DB::beginTransaction();
         try {
-            $user = Auth::user();
             if ($request->action === 'approve') {
                 $plan->status = 'approved';
+                
+                // Actualizar proveedor si se seleccionó uno o se cambió
+                if ($request->has('supplier_id')) {
+                    $plan->supplier_id = $request->supplier_id ?: null;
+                }
                 
                 // Actualizar cantidades autorizadas por ítem
                 if ($request->has('approved_quantities')) {
@@ -364,7 +384,8 @@ class PurchasePlanController extends Controller
         $plan = PurchasePlan::with('details')->findOrFail($id);
         $request->validate([
             'purchased_quantities' => 'required|array',
-            'justification_notes' => 'nullable|string'
+            'justification_notes' => 'nullable|string',
+            'voucher_files.*' => 'nullable|file|mimes:jpeg,png,jpg,webp,pdf|max:10240'
         ]);
 
         DB::beginTransaction();
@@ -372,13 +393,14 @@ class PurchasePlanController extends Controller
             $totalTarget = 0;
             $totalPurchased = 0;
 
-            foreach ($request->purchased_quantities as $detailId => $qty) {
+            foreach ($request->purchased_quantities as $detailId => $purchasedQty) {
                 $detail = PurchasePlanDetail::where('purchase_plan_id', $plan->id)->find($detailId);
                 if ($detail) {
-                    $purchasedQty = max(0, floatval($qty));
+                    $purchasedQty = max(0, floatval($purchasedQty));
                     $detail->purchased_quantity = $purchasedQty;
                     $detail->save();
 
+                    // La meta es la aprobada por gerencia (si no hubo ajuste, es la solicitada)
                     $target = $detail->approved_quantity !== null ? $detail->approved_quantity : $detail->requested_quantity;
                     $totalTarget += $target;
                     $totalPurchased += $purchasedQty;
@@ -389,6 +411,20 @@ class PurchasePlanController extends Controller
             $plan->compliance_percentage = $compliance;
             $plan->justification_notes = $request->justification_notes;
 
+            // Procesar imágenes/archivos de vouchers o comprobantes
+            $currentImages = is_array($plan->voucher_images) ? $plan->voucher_images : [];
+            if ($request->hasFile('voucher_files')) {
+                foreach ($request->file('voucher_files') as $file) {
+                    $path = $file->store('purchase_vouchers', 'public');
+                    $currentImages[] = [
+                        'path' => $path,
+                        'name' => $file->getClientOriginalName(),
+                        'uploaded_at' => Carbon::now()->toDateTimeString()
+                    ];
+                }
+            }
+            $plan->voucher_images = $currentImages;
+
             if ($compliance >= 100) {
                 $plan->status = 'completed';
             } else {
@@ -398,7 +434,7 @@ class PurchasePlanController extends Controller
             $plan->save();
 
             DB::commit();
-            return back()->with('success', 'Cantidades reales compradas actualizadas correctamente. Eficacia: ' . $compliance . '%');
+            return back()->with('success', 'Cantidades reales compradas y comprobantes actualizados correctamente. Eficacia: ' . $compliance . '%');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error actualizando compra real: ' . $e->getMessage());
@@ -408,7 +444,7 @@ class PurchasePlanController extends Controller
 
     public function pdf($id)
     {
-        $plan = PurchasePlan::with(['location', 'user', 'reviewer', 'details.product', 'details.tank'])
+        $plan = PurchasePlan::with(['location', 'supplier', 'user', 'reviewer', 'details.product', 'details.tank'])
             ->findOrFail($id);
 
         $data = [
