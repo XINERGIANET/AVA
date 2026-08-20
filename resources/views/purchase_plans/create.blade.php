@@ -26,13 +26,15 @@
                         <h6 class="mb-0 text-white fw-bold"><i class="bi bi-geo-alt me-1"></i> 1. Información de la Sede</h6>
                     </div>
                     <div class="card-body">
-                        @php
-                            $currentLocationName = $locations->firstWhere('id', $selectedLocationId)->name ?? ($locations->first()->name ?? 'Sin Sede');
-                        @endphp
                         <div class="mb-3">
-                            <label class="form-label text-dark fw-bold">Sede Solicitante <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control bg-light fw-bold text-dark" value="{{ $currentLocationName }}" readonly>
-                            <input type="hidden" name="location_id" id="location_id" value="{{ $selectedLocationId }}">
+                            <label for="location_id" class="form-label text-dark fw-bold">Sede Solicitante <span class="text-danger">*</span></label>
+                            <select name="location_id" id="location_id" class="form-select fw-bold text-dark @error('location_id') is-invalid @enderror" required>
+                                @foreach($locations as $loc)
+                                    <option value="{{ $loc->id }}" {{ $selectedLocationId == $loc->id ? 'selected' : '' }}>
+                                        {{ $loc->name }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
 
                         <div class="mb-3">
@@ -389,6 +391,7 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         let rowIndex = {{ isset($rowIndex) && $rowIndex > 0 ? $rowIndex : 1 }};
+        let currentTanks = @json($tanks);
         const sedeSelect = document.getElementById('location_id');
         const availableMoneyInput = document.getElementById('available_money');
         const tbody = document.getElementById('tbodyItems');
@@ -565,7 +568,7 @@
             });
         }
 
-        // Cambio de sede por AJAX
+        // Cambio de sede por AJAX (sede individual o 'all')
         if (sedeSelect && sedeSelect.tagName === 'SELECT') {
             sedeSelect.addEventListener('change', function() {
                 const locId = this.value;

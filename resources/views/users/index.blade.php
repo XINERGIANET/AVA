@@ -44,6 +44,7 @@
                     <thead class="text-center">
                         <tr>
                             <th class="fw-bold text-uppercase" style="width: 5%; font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">N°</th>
+                            <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Nombre Completo / Persona</th>
                             <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Usuario</th>
                             <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Email</th>
                             <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Rol</th>
@@ -56,6 +57,9 @@
                         @forelse($users as $user)
                             <tr style="border-bottom: 1px solid #e9ecef;">
                                 <td class="text-dark">{{ ($users->currentPage() - 1) * $users->perPage() + $loop->iteration }}</td>
+                                <td class="text-dark fw-bold text-start ps-3">
+                                    <i class="bi bi-person me-1 text-primary"></i>{{ $user->display_name }}
+                                </td>
                                 <td class="text-dark">{{ $user->name }}</td>
                                 <td class="text-dark">{{ $user->email }}</td>
                                 <td class="text-dark">{{ $user->role->nombre }}</td>
@@ -72,7 +76,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center py-4">No hay usuarios registrados.</td>
+                                <td colspan="8" class="text-center py-4">No hay usuarios registrados.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -97,11 +101,15 @@
                 </div>
                 <div class="modal-body row">
                     <div class="col-md-6 mb-3">
-                        <label for="name" class="form-label text-dark fw-bold">Usuario</label>
-                        <input type="text" class="form-control" placeholder="Nombre de Usuario" id="name" name="name" required>
+                        <label for="full_name" class="form-label text-dark fw-bold">Nombre Completo (Persona) <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" placeholder="Ej: Juan Pérez García" id="full_name" name="full_name" required>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label for="rol_id" class="form-label text-dark fw-bold">Rol</label>
+                        <label for="name" class="form-label text-dark fw-bold">Nombre de Usuario (Login) <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" placeholder="Ej: jperez" id="name" name="name" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="rol_id" class="form-label text-dark fw-bold">Rol <span class="text-danger">*</span></label>
                         <select class="form-select" id="rol_id" name="rol_id" required>
                             <option value="">Seleccione un Rol</option>
                             @foreach ($roles as $rol)
@@ -110,15 +118,15 @@
                         </select>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label for="email" class="form-label text-dark fw-bold">Email</label>
+                        <label for="email" class="form-label text-dark fw-bold">Email <span class="text-danger">*</span></label>
                         <input type="email" class="form-control" placeholder="Email" id="email" name="email" required>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label for="password" class="form-label text-dark fw-bold">Contraseña</label>
+                        <label for="password" class="form-label text-dark fw-bold">Contraseña <span class="text-danger">*</span></label>
                         <input type="password" class="form-control" placeholder="Contraseña" id="password" name="password" required>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label for="location_id" class="form-label text-dark fw-bold">Sede</label>
+                        <label for="location_id" class="form-label text-dark fw-bold">Sede <span class="text-danger">*</span></label>
                         <select class="form-select" id="location_id" name="location_id" required>
                             <option value="">Seleccione una sede</option>
                             @foreach ($locations as $location)
@@ -158,7 +166,11 @@
                 </div>
                 <div class="modal-body row">
                     <div class="col-md-6 mb-3">
-                        <label for="edit_name" class="form-label text-dark fw-bold">Usuario</label>
+                        <label for="edit_full_name" class="form-label text-dark fw-bold">Nombre Completo (Persona)</label>
+                        <input type="text" class="form-control" id="edit_full_name" name="full_name" placeholder="Ej: Juan Pérez García">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="edit_name" class="form-label text-dark fw-bold">Nombre de Usuario (Login)</label>
                         <input type="text" class="form-control" id="edit_name" name="name" required>
                     </div>
                     <div class="col-md-6 mb-3">
@@ -254,6 +266,7 @@
                             const roles = response.data.roles;
 
                             $('#edit_name').val(user.name);
+                            $('#edit_full_name').val(user.full_name || '');
                             $('#edit_email').val(user.email);
                             $('#edit_shift').val(user.shift);
                             $('#edit_location_id').val(user.location_id);
@@ -306,6 +319,7 @@
                     data: {
                         _token: $('meta[name="csrf-token"]').attr('content'),
                         name: $('#edit_name').val(),
+                        full_name: $('#edit_full_name').val(),
                         email: $('#edit_email').val(),
                         rol_id: $('#edit_rol_id').val(),
                         location_id: $('#edit_location_id').val(),

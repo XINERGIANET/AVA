@@ -66,7 +66,7 @@
                         </li>
                         <li class="list-group-item d-flex justify-content-between px-0">
                             <span class="text-muted">Registrado por:</span>
-                            <span>{{ $plan->user->name ?? '---' }}</span>
+                            <span class="fw-bold text-dark">{{ $plan->user->display_name ?? ($plan->user->name ?? '---') }}</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between px-0">
                             <span class="text-muted">Fecha de Registro:</span>
@@ -75,7 +75,7 @@
                         @if($plan->reviewer)
                             <li class="list-group-item d-flex justify-content-between px-0">
                                 <span class="text-muted">Revisado por (Gerencia):</span>
-                                <span class="fw-bold text-success">{{ $plan->reviewer->name }}</span>
+                                <span class="fw-bold text-success">{{ $plan->reviewer->display_name ?? $plan->reviewer->name }}</span>
                             </li>
                             <li class="list-group-item d-flex justify-content-between px-0">
                                 <span class="text-muted">Fecha de Revisión:</span>

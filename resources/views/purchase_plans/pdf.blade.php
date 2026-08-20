@@ -166,9 +166,9 @@
             </tr>
             <tr>
                 <td class="label">Solicitante (Admin):</td>
-                <td class="value">{{ $plan->user->name ?? '---' }}</td>
+                <td class="value">{{ $plan->user->display_name ?? ($plan->user->name ?? '---') }}</td>
                 <td class="label">Aprobado por (Master):</td>
-                <td class="value font-bold">{{ $plan->reviewer ? $plan->reviewer->name : 'Pendiente' }}</td>
+                <td class="value font-bold">{{ $plan->reviewer ? ($plan->reviewer->display_name ?? $plan->reviewer->name) : 'Pendiente' }}</td>
             </tr>
             @if($plan->reviewed_at)
             <tr>
@@ -245,13 +245,13 @@
         <tr>
             <td style="width: 50%;">
                 <div class="signature-line">
-                    {{ $plan->user->name ?? 'ADMINISTRADOR DE SEDE' }}<br>
+                    {{ $plan->user->display_name ?? ($plan->user->name ?? 'ADMINISTRADOR DE SEDE') }}<br>
                     <span style="font-weight: normal; font-size: 9px; color: #666;">Firma Solicitante (Admin Sede)</span>
                 </div>
             </td>
             <td style="width: 50%;">
                 <div class="signature-line">
-                    {{ $plan->reviewer->name ?? 'GERENCIA / DIRECCIÓN' }}<br>
+                    {{ $plan->reviewer ? ($plan->reviewer->display_name ?? $plan->reviewer->name) : 'GERENCIA / DIRECCIÓN' }}<br>
                     <span style="font-weight: normal; font-size: 9px; color: #666;">Firma de Aprobación (Gerencia)</span>
                 </div>
             </td>
