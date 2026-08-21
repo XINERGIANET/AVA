@@ -184,6 +184,8 @@ class ExpenseController extends Controller
                     return response()->json(['success' => false, 'message' => 'No hay caja general abierta.'], 422);
                 }
 
+                $expenseDate = $request->input('date') ?: now()->format('Y-m-d');
+
                 $expense = Transaction::create([
                     'user_id' => $user->id,
                     'location_id' => $location->id,
@@ -194,7 +196,7 @@ class ExpenseController extends Controller
                     'payment_method' => $request->input('payment_method') ?: 'Efectivo',
                     'observation' => $request->input('observation'),
                     'amount' => $request->input('amount'),
-                    'date' => now(),
+                    'date' => $expenseDate,
                 ]);
 
                 $location->decrement('cash_amount', $request->input('amount'));
@@ -223,6 +225,8 @@ class ExpenseController extends Controller
                 }
             }
 
+            $expenseDate = $request->input('date') ?: now()->format('Y-m-d');
+
             $expense = Transaction::create([
                 'user_id' => $user->id,
                 'location_id' => $isle->location_id,
@@ -233,7 +237,7 @@ class ExpenseController extends Controller
                 'payment_method' => $request->input('payment_method') ?: 'Efectivo',
                 'observation' => $request->input('observation'),
                 'amount' => $request->input('amount'),
-                'date' => now(),
+                'date' => $expenseDate,
             ]);
 
             $isle->decrement('cash_amount', $request->input('amount'));

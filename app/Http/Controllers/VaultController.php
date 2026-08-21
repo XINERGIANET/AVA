@@ -430,6 +430,8 @@ class VaultController extends Controller
                     }
                 }
 
+                $vaultDate = $request->input('date') ?: now()->format('Y-m-d');
+
                 $expense = Transaction::create([
                     'user_id' => $user->id,
                     'location_id' => $destinationLocation->id,
@@ -437,7 +439,7 @@ class VaultController extends Controller
                     'type' => 'eb',
                     'description' => 'Transferencia a boveda desde caja general de ' . ($sourceLocation->name ?? 'N/A') . ' hacia boveda de ' . $destinationLocation->name,
                     'amount' => $amount,
-                    'date' => now(),
+                    'date' => $vaultDate,
                     'status' => $user->role->nombre === 'worker' ? 0 : 1,
                 ]);
 
@@ -501,6 +503,7 @@ class VaultController extends Controller
             $isle->decrement('cash_amount', $amount);
             $sourceLocation = Location::find($isle->location_id);
             $description = 'Transferencia a boveda desde cierre de caja (Isla: ' . $isle->name . ', Sede origen: ' . ($sourceLocation->name ?? 'N/A') . ') hacia boveda de ' . $destinationLocation->name;
+            $vaultDate = $request->input('date') ?: now()->format('Y-m-d');
 
             if (auth()->user()->role->nombre === 'worker') {
                 $expense = Transaction::create([
@@ -510,7 +513,7 @@ class VaultController extends Controller
                     'type' => 'eb', // Enviar a Bóveda
                     'description' => $description,
                     'amount' => $amount,
-                    'date' => now(),
+                    'date' => $vaultDate,
                     'status' => 0, // 0 = Pendiente
                 ]);
 
@@ -541,7 +544,7 @@ class VaultController extends Controller
                     'type' => 'eb',
                     'description' => $description,
                     'amount' => $amount,
-                    'date' => now(),
+                    'date' => $vaultDate,
                     'status' => 1, // 1 = Aprobado/Ingresado
                 ]);
 
