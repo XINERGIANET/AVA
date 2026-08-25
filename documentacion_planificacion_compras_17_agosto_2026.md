@@ -1,18 +1,21 @@
-# Documentación y Resumen de Cambios: Módulo de Planificación de Compras de Combustible (Actualizado al 18 de Agosto de 2026)
+# Documentación y Resumen de Cambios: Módulo de Planificación de Compras de Combustible (Actualizado al 19 de Agosto de 2026)
 
 ## 📌 Contexto y Objetivo
-Se implementó en el sistema **AVA** el módulo integral de **Planificación de Compras de Combustible**, diseñado para coordinar el abastecimiento entre los Administradores de Sede y la Gerencia General (Usuario Maestro), permitiendo monitorear existencias físicas en tanques, fondos líquidos disponibles (bóveda, cajas y métodos de pago), aprobación/ajuste gerencial de galones, generación de órdenes en PDF, cálculo de eficacia de compra real y registro de justificaciones ante compras parciales.
+Se implementó en el sistema **AVA** el módulo integral de **Planificación de Compras de Combustible**, diseñado para coordinar el abastecimiento entre los Administradores de Sede y la Gerencia General (**Usuario Master Exclusivo** para evaluar solicitudes), permitiendo monitorear existencias físicas en tanques, fondos líquidos disponibles (bóveda, cajas y métodos de pago), aprobación/ajuste gerencial de galones, generación de órdenes en PDF, cálculo de eficacia de compra real y registro de justificaciones ante compras parciales.
 
 ---
 
 ## 🛠️ Componentes Desarrollados
 
 ### 1. Base de Datos & Migraciones
-* **Archivo de Migración**: `database/migrations/2026_08_17_000001_create_purchase_plans_tables.php`
-* **Tablas Creadas**:
+* **Archivos de Migración**: 
+  * `database/migrations/2026_08_17_000001_create_purchase_plans_tables.php`
+  * `database/migrations/2026_08_19_162701_add_supplier_id_to_purchase_plans_table.php`
+* **Tablas Creadas / Modificadas**:
   * **`purchase_plans`**:
     * `id`: Identificador único de la solicitud de planificación.
     * `location_id`: Sede solicitante vinculada a `locations`.
+    * `supplier_id`: Proveedor asignado o sugerido vinculado a `suppliers` (opcional/nullable).
     * `user_id`: Usuario administrador que genera la solicitud.
     * `scheduled_date`: Fecha proyectada en que se requiere la compra/descarga.
     * `available_money`: Dinero total disponible reportado (Bóveda + Todos los métodos de pago).

@@ -26,13 +26,15 @@
                         <h6 class="mb-0 text-white fw-bold"><i class="bi bi-geo-alt me-1"></i> 1. Información de la Sede</h6>
                     </div>
                     <div class="card-body">
-                        @php
-                            $currentLocationName = $locations->firstWhere('id', $selectedLocationId)->name ?? ($locations->first()->name ?? 'Sin Sede');
-                        @endphp
                         <div class="mb-3">
-                            <label class="form-label text-dark fw-bold">Sede Solicitante <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control bg-light fw-bold text-dark" value="{{ $currentLocationName }}" readonly>
-                            <input type="hidden" name="location_id" id="location_id" value="{{ $selectedLocationId }}">
+                            <label for="location_id" class="form-label text-dark fw-bold">Sede Solicitante <span class="text-danger">*</span></label>
+                            <select name="location_id" id="location_id" class="form-select fw-bold text-dark @error('location_id') is-invalid @enderror" required>
+                                @foreach($locations as $loc)
+                                    <option value="{{ $loc->id }}" {{ $selectedLocationId == $loc->id ? 'selected' : '' }}>
+                                        {{ $loc->name }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
 
                         <div class="mb-3">
@@ -40,6 +42,28 @@
                             <input type="date" class="form-control @error('scheduled_date') is-invalid @enderror" 
                                    name="scheduled_date" id="scheduled_date" 
                                    value="{{ old('scheduled_date', date('Y-m-d')) }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label for="supplier_id" class="form-label text-dark fw-bold mb-0">Proveedor Sugerido / Asignado</label>
+                                <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2 fw-bold" data-bs-toggle="modal" data-bs-target="#quickProviderModal" title="Agregar Nuevo Proveedor" style="font-size: 0.75rem;">
+                                    <i class="bi bi-plus-circle me-1"></i>Nuevo Proveedor
+                                </button>
+                            </div>
+                            <div class="input-group">
+                                <select name="supplier_id" id="supplier_id" class="form-select @error('supplier_id') is-invalid @enderror">
+                                    <option value="">-- Seleccionar Proveedor (Opcional) --</option>
+                                    @foreach($suppliers as $supplier)
+                                        <option value="{{ $supplier->id }}" {{ old('supplier_id') == $supplier->id ? 'selected' : '' }}>
+                                            {{ $supplier->company_name }} {{ $supplier->document ? '('.$supplier->document.')' : '' }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#quickProviderModal" title="Agregar Proveedor">
+                                    <i class="bi bi-plus-lg"></i>
+                                </button>
+                            </div>
                         </div>
 
                         <div class="mb-3">
@@ -259,192 +283,403 @@
         </div>
     </form>
 </div>
+
+<!-- MODAL PARA AGREGAR PROVEEDOR RÁPIDO -->
+<div class="modal fade" id="quickProviderModal" tabindex="-1" aria-labelledby="quickProviderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title text-white fw-bold" id="quickProviderModalLabel"><i class="bi bi-truck me-2"></i>Registrar Nuevo Proveedor</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="quickProviderForm">
+                    <div class="mb-3">
+                        <label for="quick_document" class="form-label text-dark fw-bold">RUC / DNI <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="quick_document" name="document" placeholder="Ingrese RUC o DNI" maxlength="20" required>
+                            <button class="btn btn-primary" type="button" id="btnSearchSunat" onclick="searchQuickSupplierDoc()">
+                                <i class="bi bi-search me-1"></i> Buscar
+                            </button>
+                        </div>
+                        <small class="text-muted">Presione Buscar para autocompletar la Razón Social vía SUNAT/RENIEC.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quick_company_name" class="form-label text-dark fw-bold">Razón Social / Nombre <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="quick_company_name" name="company_name" placeholder="Razón social o denominación" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="quick_commercial_name" class="form-label text-dark fw-bold">Nombre Comercial</label>
+                            <input type="text" class="form-control" id="quick_commercial_name" name="commercial_name" placeholder="Opcional">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="quick_phone" class="form-label text-dark fw-bold">Teléfono</label>
+                            <input type="text" class="form-control" id="quick_phone" name="phone" placeholder="Opcional">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary px-4" id="btnSaveQuickSupplier">
+                    <i class="bi bi-check-circle me-1"></i> Guardar y Seleccionar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('scripts')
 <script>
+    function searchQuickSupplierDoc() {
+        const doc = document.getElementById('quick_document').value.trim();
+        const companyInput = document.getElementById('quick_company_name');
+        const btn = document.getElementById('btnSearchSunat');
+
+        if (!/^\d{8}$|^\d{11}$/.test(doc)) {
+            if (typeof ToastError !== 'undefined') {
+                ToastError.fire({ text: 'El documento debe tener 8 dígitos para DNI o 11 dígitos para RUC.' });
+            } else {
+                alert('El documento debe tener 8 dígitos para DNI o 11 dígitos para RUC.');
+            }
+            return;
+        }
+
+        const originalBtnHtml = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+        btn.disabled = true;
+
+        fetch(`{{ url('sunat/consultar') }}?doc=${doc}`)
+            .then(res => res.json())
+            .then(data => {
+                btn.innerHTML = originalBtnHtml;
+                btn.disabled = false;
+
+                if (data && (data.razon_social || data.nombre || data.nombres)) {
+                    const name = data.razon_social || `${data.nombres || ''} ${data.apellido_paterno || ''} ${data.apellido_materno || ''}`.trim();
+                    companyInput.value = name;
+                    if (typeof ToastMessage !== 'undefined') {
+                        ToastMessage.fire({ icon: 'success', text: 'Datos encontrados con éxito' });
+                    }
+                } else if (data && data.error) {
+                    if (typeof ToastError !== 'undefined') {
+                        ToastError.fire({ text: data.error });
+                    } else {
+                        alert(data.error);
+                    }
+                } else {
+                    if (typeof ToastError !== 'undefined') {
+                        ToastError.fire({ text: 'No se encontraron datos para el documento ingresado.' });
+                    } else {
+                        alert('No se encontraron datos para el documento ingresado.');
+                    }
+                }
+            })
+            .catch(err => {
+                btn.innerHTML = originalBtnHtml;
+                btn.disabled = false;
+                console.error('Error consultando SUNAT:', err);
+                if (typeof ToastError !== 'undefined') {
+                    ToastError.fire({ text: 'Error de conexión al consultar el documento.' });
+                } else {
+                    alert('Error de conexión al consultar el documento.');
+                }
+            });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
-        let rowIndex = {{ $rowIndex > 0 ? $rowIndex : 1 }};
+        let rowIndex = {{ isset($rowIndex) && $rowIndex > 0 ? $rowIndex : 1 }};
+        let currentTanks = @json($tanks);
         const sedeSelect = document.getElementById('location_id');
         const availableMoneyInput = document.getElementById('available_money');
         const tbody = document.getElementById('tbodyItems');
         const totalGallonsFooter = document.getElementById('totalGallonsFooter');
 
+        // Botón Guardar Proveedor
+        const btnSaveSupplier = document.getElementById('btnSaveQuickSupplier');
+        if (btnSaveSupplier) {
+            btnSaveSupplier.addEventListener('click', function() {
+                const doc = document.getElementById('quick_document').value.trim();
+                const compName = document.getElementById('quick_company_name').value.trim();
+                const commName = document.getElementById('quick_commercial_name').value.trim();
+                const phone = document.getElementById('quick_phone').value.trim();
+
+                if (!doc || !compName) {
+                    if (typeof ToastError !== 'undefined') {
+                        ToastError.fire({ text: 'RUC/DNI y Razón Social son campos obligatorios.' });
+                    } else {
+                        alert('RUC/DNI y Razón Social son campos obligatorios.');
+                    }
+                    return;
+                }
+
+                const originalBtnHtml = btnSaveSupplier.innerHTML;
+                btnSaveSupplier.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Guardando...';
+                btnSaveSupplier.disabled = true;
+
+                fetch('{{ route('suppliers.saveSupplier') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        document: doc,
+                        company_name: compName,
+                        commercial_name: commName,
+                        phone: phone
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    btnSaveSupplier.innerHTML = originalBtnHtml;
+                    btnSaveSupplier.disabled = false;
+
+                    if (data.success && data.supplier) {
+                        // Agregar al select de proveedores y seleccionarlo
+                        const selectSupplier = document.getElementById('supplier_id');
+                        const opt = document.createElement('option');
+                        opt.value = data.supplier.id;
+                        opt.textContent = `${data.supplier.company_name} (${data.supplier.document})`;
+                        opt.selected = true;
+                        selectSupplier.appendChild(opt);
+
+                        if (typeof ToastMessage !== 'undefined') {
+                            ToastMessage.fire({ icon: 'success', text: data.message || 'Proveedor registrado correctamente.' });
+                        }
+
+                        // Limpiar formulario y cerrar modal
+                        document.getElementById('quickProviderForm').reset();
+                        const modalEl = document.getElementById('quickProviderModal');
+                        const bsModal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                        bsModal.hide();
+                    } else {
+                        if (typeof ToastError !== 'undefined') {
+                            ToastError.fire({ text: data.message || 'Error al guardar el proveedor.' });
+                        } else {
+                            alert(data.message || 'Error al guardar el proveedor.');
+                        }
+                    }
+                })
+                .catch(err => {
+                    btnSaveSupplier.innerHTML = originalBtnHtml;
+                    btnSaveSupplier.disabled = false;
+                    console.error('Error guardando proveedor:', err);
+                    if (typeof ToastError !== 'undefined') {
+                        ToastError.fire({ text: 'Error inesperado al guardar el proveedor.' });
+                    } else {
+                        alert('Error inesperado al guardar el proveedor.');
+                    }
+                });
+            });
+        }
+
         // Recalcular total galones
         function recalculateTotal() {
             let total = 0;
-            document.querySelectorAll('.input-gallons').forEach(function(input) {
-                total += parseFloat(input.value) || 0;
-            });
-            totalGallonsFooter.textContent = total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' Gls';
+            if (tbody) {
+                tbody.querySelectorAll('.input-gallons').forEach(function(input) {
+                    total += parseFloat(input.value) || 0;
+                });
+            }
+            if (totalGallonsFooter) {
+                totalGallonsFooter.textContent = total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' Gls';
+            }
         }
 
-        tbody.addEventListener('input', function(e) {
-            if (e.target.classList.contains('input-gallons')) {
-                recalculateTotal();
-            }
-        });
-
-        // Eliminar fila
-        tbody.addEventListener('click', function(e) {
-            const btn = e.target.closest('.btn-remove-row');
-            if (btn) {
-                if (tbody.querySelectorAll('tr').length > 1) {
-                    btn.closest('tr').remove();
+        if (tbody) {
+            tbody.addEventListener('input', function(e) {
+                if (e.target.classList.contains('input-gallons')) {
                     recalculateTotal();
-                } else {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Atención',
-                        text: 'Debe existir al menos un combustible en la solicitud.'
-                    });
                 }
-            }
-        });
+            });
+
+            // Eliminar fila
+            tbody.addEventListener('click', function(e) {
+                const btn = e.target.closest('.btn-remove-row');
+                if (btn) {
+                    if (tbody.querySelectorAll('tr').length > 1) {
+                        btn.closest('tr').remove();
+                        recalculateTotal();
+                    } else {
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Atención',
+                                text: 'Debe existir al menos un combustible en la solicitud.'
+                            });
+                        } else {
+                            alert('Debe existir al menos un combustible en la solicitud.');
+                        }
+                    }
+                }
+            });
+        }
 
         // Agregar nueva fila manual
-        document.getElementById('btnAgregarFila').addEventListener('click', function() {
-            const tr = document.createElement('tr');
-            tr.setAttribute('data-index', rowIndex);
-            tr.innerHTML = `
-                <td>
-                    <select name="items[${rowIndex}][product_id]" class="form-select form-select-sm select-product" required>
-                        <option value="">Seleccione combustible</option>
-                        @foreach($fuelProducts as $prod)
-                            <option value="{{ $prod->id }}">{{ $prod->name }}</option>
-                        @endforeach
-                    </select>
-                </td>
-                <td>
-                    <select name="items[${rowIndex}][tank_id]" class="form-select form-select-sm select-tank">
-                        <option value="">General / Sin tanque</option>
-                    </select>
-                </td>
-                <td>
-                    <input type="number" step="0.01" class="form-control form-control-sm text-end input-stock" 
-                           name="items[${rowIndex}][current_stock]" value="0" placeholder="0.00">
-                </td>
-                <td>
-                    <div class="input-group input-group-sm">
-                        <input type="number" step="0.01" min="1" class="form-control text-end fw-bold text-primary input-gallons" 
-                               name="items[${rowIndex}][requested_quantity]" placeholder="0.00" required>
-                        <span class="input-group-text">Gls</span>
-                    </div>
-                </td>
-                <td>
-                    <div class="input-group input-group-sm">
-                        <span class="input-group-text">S/</span>
-                        <input type="number" step="0.01" class="form-control text-end input-price" 
-                               name="items[${rowIndex}][unit_price_estimate]" placeholder="0.00">
-                    </div>
-                </td>
-                <td class="text-center">
-                    <button type="button" class="btn btn-outline-danger btn-sm btn-remove-row"><i class="bi bi-trash"></i></button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-            rowIndex++;
-        });
+        const btnAddRow = document.getElementById('btnAgregarFila');
+        if (btnAddRow && tbody) {
+            btnAddRow.addEventListener('click', function() {
+                const tr = document.createElement('tr');
+                tr.setAttribute('data-index', rowIndex);
+                tr.innerHTML = `
+                    <td>
+                        <select name="items[${rowIndex}][product_id]" class="form-select form-select-sm select-product" required>
+                            <option value="">Seleccione combustible</option>
+                            @foreach($fuelProducts as $prod)
+                                <option value="{{ $prod->id }}">{{ $prod->name }}</option>
+                            @endforeach
+                        </select>
+                    </td>
+                    <td>
+                        <select name="items[${rowIndex}][tank_id]" class="form-select form-select-sm select-tank">
+                            <option value="">General / Sin tanque</option>
+                            @foreach($tanks as $tank)
+                                <option value="{{ $tank->id }}">{{ $tank->name }} ({{ $tank->product->name ?? 'Combustible' }})</option>
+                            @endforeach
+                        </select>
+                    </td>
+                    <td>
+                        <input type="number" step="0.01" class="form-control form-control-sm text-end input-stock bg-light" 
+                               name="items[${rowIndex}][current_stock]" value="0" placeholder="0.00" readonly>
+                    </td>
+                    <td>
+                        <div class="input-group input-group-sm">
+                            <input type="number" step="0.01" min="1" class="form-control text-end fw-bold text-primary input-gallons" 
+                                   name="items[${rowIndex}][requested_quantity]" placeholder="0.00" required>
+                            <span class="input-group-text">Gls</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">S/</span>
+                            <input type="number" step="0.01" class="form-control text-end input-price" 
+                                   name="items[${rowIndex}][unit_price_estimate]" placeholder="0.00">
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-outline-danger btn-sm btn-remove-row"><i class="bi bi-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+                rowIndex++;
+            });
+        }
 
-        // Cambio de sede por AJAX
-        sedeSelect.addEventListener('change', function() {
-            const locId = this.value;
-            if (!locId) return;
+        // Cambio de sede por AJAX (sede individual o 'all')
+        if (sedeSelect && sedeSelect.tagName === 'SELECT') {
+            sedeSelect.addEventListener('change', function() {
+                const locId = this.value;
+                if (!locId) return;
 
-            fetch(`{{ route('purchase_plans.sede_info') }}?location_id=${locId}`)
-                .then(r => r.json())
-                .then(data => {
-                    if (data.success) {
-                        availableMoneyInput.value = (data.availableMoney || 0).toFixed(2);
-                        
-                        // Actualizar Desglose Financiero
-                        document.getElementById('spanVaultMoney').textContent = 'S/ ' + (data.vaultMoney || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                        document.getElementById('spanCashMoney').textContent = 'S/ ' + (data.cashMoney || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                        
-                        const containerPM = document.getElementById('containerPaymentMethods');
-                        containerPM.innerHTML = '';
-                        if (data.paymentMethods && data.paymentMethods.length > 0) {
-                            data.paymentMethods.forEach(pm => {
-                                const isCash = pm.id == 1 || pm.name.toLowerCase().includes('efectivo');
-                                containerPM.innerHTML += `
-                                    <div class="d-flex justify-content-between align-items-center mb-1 px-1 py-1 rounded ${isCash ? 'bg-white border' : ''}">
-                                        <span class="text-muted" style="font-size: 0.75rem;">
-                                            <i class="bi bi-dot"></i> ${pm.name}:
-                                        </span>
-                                        <span class="fw-bold text-dark" style="font-size: 0.75rem;">
-                                            S/ ${parseFloat(pm.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                        </span>
-                                    </div>
-                                `;
-                            });
-                        } else {
-                            containerPM.innerHTML = '<small class="text-muted fst-italic d-block" style="font-size: 0.7rem;">Sin métodos de pago configurados</small>';
-                        }
-
-                        // Actualizar tabla de tanques resumen
-                        const summaryTbody = document.getElementById('tanksSummaryTbody');
-                        const tankBadge = document.getElementById('tankCountBadge');
-                        summaryTbody.innerHTML = '';
-                        tankBadge.textContent = `${data.tanks.length} Tanques`;
-
-                        if (data.tanks.length > 0) {
-                            tbody.innerHTML = '';
-                            rowIndex = 0;
-                            data.tanks.forEach(t => {
-                                const prodName = t.product ? t.product.name : 'Combustible';
-                                summaryTbody.innerHTML += `
-                                    <tr>
-                                        <td class="fw-bold">${t.name}</td>
-                                        <td>${prodName}</td>
-                                        <td class="fw-bold text-success">${parseFloat(t.stored_quantity).toFixed(2)} Gls</td>
-                                    </tr>
-                                `;
-
-                                // Añadir a la tabla de solicitud
-                                tbody.innerHTML += `
-                                    <tr data-index="${rowIndex}">
-                                        <td>
-                                            <select name="items[${rowIndex}][product_id]" class="form-select form-select-sm select-product" required>
-                                                <option value="${t.product_id}" selected>${prodName}</option>
-                                            </select>
-                                        </td>
-                                        <td>
-                                            <input type="hidden" name="items[${rowIndex}][tank_id]" value="${t.id}">
-                                            <span class="badge bg-light text-dark border">${t.name}</span>
-                                        </td>
-                                        <td>
-                                            <input type="number" step="0.01" class="form-control form-control-sm text-end input-stock bg-light" 
-                                                   name="items[${rowIndex}][current_stock]" value="${t.stored_quantity}" readonly>
-                                        </td>
-                                        <td>
-                                            <div class="input-group input-group-sm">
-                                                <input type="number" step="0.01" min="1" class="form-control text-end fw-bold text-primary input-gallons" 
-                                                       name="items[${rowIndex}][requested_quantity]" placeholder="0.00" required>
-                                                <span class="input-group-text">Gls</span>
+                fetch(`{{ route('purchase_plans.sede_info') }}?location_id=${locId}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            if (availableMoneyInput) availableMoneyInput.value = (data.available_money || 0).toFixed(2);
+                            
+                            // Actualizar Desglose Financiero
+                            const spanVault = document.getElementById('spanVaultMoney');
+                            const spanCash = document.getElementById('spanCashMoney');
+                            if (spanVault) spanVault.textContent = 'S/ ' + (data.vault_money || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                            if (spanCash) spanCash.textContent = 'S/ ' + (data.cash_money || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                            
+                            const containerPM = document.getElementById('containerPaymentMethods');
+                            if (containerPM) {
+                                containerPM.innerHTML = '';
+                                if (data.payment_methods && data.payment_methods.length > 0) {
+                                    data.payment_methods.forEach(pm => {
+                                        const isCash = pm.id == 1 || pm.name.toLowerCase().includes('efectivo');
+                                        containerPM.innerHTML += `
+                                            <div class="d-flex justify-content-between align-items-center mb-1 px-1 py-1 rounded ${isCash ? 'bg-white border' : ''}">
+                                                <span class="text-muted" style="font-size: 0.75rem;">
+                                                    <i class="bi bi-dot"></i> ${pm.name}:
+                                                </span>
+                                                <span class="fw-bold text-dark" style="font-size: 0.75rem;">
+                                                    S/ ${parseFloat(pm.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                </span>
                                             </div>
-                                        </td>
-                                        <td>
-                                            <div class="input-group input-group-sm">
-                                                <span class="input-group-text">S/</span>
-                                                <input type="number" step="0.01" class="form-control text-end input-price" 
-                                                       name="items[${rowIndex}][unit_price_estimate]" placeholder="0.00">
-                                            </div>
-                                        </td>
-                                        <td class="text-center">
-                                            <button type="button" class="btn btn-outline-danger btn-sm btn-remove-row"><i class="bi bi-trash"></i></button>
-                                        </td>
-                                    </tr>
-                                `;
-                                rowIndex++;
-                            });
-                        } else {
-                            summaryTbody.innerHTML = '<tr><td colspan="3" class="text-muted py-3">No hay tanques registrados para esta sede.</td></tr>';
+                                        `;
+                                    });
+                                } else {
+                                    containerPM.innerHTML = '<small class="text-muted fst-italic d-block" style="font-size: 0.7rem;">Sin métodos de pago configurados</small>';
+                                }
+                            }
+
+                            // Actualizar tabla de tanques resumen
+                            const summaryTbody = document.getElementById('tanksSummaryTbody');
+                            const tankBadge = document.getElementById('tankCountBadge');
+                            if (tankBadge) tankBadge.textContent = `${data.tanks.length} Tanques`;
+
+                            if (summaryTbody) {
+                                summaryTbody.innerHTML = '';
+                                if (data.tanks.length > 0) {
+                                    data.tanks.forEach(t => {
+                                        const prodName = t.product ? t.product.name : 'Combustible';
+                                        summaryTbody.innerHTML += `
+                                            <tr>
+                                                <td class="fw-bold">${t.name}</td>
+                                                <td>${prodName}</td>
+                                                <td class="fw-bold text-success">${parseFloat(t.stored_quantity).toFixed(2)} Gls</td>
+                                            </tr>
+                                        `;
+                                    });
+                                } else {
+                                    summaryTbody.innerHTML = '<tr><td colspan="3" class="text-muted py-3">No hay tanques registrados para esta sede.</td></tr>';
+                                }
+                            }
+
+                            // Actualizar tabla de solicitud de combustibles
+                            if (tbody && data.tanks.length > 0) {
+                                tbody.innerHTML = '';
+                                rowIndex = 0;
+                                data.tanks.forEach(t => {
+                                    const prodName = t.product ? t.product.name : 'Combustible';
+                                    tbody.innerHTML += `
+                                        <tr data-index="${rowIndex}">
+                                            <td>
+                                                <select name="items[${rowIndex}][product_id]" class="form-select form-select-sm select-product" required>
+                                                    <option value="${t.product_id}" selected>${prodName}</option>
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <input type="hidden" name="items[${rowIndex}][tank_id]" value="${t.id}">
+                                                <span class="badge bg-light text-dark border">${t.name}</span>
+                                            </td>
+                                            <td>
+                                                <input type="number" step="0.01" class="form-control form-control-sm text-end input-stock bg-light" 
+                                                       name="items[${rowIndex}][current_stock]" value="${t.stored_quantity}" readonly>
+                                            </td>
+                                            <td>
+                                                <div class="input-group input-group-sm">
+                                                    <input type="number" step="0.01" min="1" class="form-control text-end fw-bold text-primary input-gallons" 
+                                                           name="items[${rowIndex}][requested_quantity]" placeholder="0.00" required>
+                                                    <span class="input-group-text">Gls</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="input-group input-group-sm">
+                                                    <span class="input-group-text">S/</span>
+                                                    <input type="number" step="0.01" class="form-control text-end input-price" 
+                                                           name="items[${rowIndex}][unit_price_estimate]" placeholder="0.00">
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                <button type="button" class="btn btn-outline-danger btn-sm btn-remove-row"><i class="bi bi-trash"></i></button>
+                                            </td>
+                                        </tr>
+                                    `;
+                                    rowIndex++;
+                                });
+                            }
+                            recalculateTotal();
                         }
-                        recalculateTotal();
-                    }
-                })
-                .catch(err => console.error('Error cargando información de sede:', err));
-        });
+                    })
+                    .catch(err => console.error('Error cargando información de sede:', err));
+            });
+        }
 
         recalculateTotal();
     });

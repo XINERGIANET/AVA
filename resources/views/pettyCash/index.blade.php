@@ -148,6 +148,7 @@
                 @endforeach
             </select>
         </div>
+        <div class="mb-3" id="dateGroup"><label class="form-label fw-semibold">Fecha de Operación</label><input type="date" class="form-control" id="cashDate" value="{{ date('Y-m-d') }}"></div>
         <div class="mb-3"><label class="form-label" id="cashAmountLabel">Monto</label><input type="number" min="0.01" step="0.01" class="form-control" id="cashAmount"></div>
         <div class="mb-3 d-none" id="descriptionGroup"><label class="form-label">Descripcion</label><input type="text" maxlength="255" class="form-control" id="cashDescription"></div>
     </div>
@@ -180,6 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('cashAmount').value = action === 'open' ? '0' : (action === 'vault' ? (btn.dataset.amount || '') : '');
         document.getElementById('cashAmount').readOnly = action === 'open';
         document.getElementById('cashDescription').value = '';
+        document.getElementById('cashDate').value = new Date().toISOString().split('T')[0];
         document.getElementById('cashVaultLocation').value = btn.dataset.location || '';
         document.getElementById('vaultLocationGroup').classList.toggle('d-none', action !== 'vault');
         document.getElementById('descriptionGroup').classList.toggle('d-none', action !== 'expense');
@@ -198,6 +200,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('sumSales').textContent = Number(data.cash_sales).toFixed(2);
                 document.getElementById('sumExpenses').textContent = Number(data.cash_expenses).toFixed(2);
                 document.getElementById('sumCalculated').textContent = Number(data.calculated_cash_amount).toFixed(2);
+                if (data.cash_close && data.cash_close.date) {
+                    document.getElementById('cashDate').value = data.cash_close.date.split('T')[0];
+                }
                 document.getElementById('closeSummary').classList.remove('d-none');
             } catch (error) { AppError.handle({status:0}, {context:'consultar la caja'}); return; }
         }
@@ -210,13 +215,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const isle = document.getElementById('cashIsle').value;
         const amount = Number(document.getElementById('cashAmount').value);
         const vaultLocation = document.getElementById('cashVaultLocation').value;
+        const selectedDate = document.getElementById('cashDate').value;
         if (action !== 'open' && (!amount || amount <= 0)) { Swal.fire('Dato requerido', 'Ingrese un monto mayor a cero.', 'warning'); return; }
         if (action === 'vault' && !vaultLocation) { Swal.fire('Dato requerido', 'Seleccione la boveda destino.', 'warning'); return; }
         let url, method = 'POST', body;
-        if (action === 'open') { url=urls.open; body={cash_type:cashType,initial_cash_amount:amount,isle_id:isle || null}; }
-        if (action === 'expense') { url=urls.expense; body={cash_type:cashType,amount,isle_id:isle || null,description:document.getElementById('cashDescription').value}; }
-        if (action === 'vault') { url=urls.vault; body={cash_type:cashType,amount,isle_id:isle || null,location_id:vaultLocation}; }
-        if (action === 'close') { url=`${urls.detail}/${document.getElementById('cashCloseId').value}`; method='PUT'; body={final_cash_amount:amount,real_cash_amount:Number(document.getElementById('sumCalculated').textContent)}; }
+        if (action === 'open') { url=urls.open; body={cash_type:cashType,initial_cash_amount:amount,isle_id:isle || null,date:selectedDate}; }
+        if (action === 'expense') { url=urls.expense; body={cash_type:cashType,amount,isle_id:isle || null,description:document.getElementById('cashDescription').value,date:selectedDate}; }
+        if (action === 'vault') { url=urls.vault; body={cash_type:cashType,amount,isle_id:isle || null,location_id:vaultLocation,date:selectedDate}; }
+        if (action === 'close') { url=`${urls.detail}/${document.getElementById('cashCloseId').value}`; method='PUT'; body={final_cash_amount:amount,real_cash_amount:Number(document.getElementById('sumCalculated').textContent),date:selectedDate}; }
         this.disabled = true;
         try {
             const response = await fetch(url, {method, headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':csrf}, body:JSON.stringify(body)});

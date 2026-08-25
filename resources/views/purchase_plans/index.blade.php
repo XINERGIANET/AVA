@@ -18,7 +18,53 @@
 
     <!-- TARJETAS DE INDICADORES / KPIS -->
     <div class="row g-3 mb-4">
-        <div class="col-md-3 col-sm-6">
+        @if($isMaster && $masterMoneyData)
+            <!-- 5TA CARD EXCLUSIVA ROL MASTER: LIQUIDEZ Y SALDO TOTAL DISPONIBLE (CLICK ABRE MODAL) -->
+            <div class="col-xl-4 col-lg-6 col-md-6 col-sm-12">
+                <div class="card shadow-sm border-0 h-100 cursor-pointer" 
+                     style="border-radius: 10px; border-left: 4px solid #10b981 !important; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;"
+                     data-bs-toggle="modal" data-bs-target="#modalGlobalFundsModal"
+                     title="Haga clic para ver el desglose detallado de fondos por sede">
+                    <div class="card-body py-3">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="d-flex align-items-center gap-1">
+                                    <span class="text-muted fw-bold text-uppercase" style="font-size: 0.73rem;">
+                                        <i class="bi bi-wallet2 text-success me-1"></i>Saldo Disponible:
+                                    </span>
+                                    <span class="badge bg-primary text-white" style="font-size: 0.65rem;">{{ $masterMoneyData['scope_name'] }}</span>
+                                </div>
+                                <h3 class="mb-0 text-success fw-bold mt-1" style="font-size: 1.55rem;">
+                                    S/ {{ number_format($masterMoneyData['available_money'], 2) }}
+                                </h3>
+                                <div class="text-muted mt-1 d-flex gap-2" style="font-size: 0.72rem;">
+                                    <span><i class="bi bi-safe me-1 text-info"></i>Bóveda: <strong class="text-dark">S/ {{ number_format($masterMoneyData['vault_money'], 2) }}</strong></span>
+                                    <span>|</span>
+                                    <span><i class="bi bi-cash-stack me-1 text-success"></i>Cajas/Pagos: <strong class="text-dark">S/ {{ number_format($masterMoneyData['available_money'] - $masterMoneyData['vault_money'], 2) }}</strong></span>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-column align-items-end gap-1">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background-color: rgba(16, 185, 129, 0.1);">
+                                    <i class="bi bi-bank2 text-success fs-4"></i>
+                                </div>
+                                <span class="badge bg-light text-primary border" style="font-size: 0.65rem;">
+                                    <i class="bi bi-eye me-1"></i>Ver detalle
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @php 
+                $colClass = "col-xl-2 col-lg-3 col-md-6 col-sm-6"; 
+            @endphp
+        @else
+            @php 
+                $colClass = "col-md-3 col-sm-6"; 
+            @endphp
+        @endif
+
+        <div class="{{ $colClass }}">
             <div class="card shadow-sm border-0 h-100" style="border-radius: 10px; border-left: 4px solid #465fff !important;">
                 <div class="card-body py-3">
                     <div class="d-flex justify-content-between align-items-center">
@@ -35,14 +81,14 @@
             </div>
         </div>
 
-        <div class="col-md-3 col-sm-6">
+        <div class="{{ $colClass }}">
             <div class="card shadow-sm border-0 h-100" style="border-radius: 10px; border-left: 4px solid #10b981 !important;">
                 <div class="card-body py-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <span class="text-muted fw-bold text-uppercase" style="font-size: 0.75rem;">Tasa de Aprobación</span>
+                            <span class="text-muted fw-bold text-uppercase" style="font-size: 0.75rem;">Tasa Aprobación</span>
                             <h3 class="mb-0 text-dark fw-bold mt-1">{{ $confirmationRate }}%</h3>
-                            <small class="text-muted"><span class="text-success fw-bold">{{ $approvedPlans }}</span> confirmadas por Gerencia</small>
+                            <small class="text-muted"><span class="text-success fw-bold">{{ $approvedPlans }}</span> confirmadas</small>
                         </div>
                         <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background-color: rgba(16, 185, 129, 0.1);">
                             <i class="bi bi-check-circle-fill text-success fs-4"></i>
@@ -52,14 +98,14 @@
             </div>
         </div>
 
-        <div class="col-md-3 col-sm-6">
+        <div class="{{ $colClass }}">
             <div class="card shadow-sm border-0 h-100" style="border-radius: 10px; border-left: 4px solid #06b6d4 !important;">
                 <div class="card-body py-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <span class="text-muted fw-bold text-uppercase" style="font-size: 0.75rem;">Eficacia de Compra</span>
+                            <span class="text-muted fw-bold text-uppercase" style="font-size: 0.75rem;">Eficacia Compra</span>
                             <h3 class="mb-0 text-dark fw-bold mt-1">{{ $avgCompliance }}%</h3>
-                            <small class="text-muted">Cumplimiento galones solicitados</small>
+                            <small class="text-muted">Cumplimiento galones</small>
                         </div>
                         <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background-color: rgba(6, 182, 212, 0.1);">
                             <i class="bi bi-speedometer2 text-info fs-4"></i>
@@ -69,14 +115,14 @@
             </div>
         </div>
 
-        <div class="col-md-3 col-sm-6">
+        <div class="{{ $colClass }}">
             <div class="card shadow-sm border-0 h-100" style="border-radius: 10px; border-left: 4px solid #ef4444 !important;">
                 <div class="card-body py-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <span class="text-muted fw-bold text-uppercase" style="font-size: 0.75rem;">Rechazadas</span>
                             <h3 class="mb-0 text-dark fw-bold mt-1">{{ $rejectedPlans }}</h3>
-                            <small class="text-muted">Desestimadas o replanificadas</small>
+                            <small class="text-muted">Desestimadas</small>
                         </div>
                         <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background-color: rgba(239, 68, 68, 0.1);">
                             <i class="bi bi-x-circle-fill text-danger fs-4"></i>
@@ -145,6 +191,7 @@
                         <tr>
                             <th class="fw-bold text-uppercase" style="font-size: 0.75rem; background-color: #2c3e50 !important; color: white !important;">ID</th>
                             <th class="fw-bold text-uppercase" style="font-size: 0.75rem; background-color: #2c3e50 !important; color: white !important;">Sede</th>
+                            <th class="fw-bold text-uppercase" style="font-size: 0.75rem; background-color: #2c3e50 !important; color: white !important;">Proveedor</th>
                             <th class="fw-bold text-uppercase" style="font-size: 0.75rem; background-color: #2c3e50 !important; color: white !important;">Fecha Prog.</th>
                             <th class="fw-bold text-uppercase" style="font-size: 0.75rem; background-color: #2c3e50 !important; color: white !important;">Dinero Disp.</th>
                             <th class="fw-bold text-uppercase" style="font-size: 0.75rem; background-color: #2c3e50 !important; color: white !important;">Galones Solicitados</th>
@@ -159,6 +206,15 @@
                             <tr style="border-bottom: 1px solid #e9ecef;">
                                 <td class="fw-bold text-primary">#{{ str_pad($plan->id, 5, '0', STR_PAD_LEFT) }}</td>
                                 <td class="text-dark fw-bold">{{ $plan->location->name ?? '---' }}</td>
+                                <td class="text-dark">
+                                    @if($plan->supplier)
+                                        <span class="badge bg-light text-dark border">
+                                            <i class="bi bi-truck me-1 text-primary"></i>{{ $plan->supplier->company_name }}
+                                        </span>
+                                    @else
+                                        <span class="text-muted small">No asignado</span>
+                                    @endif
+                                </td>
                                 <td class="text-dark">{{ $plan->scheduled_date->format('d/m/Y') }}</td>
                                 <td class="text-dark fw-bold">S/ {{ number_format($plan->available_money, 2) }}</td>
                                 <td class="text-dark">
@@ -222,12 +278,12 @@
                                             <i class="bi bi-file-earmark-pdf"></i>
                                         </a>
 
-                                        <!-- EVALUAR / APROBAR (GERENCIA / MASTER) -->
-                                        @if($isMasterOrManager && $plan->status === 'pending')
+                                        <!-- EVALUAR / APROBAR (ÚNICAMENTE MASTER) -->
+                                        @if($isMaster && $plan->status === 'pending')
                                             <button type="button" class="btn btn-sm btn-success btn-evaluar" 
                                                     data-bs-toggle="modal" 
                                                     data-bs-target="#modalReview-{{ $plan->id }}" 
-                                                    title="Revisar / Aprobar Gerencia">
+                                                    title="Revisar / Aprobar Master">
                                                 <i class="bi bi-shield-check"></i>
                                             </button>
                                         @endif
@@ -246,7 +302,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="9" class="text-center py-4 text-muted">
+                                <td colspan="10" class="text-center py-4 text-muted">
                                     <i class="bi bi-inbox fs-2 d-block mb-2 text-muted"></i>
                                     No se encontraron solicitudes de compras registradas.
                                 </td>
@@ -263,9 +319,9 @@
         </div>
     </div>
 
-    <!-- MODALES DE REVISIÓN GERENCIAL Y COMPRA REAL (FUERA DE LA TABLA) -->
+    <!-- MODALES DE REVISIÓN MASTER Y COMPRA REAL (FUERA DE LA TABLA) -->
     @foreach($plans as $plan)
-        @if($isMasterOrManager)
+        @if($isMaster)
         <div class="modal fade text-start" id="modalReview-{{ $plan->id }}" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
@@ -277,9 +333,45 @@
                         </div>
                         <div class="modal-body">
                             <div class="alert alert-info py-2 mb-3">
-                                <strong>Sede:</strong> {{ $plan->location->name }} &nbsp;|&nbsp; 
-                                <strong>Fecha Programada:</strong> {{ $plan->scheduled_date->format('d/m/Y') }} &nbsp;|&nbsp;
-                                <strong>Dinero Disponible:</strong> S/ {{ number_format($plan->available_money, 2) }}
+                                <div class="row g-2 align-items-center">
+                                    <div class="col-md-3">
+                                        <strong>Sede:</strong> {{ $plan->location->name }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Solicitante:</strong> {{ $plan->user->display_name ?? ($plan->user->name ?? '---') }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Fecha Prog:</strong> {{ $plan->scheduled_date->format('d/m/Y') }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Dinero Disp:</strong> <span class="fw-bold text-success">S/ {{ number_format($plan->available_money, 2) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="supplier_id_{{ $plan->id }}" class="form-label text-dark fw-bold mb-0">
+                                        <i class="bi bi-truck text-primary me-1"></i> Proveedor Asignado / Autorizado:
+                                    </label>
+                                    <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2 fw-bold btn-open-quick-supplier" data-plan-id="{{ $plan->id }}" style="font-size: 0.75rem;">
+                                        <i class="bi bi-plus-circle me-1"></i>Nuevo Proveedor
+                                    </button>
+                                </div>
+                                <div class="input-group input-group-sm">
+                                    <select name="supplier_id" id="supplier_id_{{ $plan->id }}" class="form-select select-review-supplier">
+                                        <option value="">-- Sin Proveedor Asignado --</option>
+                                        @foreach($suppliers as $sup)
+                                            <option value="{{ $sup->id }}" {{ $plan->supplier_id == $sup->id ? 'selected' : '' }}>
+                                                {{ $sup->company_name }} {{ $sup->document ? '('.$sup->document.')' : '' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <button type="button" class="btn btn-primary btn-open-quick-supplier" data-plan-id="{{ $plan->id }}" title="Agregar Proveedor">
+                                        <i class="bi bi-plus-lg"></i>
+                                    </button>
+                                </div>
+                                <small class="text-muted" style="font-size: 0.72rem;">Puede confirmar el proveedor sugerido por la sede o seleccionar/crear otro para esta orden.</small>
                             </div>
 
                             <h6 class="fw-bold text-dark mb-2">Cantidades Solicitadas por Combustible:</h6>
@@ -347,14 +439,25 @@
         <div class="modal fade text-start" id="modalPurchased-{{ $plan->id }}" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
-                    <form action="{{ route('purchase_plans.purchased', $plan->id) }}" method="POST">
+                    <form action="{{ route('purchase_plans.purchased', $plan->id) }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <div class="modal-header bg-primary text-white">
                             <h5 class="modal-title text-white"><i class="bi bi-cart-check me-2"></i>Actualizar Compra Real y Eficacia #{{ str_pad($plan->id, 5, '0', STR_PAD_LEFT) }}</h5>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <p class="text-muted small">
+                            <div class="alert alert-light border py-2 mb-2 d-flex flex-wrap gap-3 align-items-center small">
+                                <div><strong>Sede:</strong> {{ $plan->location->name }}</div>
+                                <div><strong>Proveedor:</strong> 
+                                    @if($plan->supplier)
+                                        <span class="badge bg-dark text-white"><i class="bi bi-truck me-1"></i>{{ $plan->supplier->company_name }}</span>
+                                    @else
+                                        <span class="badge bg-secondary">No asignado</span>
+                                    @endif
+                                </div>
+                                <div><strong>Fecha Programada:</strong> {{ $plan->scheduled_date->format('d/m/Y') }}</div>
+                            </div>
+                            <p class="text-muted small mb-3">
                                 Ingrese los galones efectivamente comprados y descargados en estación. Si la cantidad comprada es inferior a lo solicitado/autorizado, registre la justificación correspondiente.
                             </p>
 
@@ -392,27 +495,275 @@
                                 </tbody>
                             </table>
 
+                            <!-- SUBIDA DE VOUCHERS / COMPROBANTES -->
+                            <div class="card bg-light border-0 mb-3 p-3" style="border-radius: 8px;">
+                                <label class="form-label fw-bold text-dark mb-1">
+                                    <i class="bi bi-paperclip text-primary me-1"></i> Comprobantes / Vouchers de Pago y Descarga:
+                                </label>
+                                <input type="file" name="voucher_files[]" class="form-control form-control-sm" multiple accept="image/*,application/pdf">
+                                <small class="text-muted" style="font-size: 0.75rem;">
+                                    Puede adjuntar fotos o capturas de vouchers bancarios, boletas, facturas o guías de remisión (JPG, PNG, PDF).
+                                </small>
+
+                                @if(!empty($plan->voucher_images) && count($plan->voucher_images) > 0)
+                                    <div class="mt-2 pt-2 border-top">
+                                        <span class="fw-bold text-dark small d-block mb-1">Comprobantes ya adjuntados:</span>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            @foreach($plan->voucher_images as $vImg)
+                                                @php
+                                                    $isPdf = str_ends_with(strtolower($vImg['path'] ?? ''), '.pdf');
+                                                @endphp
+                                                <a href="{{ asset('storage/' . $vImg['path']) }}" target="_blank" class="btn btn-sm btn-outline-dark py-1 px-2 d-inline-flex align-items-center" style="font-size: 0.75rem;">
+                                                    <i class="bi {{ $isPdf ? 'bi-file-earmark-pdf text-danger' : 'bi-image text-primary' }} me-1"></i>
+                                                    {{ Str::limit($vImg['name'] ?? 'Comprobante', 18) }}
+                                                </a>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+
                             <div class="mb-3">
                                 <label class="form-label fw-bold text-dark">Justificación de Desviación / Compra Parcial:</label>
-                                <textarea name="justification_notes" class="form-control" rows="3" placeholder="Ej: Se solicitaron 10,000 gls pero solo se compraron 7,000 gls (70%) debido a falta de cupo de crédito con proveedor / quiebre de stock en planta / restricción de liquidez...">{{ $plan->justification_notes }}</textarea>
+                                <textarea name="justification_notes" class="form-control" rows="2" placeholder="Ej: Se solicitaron 10,000 gls pero solo se compraron 7,000 gls (70%) debido a falta de cupo de crédito con proveedor / quiebre de stock en planta / restricción de liquidez...">{{ $plan->justification_notes }}</textarea>
                                 <small class="text-muted">Requerido si la compra fue inferior al 100% de lo solicitado.</small>
                             </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
-                            <button type="submit" class="btn btn-success btn-sm"><i class="bi bi-check-lg me-1"></i>Actualizar Eficacia</button>
+                            <button type="submit" class="btn btn-success btn-sm"><i class="bi bi-check-lg me-1"></i>Actualizar Eficacia y Guardar Comprobantes</button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
     @endforeach
-
 </div>
+
+@if($isMaster)
+<!-- MODAL PARA AGREGAR PROVEEDOR RÁPIDO DESDE BANDEJA / EVALUACIÓN -->
+<div class="modal fade" id="quickProviderModalIndex" tabindex="-1" aria-labelledby="quickProviderModalIndexLabel" aria-hidden="true" style="z-index: 1065;">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title text-white fw-bold" id="quickProviderModalIndexLabel"><i class="bi bi-truck me-2"></i>Registrar Nuevo Proveedor</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="quickProviderFormIndex">
+                    <div class="mb-3">
+                        <label for="quick_index_document" class="form-label text-dark fw-bold">RUC / DNI <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="quick_index_document" name="document" placeholder="Ingrese RUC o DNI" maxlength="20" required>
+                            <button class="btn btn-primary" type="button" id="btnSearchSunatIndex" onclick="searchQuickSupplierDocIndex()">
+                                <i class="bi bi-search me-1"></i> Buscar
+                            </button>
+                        </div>
+                        <small class="text-muted">Presione Buscar para autocompletar la Razón Social vía SUNAT/RENIEC.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quick_index_company_name" class="form-label text-dark fw-bold">Razón Social / Nombre <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="quick_index_company_name" name="company_name" placeholder="Razón social o denominación" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="quick_index_commercial_name" class="form-label text-dark fw-bold">Nombre Comercial</label>
+                            <input type="text" class="form-control" id="quick_index_commercial_name" name="commercial_name" placeholder="Opcional">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="quick_index_phone" class="form-label text-dark fw-bold">Teléfono</label>
+                            <input type="text" class="form-control" id="quick_index_phone" name="phone" placeholder="Opcional">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary px-4" id="btnSaveQuickSupplierIndex">
+                    <i class="bi bi-check-circle me-1"></i> Guardar y Seleccionar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE LIQUIDEZ Y DINERO DISPONIBLE POR SEDES (ROL MASTER) -->
+<div class="modal fade" id="modalGlobalFundsModal" tabindex="-1" aria-labelledby="modalGlobalFundsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" style="max-height: 92vh;">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
+            <div class="modal-header bg-white border-bottom py-2 px-3">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="p-2 rounded-circle bg-success bg-opacity-10 text-success">
+                        <i class="bi bi-bank2 fs-5"></i>
+                    </div>
+                    <div>
+                        <h6 class="modal-title fw-bold text-dark mb-0">Consolidado y Desglose de Fondos por Sede</h6>
+                        <small class="text-muted" style="font-size: 0.72rem;">Estado financiero de liquidez y métodos de pago en tiempo real</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-3 bg-light" style="max-height: calc(88vh - 120px); overflow-y: auto;">
+                <!-- RESUMEN TOTAL SUPERIOR COMPACTO -->
+                <div class="card border-0 shadow-sm mb-2" style="border-radius: 10px; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                    <div class="card-body py-2 px-3 text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="text-white-50 text-uppercase fw-bold" style="font-size: 0.7rem;">Saldo Total Consolidado del Grupo</span>
+                                <h3 class="mb-0 text-white fw-bold">S/ {{ number_format($masterMoneyData['grand_total_available'] ?? $masterMoneyData['available_money'], 2) }}</h3>
+                            </div>
+                            <div class="text-end">
+                                <div class="badge bg-white text-success fw-bold px-2 py-1 mb-1" style="font-size: 0.72rem;">Todas las Estaciones</div>
+                                <div class="text-white-50 small" style="font-size: 0.72rem;">Bóvedas Consolidadas: <strong class="text-white">S/ {{ number_format($masterMoneyData['grand_total_vault'] ?? $masterMoneyData['vault_money'], 2) }}</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TABLA DE SEDES CON SU DINERO DISPONIBLE Y MÉTODOS DE PAGO -->
+                <div class="card border-0 shadow-sm" style="border-radius: 10px;">
+                    <div class="card-header bg-white py-1 px-3 border-bottom d-flex justify-content-between align-items-center">
+                        <span class="fw-bold text-dark" style="font-size: 0.78rem;"><i class="bi bi-geo-alt-fill text-danger me-1"></i> Liquidez y Métodos de Pago por Cada Sede</span>
+                        <span class="badge bg-light text-muted border" style="font-size: 0.65rem;">En tiempo real</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="text-center" style="font-size: 0.72rem; background-color: #f8fafc;">
+                                <tr>
+                                    <th class="text-start ps-3 py-2" style="width: 20%;">Sede</th>
+                                    <th class="py-2" style="width: 15%;">En Bóveda</th>
+                                    <th class="text-start ps-3 py-2" style="width: 43%;">Métodos de Pago / Cajas</th>
+                                    <th class="text-end pe-3 py-2" style="width: 14%;">Total Disponible</th>
+                                    <th class="text-center py-2" style="width: 8%;">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if(isset($masterMoneyData['sedes_breakdown']))
+                                    @foreach($masterMoneyData['sedes_breakdown'] as $sb)
+                                        <tr>
+                                            <td class="text-start ps-3 fw-bold text-dark py-2">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bi bi-building me-2 text-primary fs-5"></i>
+                                                    <div>
+                                                        <span class="d-block text-dark fw-bold" style="font-size: 0.85rem;">{{ $sb['name'] }}</span>
+                                                        <small class="text-muted" style="font-size: 0.65rem;">Estación de Servicio</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="text-center py-2">
+                                                <div class="d-inline-block px-2 py-1 rounded bg-light border border-secondary border-opacity-25">
+                                                    <small class="text-muted d-block" style="font-size: 0.62rem;">Bóveda</small>
+                                                    <span class="fw-bold text-dark" style="font-size: 0.82rem;">
+                                                        S/ {{ number_format($sb['vault_money'], 2) }}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td class="ps-3 py-2">
+                                                <div class="d-flex flex-wrap gap-1 align-items-center">
+                                                    @php $hasMovement = false; @endphp
+                                                    @if(!empty($sb['payment_methods']))
+                                                        @foreach($sb['payment_methods'] as $pm)
+                                                            @if($pm['amount'] > 0)
+                                                                @php $hasMovement = true; @endphp
+                                                                <span class="badge bg-white text-dark border px-2 py-1 shadow-xs" style="font-size: 0.72rem;">
+                                                                    <i class="bi bi-cash-stack text-success me-1"></i>{{ $pm['name'] }}: <strong class="text-primary">S/ {{ number_format($pm['amount'], 2) }}</strong>
+                                                                </span>
+                                                            @endif
+                                                        @endforeach
+                                                    @endif
+                                                    @if(!$hasMovement)
+                                                        <span class="text-muted fst-italic" style="font-size: 0.72rem;">Sin saldo en cajas</span>
+                                                    @endif
+                                                </div>
+                                            </td>
+                                            <td class="text-end pe-3 fw-bold text-success py-2" style="font-size: 0.95rem;">
+                                                S/ {{ number_format($sb['available_money'], 2) }}
+                                            </td>
+                                            <td class="text-center py-2">
+                                                <a href="{{ route('purchase_plans.index', ['location_id' => $sb['id']]) }}" class="btn btn-outline-primary btn-sm py-1 px-2" style="font-size: 0.72rem;" title="Filtrar solicitudes de {{ $sb['name'] }}">
+                                                    <i class="bi bi-funnel me-1"></i>Filtrar
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                @endif
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-white border-top py-2 px-3">
+                <a href="{{ route('purchase_plans.index') }}" class="btn btn-outline-secondary btn-sm me-auto" style="font-size: 0.8rem;">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> Restablecer a Todas las Sedes
+                </a>
+                <button type="button" class="btn btn-primary btn-sm px-4" data-bs-dismiss="modal" style="font-size: 0.82rem;">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 @endsection
 
 @section('scripts')
 <script>
+    let activeReviewPlanId = null;
+
+    function searchQuickSupplierDocIndex() {
+        const doc = document.getElementById('quick_index_document').value.trim();
+        const companyInput = document.getElementById('quick_index_company_name');
+        const btn = document.getElementById('btnSearchSunatIndex');
+
+        if (!/^\d{8}$|^\d{11}$/.test(doc)) {
+            if (typeof ToastError !== 'undefined') {
+                ToastError.fire({ text: 'El documento debe tener 8 dígitos para DNI o 11 dígitos para RUC.' });
+            } else {
+                alert('El documento debe tener 8 dígitos para DNI o 11 dígitos para RUC.');
+            }
+            return;
+        }
+
+        const originalBtnHtml = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+        btn.disabled = true;
+
+        fetch(`{{ url('sunat/consultar') }}?doc=${doc}`)
+            .then(res => res.json())
+            .then(data => {
+                btn.innerHTML = originalBtnHtml;
+                btn.disabled = false;
+
+                if (data && (data.razon_social || data.nombre || data.nombres)) {
+                    const name = data.razon_social || `${data.nombres || ''} ${data.apellido_paterno || ''} ${data.apellido_materno || ''}`.trim();
+                    companyInput.value = name;
+                    if (typeof ToastMessage !== 'undefined') {
+                        ToastMessage.fire({ icon: 'success', text: 'Datos encontrados con éxito' });
+                    }
+                } else if (data && data.error) {
+                    if (typeof ToastError !== 'undefined') {
+                        ToastError.fire({ text: data.error });
+                    } else {
+                        alert(data.error);
+                    }
+                } else {
+                    if (typeof ToastError !== 'undefined') {
+                        ToastError.fire({ text: 'No se encontraron datos para el documento ingresado.' });
+                    } else {
+                        alert('No se encontraron datos para el documento ingresado.');
+                    }
+                }
+            })
+            .catch(err => {
+                btn.innerHTML = originalBtnHtml;
+                btn.disabled = false;
+                console.error('Error consultando SUNAT:', err);
+                if (typeof ToastError !== 'undefined') {
+                    ToastError.fire({ text: 'Error de conexión al consultar el documento.' });
+                } else {
+                    alert('Error de conexión al consultar el documento.');
+                }
+            });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         // Cálculo dinámico de % al escribir cantidades compradas
         document.querySelectorAll('.input-purchased-qty').forEach(function(input) {
@@ -426,6 +777,105 @@
                 }
             });
         });
+
+        // Abrir modal de proveedor desde modal de evaluación
+        document.querySelectorAll('.btn-open-quick-supplier').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                activeReviewPlanId = this.dataset.planId;
+                const modalQuickEl = document.getElementById('quickProviderModalIndex');
+                if (modalQuickEl) {
+                    const bsModal = new bootstrap.Modal(modalQuickEl);
+                    bsModal.show();
+                }
+            });
+        });
+
+        // Guardar proveedor desde modal
+        const btnSaveSupplier = document.getElementById('btnSaveQuickSupplierIndex');
+        if (btnSaveSupplier) {
+            btnSaveSupplier.addEventListener('click', function() {
+                const doc = document.getElementById('quick_index_document').value.trim();
+                const compName = document.getElementById('quick_index_company_name').value.trim();
+                const commName = document.getElementById('quick_index_commercial_name').value.trim();
+                const phone = document.getElementById('quick_index_phone').value.trim();
+
+                if (!doc || !compName) {
+                    if (typeof ToastError !== 'undefined') {
+                        ToastError.fire({ text: 'RUC/DNI y Razón Social son campos obligatorios.' });
+                    } else {
+                        alert('RUC/DNI y Razón Social son campos obligatorios.');
+                    }
+                    return;
+                }
+
+                const originalBtnHtml = btnSaveSupplier.innerHTML;
+                btnSaveSupplier.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Guardando...';
+                btnSaveSupplier.disabled = true;
+
+                fetch('{{ route('suppliers.saveSupplier') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        document: doc,
+                        company_name: compName,
+                        commercial_name: commName,
+                        phone: phone
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    btnSaveSupplier.innerHTML = originalBtnHtml;
+                    btnSaveSupplier.disabled = false;
+
+                    if (data.success && data.supplier) {
+                        // Agregar el nuevo proveedor a todos los selectores de revisión
+                        document.querySelectorAll('.select-review-supplier').forEach(function(select) {
+                            const opt = document.createElement('option');
+                            opt.value = data.supplier.id;
+                            opt.textContent = `${data.supplier.company_name} (${data.supplier.document})`;
+                            select.appendChild(opt);
+                        });
+
+                        // Seleccionarlo en el modal que abrió la creación
+                        if (activeReviewPlanId) {
+                            const targetSelect = document.getElementById(`supplier_id_${activeReviewPlanId}`);
+                            if (targetSelect) {
+                                targetSelect.value = data.supplier.id;
+                            }
+                        }
+
+                        if (typeof ToastMessage !== 'undefined') {
+                            ToastMessage.fire({ icon: 'success', text: data.message || 'Proveedor registrado correctamente.' });
+                        }
+
+                        // Limpiar formulario y cerrar modal
+                        document.getElementById('quickProviderFormIndex').reset();
+                        const modalEl = document.getElementById('quickProviderModalIndex');
+                        const bsModal = bootstrap.Modal.getInstance(modalEl);
+                        if (bsModal) bsModal.hide();
+                    } else {
+                        if (typeof ToastError !== 'undefined') {
+                            ToastError.fire({ text: data.message || 'Error al guardar el proveedor.' });
+                        } else {
+                            alert(data.message || 'Error al guardar el proveedor.');
+                        }
+                    }
+                })
+                .catch(err => {
+                    btnSaveSupplier.innerHTML = originalBtnHtml;
+                    btnSaveSupplier.disabled = false;
+                    console.error('Error guardando proveedor:', err);
+                    if (typeof ToastError !== 'undefined') {
+                        ToastError.fire({ text: 'Error inesperado al guardar el proveedor.' });
+                    } else {
+                        alert('Error inesperado al guardar el proveedor.');
+                    }
+                });
+            });
+        }
     });
 </script>
 @endsection

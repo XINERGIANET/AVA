@@ -159,17 +159,21 @@
                 <td class="value font-bold">{{ $plan->scheduled_date->format('d/m/Y') }}</td>
             </tr>
             <tr>
-                <td class="label">Solicitante (Admin):</td>
-                <td class="value">{{ $plan->user->name ?? '---' }}</td>
+                <td class="label">Proveedor:</td>
+                <td class="value font-bold">{{ $plan->supplier ? $plan->supplier->company_name : 'No asignado' }}</td>
                 <td class="label">Dinero Disponible:</td>
                 <td class="value font-bold" style="color: #059669;">S/ {{ number_format($plan->available_money, 2) }}</td>
             </tr>
-            @if($plan->reviewer)
             <tr>
-                <td class="label">Aprobado por:</td>
-                <td class="value font-bold">{{ $plan->reviewer->name }}</td>
+                <td class="label">Solicitante (Admin):</td>
+                <td class="value">{{ $plan->user->display_name ?? ($plan->user->name ?? '---') }}</td>
+                <td class="label">Aprobado por (Master):</td>
+                <td class="value font-bold">{{ $plan->reviewer ? ($plan->reviewer->display_name ?? $plan->reviewer->name) : 'Pendiente' }}</td>
+            </tr>
+            @if($plan->reviewed_at)
+            <tr>
                 <td class="label">Fecha Aprobación:</td>
-                <td class="value">{{ $plan->reviewed_at ? $plan->reviewed_at->format('d/m/Y H:i') : '---' }}</td>
+                <td class="value" colspan="3">{{ $plan->reviewed_at->format('d/m/Y H:i') }}</td>
             </tr>
             @endif
         </table>
@@ -241,13 +245,13 @@
         <tr>
             <td style="width: 50%;">
                 <div class="signature-line">
-                    {{ $plan->user->name ?? 'ADMINISTRADOR DE SEDE' }}<br>
+                    {{ $plan->user->display_name ?? ($plan->user->name ?? 'ADMINISTRADOR DE SEDE') }}<br>
                     <span style="font-weight: normal; font-size: 9px; color: #666;">Firma Solicitante (Admin Sede)</span>
                 </div>
             </td>
             <td style="width: 50%;">
                 <div class="signature-line">
-                    {{ $plan->reviewer->name ?? 'GERENCIA / DIRECCIÓN' }}<br>
+                    {{ $plan->reviewer ? ($plan->reviewer->display_name ?? $plan->reviewer->name) : 'GERENCIA / DIRECCIÓN' }}<br>
                     <span style="font-weight: normal; font-size: 9px; color: #666;">Firma de Aprobación (Gerencia)</span>
                 </div>
             </td>

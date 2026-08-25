@@ -10,6 +10,7 @@ use App\Models\Tank;
 use App\Models\Isle;
 use App\Models\PaymentMethod;
 use App\Models\Payment;
+use App\Models\Supplier;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -22,10 +23,10 @@ class PurchasePlanController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $isMasterOrManager = in_array($user->role->nombre, ['master', 'gerente', 'admin']);
+        $isMaster = ($user->role && strtolower($user->role->nombre) === 'master');
         $activeLocationId = $user->location_id;
 
-        $query = PurchasePlan::with(['location', 'user', 'reviewer', 'details.product', 'details.tank'])
+        $query = PurchasePlan::with(['location', 'supplier', 'user', 'reviewer', 'details.product', 'details.tank'])
             ->where('deleted', 0)
             ->when($activeLocationId, function ($q) use ($activeLocationId) {
                 $q->where('location_id', $activeLocationId);
@@ -61,93 +62,78 @@ class PurchasePlanController extends Controller
             $avgCompliance = round($sumCompliance / $completedPlans->count(), 1);
         }
 
+        $allLocations = Location::where('deleted', 0)->orderBy('name', 'asc')->get();
+
         $locations = Location::where('deleted', 0)
             ->when($activeLocationId, fn($q) => $q->where('id', $activeLocationId))
             ->get();
 
+        $suppliers = Supplier::where('deleted', '0')->orWhere('deleted', 0)->orderBy('company_name', 'asc')->get();
+
+        // Cálculo de Dinero Total Disponible exclusivo para rol Master (Global o por sede filtrada)
+        $masterMoneyData = null;
+        if ($isMaster) {
+            $filterLocationId = $request->location_id ?: 'all';
+            $masterMoneyData = $this->calculateLocationFinances($filterLocationId, false);
+            $selectedLocationName = ($filterLocationId !== 'all') 
+                ? ($allLocations->firstWhere('id', $filterLocationId)->name ?? 'Sede')
+                : 'Todas las Sedes';
+            $masterMoneyData['scope_name'] = $selectedLocationName;
+            $masterMoneyData['is_all'] = ($filterLocationId === 'all');
+
+            // Detalle por cada una de las sedes para el modal
+            $sedesBreakdown = [];
+            $grandTotalMasterAvailable = 0;
+            $grandTotalMasterVault = 0;
+
+            foreach ($allLocations as $loc) {
+                $f = $this->calculateLocationFinances($loc->id, false);
+                $sedesBreakdown[] = [
+                    'id' => $loc->id,
+                    'name' => $loc->name,
+                    'available_money' => $f['available_money'],
+                    'vault_money' => $f['vault_money'],
+                    'cash_money' => $f['cash_money'],
+                    'payment_methods' => $f['payment_methods']
+                ];
+                $grandTotalMasterAvailable += $f['available_money'];
+                $grandTotalMasterVault += $f['vault_money'];
+            }
+            $masterMoneyData['sedes_breakdown'] = $sedesBreakdown;
+            $masterMoneyData['grand_total_available'] = $grandTotalMasterAvailable;
+            $masterMoneyData['grand_total_vault'] = $grandTotalMasterVault;
+        }
+
         return view('purchase_plans.index', compact(
             'plans',
             'locations',
+            'suppliers',
             'totalPlans',
             'pendingPlans',
             'approvedPlans',
             'rejectedPlans',
             'confirmationRate',
             'avgCompliance',
-            'isMasterOrManager'
+            'isMaster',
+            'masterMoneyData'
         ));
     }
 
     public function create(Request $request)
     {
         $user = Auth::user();
-        $locations = Location::where('deleted', 0)
-            ->when($user->role->nombre !== 'master' && $user->location_id, fn($q) => $q->where('id', $user->location_id))
-            ->get();
+        $isMaster = $user->role && strtolower($user->role->nombre) === 'master';
 
+        $locations = Location::where('deleted', 0)->orderBy('name', 'asc')->get();
         $selectedLocationId = $request->location_id ?: ($user->location_id ?: ($locations->first() ? $locations->first()->id : null));
 
-        // Obtener Tanques, Dinero y Métodos de Pago de la sede
-        $tanks = [];
-        $vaultMoney = 0;
-        $cashMoney = 0;
-        $paymentMethodsBreakdown = [];
-
-        if ($selectedLocationId) {
-            $tanks = Tank::with('product')
-                ->where('location_id', $selectedLocationId)
-                ->where('deleted', 0)
-                ->whereNotNull('product_id')
-                ->get();
-
-            // 1. Dinero en Bóveda
-            $vaultMoney = (float) Isle::where('location_id', $selectedLocationId)
-                ->where('deleted', 0)
-                ->sum('vault');
-
-            // 2. Dinero en Cajas de la sede (saldo actual en islas + caja general)
-            $locationObj = Location::find($selectedLocationId);
-            $generalCash = $locationObj ? (float)$locationObj->cash_amount : 0;
-            $islesCash = (float) Isle::where('location_id', $selectedLocationId)
-                ->where('deleted', 0)
-                ->sum('cash_amount');
-            $cashMoney = $generalCash + $islesCash;
-
-            // 3. Montos por Métodos de Pago acumulados en la sede
-            $paymentMethodsBreakdown = PaymentMethod::where('deleted', 0)
-                ->where(function ($q) use ($selectedLocationId) {
-                    $q->whereNull('location_id')
-                      ->orWhere('location_id', $selectedLocationId);
-                })
-                ->get()
-                ->map(function ($pm) use ($selectedLocationId, $cashMoney) {
-                    if ($pm->id == 1 || mb_strtolower(trim($pm->name)) === 'efectivo') {
-                        $total = $cashMoney;
-                    } else {
-                        // Sumar pagos de ese método en la sede
-                        $total = (float) Payment::where('payment_method_id', $pm->id)
-                            ->where('deleted', 0)
-                            ->where(function ($q) use ($selectedLocationId) {
-                                $q->whereHas('sale', fn($q2) => $q2->where('location_id', $selectedLocationId))
-                                  ->orWhereHas('agreement', fn($q2) => $q2->where('location_id', $selectedLocationId));
-                            })
-                            ->sum('amount');
-                    }
-
-                    return [
-                        'id' => $pm->id,
-                        'name' => $pm->name,
-                        'amount' => $total
-                    ];
-                })
-                ->values()
-                ->toArray();
-
-            // Suma total de todos los métodos de pago
-            $totalPaymentMethods = array_sum(array_column($paymentMethodsBreakdown, 'amount'));
-            // Dinero Total Disponible = Bóveda + Total de todos los Métodos de Pago (Efectivo + Tarjeta + Yape + Transferencias...)
-            $availableMoney = $vaultMoney + $totalPaymentMethods;
-        }
+        // Calcular datos financieros de la sede seleccionada
+        $sedeData = $this->calculateLocationFinances($selectedLocationId);
+        $tanks = $sedeData['tanks'];
+        $vaultMoney = $sedeData['vault_money'];
+        $cashMoney = $sedeData['cash_money'];
+        $paymentMethodsBreakdown = $sedeData['payment_methods'];
+        $availableMoney = $sedeData['available_money'];
 
         // Productos de combustible (categoría combustible o asignados a tanques)
         $fuelProducts = Product::where('deleted', 0)
@@ -165,17 +151,136 @@ class PurchasePlanController extends Controller
             })
             ->distinct()
             ->get();
+            
+        // Proveedores activos
+        $suppliers = Supplier::where('deleted', '0')->orWhere('deleted', 0)->orderBy('company_name', 'asc')->get();
 
         return view('purchase_plans.create', compact(
             'locations',
             'selectedLocationId',
+            'suppliers',
             'tanks',
             'availableMoney',
             'vaultMoney',
             'cashMoney',
             'paymentMethodsBreakdown',
-            'fuelProducts'
+            'fuelProducts',
+            'isMaster'
         ));
+    }
+
+    private function calculateLocationFinances($locationId, $withTanks = true)
+    {
+        $tanks = [];
+        $vaultMoney = 0;
+        $cashMoney = 0;
+        $paymentMethodsBreakdown = [];
+        $availableMoney = 0;
+
+        if ($locationId === 'all') {
+            // CONSOLIDADO DE TODAS LAS SEDES
+            if ($withTanks) {
+                $tanks = Tank::with(['product', 'location'])
+                    ->where('deleted', 0)
+                    ->whereNotNull('product_id')
+                    ->get();
+            }
+
+            // 1. Dinero en Bóveda (Todas las sedes)
+            $vaultMoney = (float) Isle::where('deleted', 0)->sum('vault');
+
+            // 2. Dinero en Cajas (Todas las sedes)
+            $generalCash = (float) Location::where('deleted', 0)->sum('cash_amount');
+            $islesCash = (float) Isle::where('deleted', 0)->sum('cash_amount');
+            $cashMoney = $generalCash + $islesCash;
+
+            // 3. Métodos de pago globales
+            $paymentMethodsBreakdown = PaymentMethod::where('deleted', 0)
+                ->get()
+                ->map(function ($pm) use ($cashMoney) {
+                    if ($pm->id == 1 || mb_strtolower(trim($pm->name)) === 'efectivo') {
+                        $total = $cashMoney;
+                    } else {
+                        $total = (float) Payment::where('payment_method_id', $pm->id)
+                            ->where('deleted', 0)
+                            ->sum('amount');
+                    }
+
+                    return [
+                        'id' => $pm->id,
+                        'name' => $pm->name,
+                        'amount' => $total
+                    ];
+                })
+                ->values()
+                ->toArray();
+
+            $totalPaymentMethods = array_sum(array_column($paymentMethodsBreakdown, 'amount'));
+            $availableMoney = $vaultMoney + $totalPaymentMethods;
+        } elseif ($locationId) {
+            // UNA SEDE ESPECÍFICA
+            if ($withTanks) {
+                $tanks = Tank::with(['product', 'location'])
+                    ->where('location_id', $locationId)
+                    ->where('deleted', 0)
+                    ->whereNotNull('product_id')
+                    ->get();
+            }
+
+            // 1. Dinero en Bóveda
+            $vaultMoney = (float) Isle::where('location_id', $locationId)
+                ->where('deleted', 0)
+                ->sum('vault');
+
+            // 2. Dinero en Cajas de la sede (saldo actual en islas + caja general)
+            $locationObj = Location::find($locationId);
+            $generalCash = $locationObj ? (float)$locationObj->cash_amount : 0;
+            $islesCash = (float) Isle::where('location_id', $locationId)
+                ->where('deleted', 0)
+                ->sum('cash_amount');
+            $cashMoney = $generalCash + $islesCash;
+
+            // 3. Montos por Métodos de Pago acumulados en la sede
+            $paymentMethodsBreakdown = PaymentMethod::where('deleted', 0)
+                ->where(function ($q) use ($locationId) {
+                    $q->whereNull('location_id')
+                      ->orWhere('location_id', $locationId);
+                })
+                ->get()
+                ->map(function ($pm) use ($locationId, $cashMoney) {
+                    if ($pm->id == 1 || mb_strtolower(trim($pm->name)) === 'efectivo') {
+                        $total = $cashMoney;
+                    } else {
+                        // Sumar pagos de ese método en la sede
+                        $total = (float) Payment::where('payment_method_id', $pm->id)
+                            ->where('deleted', 0)
+                            ->where(function ($q) use ($locationId) {
+                                $q->whereHas('sale', fn($q2) => $q2->where('location_id', $locationId))
+                                  ->orWhereHas('agreement', fn($q2) => $q2->where('location_id', $locationId));
+                            })
+                            ->sum('amount');
+                    }
+
+                    return [
+                        'id' => $pm->id,
+                        'name' => $pm->name,
+                        'amount' => $total
+                    ];
+                })
+                ->values()
+                ->toArray();
+
+            $totalPaymentMethods = array_sum(array_column($paymentMethodsBreakdown, 'amount'));
+            $availableMoney = $vaultMoney + $totalPaymentMethods;
+        }
+
+        return [
+            'tanks' => $tanks,
+            'vault_money' => $vaultMoney,
+            'cash_money' => $cashMoney,
+            'payment_methods' => $paymentMethodsBreakdown,
+            'available_money' => $availableMoney
+        ];
     }
 
     public function getSedeInfo(Request $request)
@@ -185,64 +290,15 @@ class PurchasePlanController extends Controller
             return response()->json(['success' => false, 'message' => 'Sede no especificada']);
         }
 
-        $tanks = Tank::with('product')
-            ->where('location_id', $locationId)
-            ->where('deleted', 0)
-            ->whereNotNull('product_id')
-            ->get();
-
-        // 1. Dinero en Bóveda
-        $vaultMoney = (float) Isle::where('location_id', $locationId)
-            ->where('deleted', 0)
-            ->sum('vault');
-
-        // 2. Dinero en Cajas de la sede (saldo actual en islas + caja general)
-        $locationObj = Location::find($locationId);
-        $generalCash = $locationObj ? (float)$locationObj->cash_amount : 0;
-        $islesCash = (float) Isle::where('location_id', $locationId)
-            ->where('deleted', 0)
-            ->sum('cash_amount');
-        $cashMoney = $generalCash + $islesCash;
-
-        // 3. Montos por Métodos de Pago acumulados en la sede
-        $paymentMethodsBreakdown = PaymentMethod::where('deleted', 0)
-            ->where(function ($q) use ($locationId) {
-                $q->whereNull('location_id')
-                  ->orWhere('location_id', $locationId);
-            })
-            ->get()
-            ->map(function ($pm) use ($locationId, $cashMoney) {
-                if ($pm->id == 1 || mb_strtolower(trim($pm->name)) === 'efectivo') {
-                    $total = $cashMoney;
-                } else {
-                    $total = (float) Payment::where('payment_method_id', $pm->id)
-                        ->where('deleted', 0)
-                        ->where(function ($q) use ($locationId) {
-                            $q->whereHas('sale', fn($q2) => $q2->where('location_id', $locationId))
-                              ->orWhereHas('agreement', fn($q2) => $q2->where('location_id', $locationId));
-                        })
-                        ->sum('amount');
-                }
-
-                return [
-                    'id' => $pm->id,
-                    'name' => $pm->name,
-                    'amount' => $total
-                ];
-            })
-            ->values()
-            ->toArray();
-
-        $totalPaymentMethods = array_sum(array_column($paymentMethodsBreakdown, 'amount'));
-        $availableMoney = $vaultMoney + $totalPaymentMethods;
+        $financeData = $this->calculateLocationFinances($locationId, true);
 
         return response()->json([
             'success' => true,
-            'tanks' => $tanks,
-            'availableMoney' => $availableMoney,
-            'vaultMoney' => $vaultMoney,
-            'cashMoney' => $cashMoney,
-            'paymentMethods' => $paymentMethodsBreakdown
+            'tanks' => $financeData['tanks'],
+            'available_money' => $financeData['available_money'],
+            'vault_money' => $financeData['vault_money'],
+            'cash_money' => $financeData['cash_money'],
+            'payment_methods' => $financeData['payment_methods']
         ]);
     }
 
@@ -250,6 +306,7 @@ class PurchasePlanController extends Controller
     {
         $request->validate([
             'location_id' => 'required|exists:locations,id',
+            'supplier_id' => 'nullable|exists:suppliers,id',
             'scheduled_date' => 'required|date',
             'available_money' => 'required|numeric|min:0',
             'items' => 'required|array|min:1',
@@ -261,6 +318,7 @@ class PurchasePlanController extends Controller
         try {
             $plan = PurchasePlan::create([
                 'location_id' => $request->location_id,
+                'supplier_id' => $request->supplier_id,
                 'user_id' => Auth::id(),
                 'scheduled_date' => $request->scheduled_date,
                 'available_money' => $request->available_money,
@@ -304,7 +362,7 @@ class PurchasePlanController extends Controller
 
     public function show($id)
     {
-        $plan = PurchasePlan::with(['location', 'user', 'reviewer', 'details.product', 'details.tank'])
+        $plan = PurchasePlan::with(['location', 'supplier', 'user', 'reviewer', 'details.product', 'details.tank'])
             ->findOrFail($id);
 
         return view('purchase_plans.show', compact('plan'));
@@ -312,18 +370,28 @@ class PurchasePlanController extends Controller
 
     public function review(Request $request, $id)
     {
+        $user = Auth::user();
+        if (!$user->role || strtolower($user->role->nombre) !== 'master') {
+            return back()->with('error', 'Acceso denegado: Únicamente el usuario Master puede autorizar o rechazar solicitudes de compra.');
+        }
+
         $plan = PurchasePlan::findOrFail($id);
         $request->validate([
             'action' => 'required|in:approve,reject',
+            'supplier_id' => 'nullable|exists:suppliers,id',
             'manager_notes' => 'nullable|string',
             'approved_quantities' => 'nullable|array',
         ]);
 
         DB::beginTransaction();
         try {
-            $user = Auth::user();
             if ($request->action === 'approve') {
                 $plan->status = 'approved';
+                
+                // Actualizar proveedor si se seleccionó uno o se cambió
+                if ($request->has('supplier_id')) {
+                    $plan->supplier_id = $request->supplier_id ?: null;
+                }
                 
                 // Actualizar cantidades autorizadas por ítem
                 if ($request->has('approved_quantities')) {
@@ -364,7 +432,8 @@ class PurchasePlanController extends Controller
         $plan = PurchasePlan::with('details')->findOrFail($id);
         $request->validate([
             'purchased_quantities' => 'required|array',
-            'justification_notes' => 'nullable|string'
+            'justification_notes' => 'nullable|string',
+            'voucher_files.*' => 'nullable|file|mimes:jpeg,png,jpg,webp,pdf|max:10240'
         ]);
 
         DB::beginTransaction();
@@ -372,13 +441,14 @@ class PurchasePlanController extends Controller
             $totalTarget = 0;
             $totalPurchased = 0;
 
-            foreach ($request->purchased_quantities as $detailId => $qty) {
+            foreach ($request->purchased_quantities as $detailId => $purchasedQty) {
                 $detail = PurchasePlanDetail::where('purchase_plan_id', $plan->id)->find($detailId);
                 if ($detail) {
-                    $purchasedQty = max(0, floatval($qty));
+                    $purchasedQty = max(0, floatval($purchasedQty));
                     $detail->purchased_quantity = $purchasedQty;
                     $detail->save();
 
+                    // La meta es la aprobada por gerencia (si no hubo ajuste, es la solicitada)
                     $target = $detail->approved_quantity !== null ? $detail->approved_quantity : $detail->requested_quantity;
                     $totalTarget += $target;
                     $totalPurchased += $purchasedQty;
@@ -389,6 +459,20 @@ class PurchasePlanController extends Controller
             $plan->compliance_percentage = $compliance;
             $plan->justification_notes = $request->justification_notes;
 
+            // Procesar imágenes/archivos de vouchers o comprobantes
+            $currentImages = is_array($plan->voucher_images) ? $plan->voucher_images : [];
+            if ($request->hasFile('voucher_files')) {
+                foreach ($request->file('voucher_files') as $file) {
+                    $path = $file->store('purchase_vouchers', 'public');
+                    $currentImages[] = [
+                        'path' => $path,
+                        'name' => $file->getClientOriginalName(),
+                        'uploaded_at' => Carbon::now()->toDateTimeString()
+                    ];
+                }
+            }
+            $plan->voucher_images = $currentImages;
+
             if ($compliance >= 100) {
                 $plan->status = 'completed';
             } else {
@@ -398,7 +482,7 @@ class PurchasePlanController extends Controller
             $plan->save();
 
             DB::commit();
-            return back()->with('success', 'Cantidades reales compradas actualizadas correctamente. Eficacia: ' . $compliance . '%');
+            return back()->with('success', 'Cantidades reales compradas y comprobantes actualizados correctamente. Eficacia: ' . $compliance . '%');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error actualizando compra real: ' . $e->getMessage());
@@ -408,7 +492,7 @@ class PurchasePlanController extends Controller
 
     public function pdf($id)
     {
-        $plan = PurchasePlan::with(['location', 'user', 'reviewer', 'details.product', 'details.tank'])
+        $plan = PurchasePlan::with(['location', 'supplier', 'user', 'reviewer', 'details.product', 'details.tank'])
             ->findOrFail($id);
 
         $data = [

@@ -110,6 +110,7 @@ class UserController extends Controller
         // Validar el campo 'name' requerido y único
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'full_name' => 'nullable|string|max:255',
             'email' => 'required|string|max:255',
             'password' => 'required|string|max:255',
             'rol_id' => 'required|integer|exists:roles,id',
@@ -143,6 +144,7 @@ class UserController extends Controller
         // Crear el registro
         User::create([
             'name' => $validated['name'],
+            'full_name' => $validated['full_name'] ?? null,
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']), // Encriptar la contraseña
             'role_id' => $validated['rol_id'],
@@ -259,6 +261,7 @@ class UserController extends Controller
             // Reglas de validación
             $rules = [
                 'name' => 'required|string|max:255',
+                'full_name' => 'nullable|string|max:255',
                 'email' => "required|string|max:255", // único excepto el actual
                 'rol_id' => 'required|exists:roles,id',
                 'location_id' => 'required|integer|exists:locations,id',
@@ -289,6 +292,7 @@ class UserController extends Controller
             }
 
             $user->name = $validated['name'];
+            $user->full_name = $validated['full_name'] ?? null;
             $user->email = $validated['email'];
             $user->role_id = $validated['rol_id'];
             $user->location_id = $validated['location_id'];

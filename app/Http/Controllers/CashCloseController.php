@@ -119,7 +119,7 @@ class CashCloseController extends Controller
         $initialCashAmount = $request->input('initial_cash_amount');
         $cashType = $request->input('cash_type', 'isle');
         $isleId = $request->input('isle_id');
-        $date = now()->format('Y-m-d');
+        $date = $request->input('date') ?: now()->format('Y-m-d');
         $user = Auth::user();
 
         DB::beginTransaction();
@@ -397,6 +397,9 @@ class CashCloseController extends Controller
 
             $cashClose->final_cash_amount = $request->input('final_cash_amount');
             $cashClose->real_cash_amount = $request->input('real_cash_amount');
+            if ($request->filled('date')) {
+                $cashClose->date = $request->input('date');
+            }
             $cashClose->save();
 
             return response()->json(['status' => true, 'message' => 'Cierre de caja actualizado correctamente', 'cash_close' => $cashClose]);

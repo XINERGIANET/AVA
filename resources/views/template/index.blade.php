@@ -1131,6 +1131,14 @@
         </script>
     @endif
 
+    @if (session('error'))
+        <script>
+            ToastError.fire({
+                text: "{{ session('error') }}"
+            });
+        </script>
+    @endif
+
     @if ($errors->any())
         <script>
             ToastError.fire({

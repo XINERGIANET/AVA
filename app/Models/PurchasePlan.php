@@ -41,6 +41,10 @@ class PurchasePlan extends Model
         'reviewed_at'
     ];
 
+    protected $casts = [
+        'voucher_images' => 'array'
+    ];
+
     protected $appends = [
         'total_requested_gallons',
         'total_approved_gallons',
@@ -51,6 +55,11 @@ class PurchasePlan extends Model
     public function location()
     {
         return $this->belongsTo(Location::class);
+    }
+
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class);
     }
 
     public function user()

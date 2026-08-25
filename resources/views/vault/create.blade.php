@@ -48,13 +48,17 @@
                         </button>
                         <div class="mt-2">
                             <strong class="d-block">
-                                Total filtrado ({{ \Carbon\Carbon::parse($fromDate)->format('d/m/Y') }} -
-                                {{ \Carbon\Carbon::parse($toDate)->format('d/m/Y') }}):
+                                @if($fromDate && $toDate)
+                                    Total filtrado ({{ \Carbon\Carbon::parse($fromDate)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($toDate)->format('d/m/Y') }}):
+                                @elseif($fromDate)
+                                    Total desde {{ \Carbon\Carbon::parse($fromDate)->format('d/m/Y') }}:
+                                @elseif($toDate)
+                                    Total hasta {{ \Carbon\Carbon::parse($toDate)->format('d/m/Y') }}:
+                                @else
+                                    Total acumulado:
+                                @endif
                                 S/ {{ number_format($filteredTotal, 2) }}
                             </strong>
-                            <small class="text-muted">
-                                Por defecto se muestra la última fecha registrada: {{ \Carbon\Carbon::parse($defaultDate)->format('d/m/Y') }}
-                            </small>
                         </div>
                     </div>
                 </div>
@@ -166,7 +170,10 @@
                     </div>
                     <div class="modal-footer border-top-0 bg-light">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary px-4">Guardar</button>
+                        <button type="submit" class="btn btn-primary px-4" id="btn-save-vault">
+                            <span class="spinner-border spinner-border-sm d-none me-1" id="save-spinner" role="status" aria-hidden="true"></span>
+                            <span id="btn-save-text">Guardar</span>
+                        </button>
                     </div>
                 </form>
             </div>
@@ -175,22 +182,43 @@
 
     <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
         <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Eliminar transacción</h5>
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title fw-bold text-dark"><i class="bi bi-exclamation-triangle text-danger me-2"></i>Eliminar Movimiento</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p>¿Seguro que deseas eliminar esta transacción?</p>
-                    <small class="text-danger">Esta acción revertirá saldos relacionados cuando corresponda.</small>
+                    <p class="mb-3">¿Cómo deseas procesar la eliminación de este movimiento?</p>
+                    
+                    <div class="list-group">
+                        <div class="list-group-item list-group-item-action border mb-2 rounded p-3">
+                            <div class="d-flex w-100 justify-content-between align-items-center mb-1">
+                                <h6 class="mb-0 fw-bold text-primary"><i class="bi bi-arrow-counterclockwise me-1"></i>Revertir Saldo a Origen</h6>
+                            </div>
+                            <p class="small text-muted mb-2">Devuelve el dinero a la caja o procedencia original de donde se tomó.</p>
+                            <button type="button" class="btn btn-primary btn-sm px-3 fw-medium" id="btn-delete-revert">
+                                <i class="bi bi-arrow-counterclockwise me-1"></i>Eliminar y Revertir
+                            </button>
+                        </div>
+
+                        <div class="list-group-item list-group-item-action border rounded p-3">
+                            <div class="d-flex w-100 justify-content-between align-items-center mb-1">
+                                <h6 class="mb-0 fw-bold text-danger"><i class="bi bi-trash3 me-1"></i>Eliminar Definitivamente</h6>
+                            </div>
+                            <p class="small text-muted mb-2">Borra únicamente el registro del historial sin alterar los saldos de caja.</p>
+                            <button type="button" class="btn btn-danger btn-sm px-3 fw-medium" id="btn-delete-direct">
+                                <i class="bi bi-trash3 me-1"></i>Eliminar Definitivamente
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-danger" id="btn-delete">Eliminar</button>
+                <div class="modal-footer border-top-0 bg-light">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
                 </div>
                 <form id="deleteForm" method="POST" action="">
                     @csrf
                     @method('DELETE')
+                    <input type="hidden" name="revert_balance" id="delete_revert_balance" value="1">
                 </form>
             </div>
         </div>
@@ -223,6 +251,28 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script type="text/javascript">
         $(document).ready(function() {
+            // Evitar doble clic en el formulario de creación
+            let isSubmitting = false;
+            $('#createCollaboratorForm').on('submit', function(e) {
+                if (isSubmitting) {
+                    e.preventDefault();
+                    return false;
+                }
+                isSubmitting = true;
+                const $btn = $('#btn-save-vault');
+                $btn.prop('disabled', true);
+                $('#save-spinner').removeClass('d-none');
+                $('#btn-save-text').text('Guardando...');
+            });
+
+            $('#createModal').on('hidden.bs.modal', function () {
+                isSubmitting = false;
+                const $btn = $('#btn-save-vault');
+                $btn.prop('disabled', false);
+                $('#save-spinner').addClass('d-none');
+                $('#btn-save-text').text('Guardar');
+            });
+
             $('#approveModal').on('show.bs.modal', function(event) {
                 const button = $(event.relatedTarget);
                 const id = button.data('id');
@@ -238,10 +288,21 @@
             });
 
             $('#btn-approve').on('click', function() {
+                $(this).prop('disabled', true).text('Aprobando...');
                 $('#approveForm').submit();
             });
 
-            $('#btn-delete').on('click', function() {
+            $('#btn-delete-revert').on('click', function() {
+                $(this).prop('disabled', true).text('Revirtiendo...');
+                $('#btn-delete-direct').prop('disabled', true);
+                $('#delete_revert_balance').val('1');
+                $('#deleteForm').submit();
+            });
+
+            $('#btn-delete-direct').on('click', function() {
+                $(this).prop('disabled', true).text('Eliminando...');
+                $('#btn-delete-revert').prop('disabled', true);
+                $('#delete_revert_balance').val('0');
                 $('#deleteForm').submit();
             });
         });

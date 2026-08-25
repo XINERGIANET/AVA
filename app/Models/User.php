@@ -39,6 +39,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name',
+        'full_name',
         'email',
         'role_id',
         'location_id',
@@ -47,6 +48,26 @@ class User extends Authenticatable
         'password',
         'deleted'
     ];
+
+    protected $appends = [
+        'display_name'
+    ];
+
+    /**
+     * Obtiene el nombre real de la persona (full_name o nombre del empleado vinculado o name de usuario)
+     */
+    public function getDisplayNameAttribute()
+    {
+        if (!empty($this->full_name)) {
+            return $this->full_name;
+        }
+
+        if ($this->employee && (!empty($this->employee->name) || !empty($this->employee->last_name))) {
+            return trim($this->employee->name . ' ' . $this->employee->last_name);
+        }
+
+        return $this->name;
+    }
 
     protected $hidden = [
         'password',
