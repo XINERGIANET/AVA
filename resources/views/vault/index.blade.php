@@ -117,6 +117,9 @@
                                         <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Sede</th>
                                         <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Estado</th>
                                         <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Descripción</th>
+                                        @if (auth()->user()->role->nombre == 'admin' || auth()->user()->role->nombre == 'master')
+                                            <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Acciones</th>
+                                        @endif
                                     </tr>
                                 </thead>
                                 <tbody class="text-center">
@@ -143,10 +146,22 @@
                                             @endif
                                         </td>
                                         <td>{{ $trans->description ?? '-' }}</td>
+                                        @if (auth()->user()->role->nombre == 'admin' || auth()->user()->role->nombre == 'master')
+                                            <td>
+                                                <button class="btn btn-sm btn-primary {{ $trans->status == 0 ? '' : 'disabled' }}" data-bs-toggle="modal"
+                                                    data-bs-target="#approveModal" data-id="{{ $trans->id }}" title="{{ $trans->status == 0 ? 'Aprobar movimiento' : 'Ya aprobado' }}">
+                                                    <i class="bi bi-check-lg"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-danger" data-bs-toggle="modal"
+                                                    data-bs-target="#deleteModal" data-id="{{ $trans->id }}" title="Eliminar">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </td>
+                                        @endif
                                     </tr>
                                     @empty
                                     <tr>
-                                        <td colspan="9" class="text-center">No hay transacciones registradas.</td>
+                                        <td colspan="11" class="text-center">No hay transacciones registradas.</td>
                                     </tr>
                                     @endforelse
                                 </tbody>
@@ -154,6 +169,72 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title fw-bold text-dark"><i class="bi bi-exclamation-triangle text-danger me-2"></i>Eliminar Movimiento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3">¿Cómo deseas procesar la eliminación de este movimiento?</p>
+                    
+                    <div class="list-group">
+                        <div class="list-group-item list-group-item-action border mb-2 rounded p-3">
+                            <div class="d-flex w-100 justify-content-between align-items-center mb-1">
+                                <h6 class="mb-0 fw-bold text-primary"><i class="bi bi-arrow-counterclockwise me-1"></i>Revertir Saldo a Origen</h6>
+                            </div>
+                            <p class="small text-muted mb-2">Devuelve el dinero a la caja o procedencia original de donde se tomó.</p>
+                            <button type="button" class="btn btn-primary btn-sm px-3 fw-medium" id="btn-delete-revert">
+                                <i class="bi bi-arrow-counterclockwise me-1"></i>Eliminar y Revertir
+                            </button>
+                        </div>
+
+                        <div class="list-group-item list-group-item-action border rounded p-3">
+                            <div class="d-flex w-100 justify-content-between align-items-center mb-1">
+                                <h6 class="mb-0 fw-bold text-danger"><i class="bi bi-trash3 me-1"></i>Eliminar Definitivamente</h6>
+                            </div>
+                            <p class="small text-muted mb-2">Borra únicamente el registro del historial sin alterar los saldos de caja.</p>
+                            <button type="button" class="btn btn-danger btn-sm px-3 fw-medium" id="btn-delete-direct">
+                                <i class="bi bi-trash3 me-1"></i>Eliminar Definitivamente
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 bg-light">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+                <form id="deleteForm" method="POST" action="">
+                    @csrf
+                    @method('DELETE')
+                    <input type="hidden" name="revert_balance" id="delete_revert_balance" value="1">
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal fade" id="approveModal" tabindex="-1" aria-labelledby="approveModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Aprobar transacción</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Estás seguro de que deseas aprobar esta transacción?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btn-approve">Aprobar</button>
+                </div>
+                <form id="approveForm" method="POST" action="">
+                    @csrf
+                    @method('PUT')
+                </form>
             </div>
         </div>
     </div>
@@ -320,6 +401,40 @@
                         btn.disabled = false;
                     }
                 });
+            });
+
+            // Handlers para Aprobar y Eliminar
+            $('#approveModal').on('show.bs.modal', function(event) {
+                const button = $(event.relatedTarget);
+                const id = button.data('id');
+                const actionUrl = "{{ route('vault.approve', ['id' => ':id']) }}".replace(':id', id);
+                $('#approveForm').attr('action', actionUrl);
+            });
+
+            $('#deleteModal').on('show.bs.modal', function(event) {
+                const button = $(event.relatedTarget);
+                const id = button.data('id');
+                const actionUrl = "{{ route('vault.destroy', ['vault' => ':id']) }}".replace(':id', id);
+                $('#deleteForm').attr('action', actionUrl);
+            });
+
+            $('#btn-approve').on('click', function() {
+                $(this).prop('disabled', true).text('Aprobando...');
+                $('#approveForm').submit();
+            });
+
+            $('#btn-delete-revert').on('click', function() {
+                $(this).prop('disabled', true).text('Revirtiendo...');
+                $('#btn-delete-direct').prop('disabled', true);
+                $('#delete_revert_balance').val('1');
+                $('#deleteForm').submit();
+            });
+
+            $('#btn-delete-direct').on('click', function() {
+                $(this).prop('disabled', true).text('Eliminando...');
+                $('#btn-delete-revert').prop('disabled', true);
+                $('#delete_revert_balance').val('0');
+                $('#deleteForm').submit();
             });
         });
     </script>
