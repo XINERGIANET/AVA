@@ -155,6 +155,14 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('sales/template', [SaleController::class, 'downloadTemplate'])->name('sales.template');
     Route::post('sales/credit-payment', [SaleController::class, 'registerCreditPayment'])->name('sales.creditPayment');
     Route::post('sales/import', [SaleController::class, 'importExcel'])->name('sales.importExcel');
+    // Rutas para mediciones de contómetro
+    Route::get('/sales/flowmeter-summary', [SaleController::class, 'getFlowmeterGallonsSummary'])->name('sales.flowmeter_summary');
+    Route::get('/sales/measurements/isles', [SaleController::class, 'getIslesByLocation'])->name('sales.measurements.isles');
+    Route::get('/sales/measurements/pumps', [SaleController::class, 'getPumpsByIsle'])->name('sales.measurements.pumps');
+    Route::get('/sales/measurements/last', [SaleController::class, 'getLastMeasurement'])->name('sales.measurements.last');
+    Route::get('/sales/measurements/theoretical', [SaleController::class, 'getTheoreticalValue'])->name('sales.measurements.theoretical');
+    Route::post('/sales/measurements/save', [SaleController::class, 'saveMeasurement'])->name('sales.measurements.save');
+
     Route::put('sales/{sale}/date', [SaleController::class, 'updateDate'])->name('sales.updateDate');
     Route::resource('sales', SaleController::class);
     Route::get('/sunat/consultar', [SaleController::class, 'consultarSunat']);
@@ -165,14 +173,6 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('recalibration/index', [RecalibrationController::class, 'index'])->name('recalibration.index');
     Route::get('recalibration/show/{id}', [RecalibrationController::class, 'show'])->name('recalibration.show');
     Route::post('recalibration/update-quantities', [RecalibrationController::class, 'updateQuantities'])->name('recalibration.updateQuantities');
-    
-    // Rutas para mediciones de contómetro
-    Route::get('/sales/flowmeter-summary', [SaleController::class, 'getFlowmeterGallonsSummary'])->name('sales.flowmeter_summary');
-    Route::get('/sales/measurements/isles', [SaleController::class, 'getIslesByLocation'])->name('sales.measurements.isles');
-    Route::get('/sales/measurements/pumps', [SaleController::class, 'getPumpsByIsle'])->name('sales.measurements.pumps');
-    Route::get('/sales/measurements/last', [SaleController::class, 'getLastMeasurement'])->name('sales.measurements.last');
-    Route::get('/sales/measurements/theoretical', [SaleController::class, 'getTheoreticalValue'])->name('sales.measurements.theoretical');
-    Route::post('/sales/measurements/save', [SaleController::class, 'saveMeasurement'])->name('sales.measurements.save');
     
     Route::get('expenses/historico', [ExpenseController::class, 'index'])->name('expenses.historico');
     Route::get('expenses/excel', [ExpenseController::class, 'excel'])->name('expenses.excel');

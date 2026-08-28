@@ -2999,6 +2999,9 @@
             if (chosenPumpId) {
                 updateRowPumpBadge($newRow, initialProductId, chosenPumpId);
             }
+            if (initialProductId || rowPumpId) {
+                loadFlowmeterSummary(rowPumpId, initialProductId, $newRow);
+            }
             recalculateTotal();
         }
 
@@ -3035,38 +3038,39 @@
             appendEditableProductRow();
         });
 
-        function loadFlowmeterSummary(pumpId) {
-            if (!pumpId) {
+        function loadFlowmeterSummary(pumpId, productId, $targetRow) {
+            const saleDate = $('#sale_date').val() || new Date().toISOString().split('T')[0];
+            const isDirecta = $('#tipo-venta').val() === 'directa';
+
+            if (!pumpId && !productId) {
                 $('#flowmeter-summary-card').slideUp();
                 return;
             }
-            const saleDate = $('#sale_date').val() || new Date().toISOString().split('T')[0];
             
             $.ajax({
                 url: "{{ route('sales.flowmeter_summary') }}",
                 type: 'GET',
                 data: {
-                    pump_id: pumpId,
+                    pump_id: pumpId || '',
+                    product_id: productId || '',
                     date: saleDate
                 },
                 success: function(response) {
                     if (response && response.success && response.has_measurement) {
                         $('#flowmeter-summary-card').slideDown();
-                        $('#flowmeter-date-text').text('Medición: ' + response.date);
+                        $('#flowmeter-date-text').text('Fecha: ' + response.date);
                         $('#fm-total-gallons').text(parseFloat(response.flowmeter_total).toFixed(3));
                         $('#fm-credit-gallons').text(parseFloat(response.credit_gallons).toFixed(3));
                         $('#fm-discount-gallons').text(parseFloat(response.discount_gallons).toFixed(3));
                         $('#fm-remaining-gallons').text(parseFloat(response.remaining_direct_gallons).toFixed(3));
 
-                        if ($('#tipo-venta').val() === 'directa' && response.remaining_direct_gallons > 0) {
-                            const $lastRow = $('#tbl-order-items tr.editable-sale-row').last();
-                            if ($lastRow.length) {
-                                const currentQty = parseFloat($lastRow.find('.sale-quantity').val()) || 0;
-                                if (currentQty === 1 || currentQty === 0) {
-                                    $lastRow.find('.sale-quantity').val(parseFloat(response.remaining_direct_gallons).toFixed(3));
-                                    recalculateEditableRow($lastRow[0], 'quantity');
-                                    recalculateTotal();
-                                }
+                        if (isDirecta && response.remaining_direct_gallons !== undefined) {
+                            const $rowToUpdate = ($targetRow && $targetRow.length) ? $targetRow : $('#tbl-order-items tr.editable-sale-row').last();
+                            if ($rowToUpdate.length) {
+                                const newQty = parseFloat(response.remaining_direct_gallons);
+                                $rowToUpdate.find('.sale-quantity').val(newQty > 0 ? newQty.toFixed(3) : (0).toFixed(3));
+                                recalculateEditableRow($rowToUpdate[0], 'quantity');
+                                recalculateTotal();
                             }
                         }
                     } else {
@@ -3074,7 +3078,8 @@
                     }
                 },
                 error: function(err) {
-                    console.warn('No se pudo cargar resumen de contómetros:', err);
+                    const msg = (err && err.responseJSON && err.responseJSON.message) ? err.responseJSON.message : (err.responseText || err.statusText || 'Error desconocido');
+                    console.error('Error al obtener contómetros:', msg, err);
                     $('#flowmeter-summary-card').slideUp();
                 }
             });
@@ -3083,17 +3088,22 @@
         $(document).on('change', '.row-pump-select', function() {
             const $row = $(this).closest('tr');
             const chosenPumpId = $(this).val();
+            const productId = $row.find('.sale-product-select').val() || $row.data('product-id');
             $row.data('pump-id', chosenPumpId).attr('data-pump-id', chosenPumpId);
-            if (chosenPumpId) {
-                loadFlowmeterSummary(chosenPumpId);
+            if (chosenPumpId || productId) {
+                loadFlowmeterSummary(chosenPumpId, productId, $row);
             }
         });
 
         $('#sale_date').on('change', function() {
-            const activePumpId = $('#tbl-order-items tr.editable-sale-row').first().data('pump-id') || $('#select-pump').val();
-            if (activePumpId) {
-                loadFlowmeterSummary(activePumpId);
-            }
+            $('#tbl-order-items tr.editable-sale-row').each(function() {
+                const $row = $(this);
+                const activePumpId = $row.data('pump-id') || $row.find('.row-pump-select').val() || $('#select-pump').val();
+                const activeProductId = $row.find('.sale-product-select').val() || $row.data('product-id');
+                if (activePumpId || activeProductId) {
+                    loadFlowmeterSummary(activePumpId, activeProductId, $row);
+                }
+            });
         });
 
         $('#tbl-order-items').on('change', '.sale-product-select', function() {
@@ -3127,8 +3137,8 @@
 
             var firstPumpVal = $pumpBadge.find('.row-pump-select').val() || currentPumpId;
             $row.data('pump-id', firstPumpVal).attr('data-pump-id', firstPumpVal);
-            if (firstPumpVal) {
-                loadFlowmeterSummary(firstPumpVal);
+            if (firstPumpVal || productId) {
+                loadFlowmeterSummary(firstPumpVal, productId, $row);
             }
 
             if (price === 0) {

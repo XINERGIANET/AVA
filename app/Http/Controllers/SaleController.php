@@ -1377,63 +1377,125 @@ class SaleController extends Controller
     {
         try {
             $pumpId = $request->input('pump_id');
+            $productId = $request->input('product_id');
             $date = $request->input('date', date('Y-m-d'));
             $user = auth()->user();
             $locationId = $request->input('location_id', $user ? $user->location_id : null);
 
-            if (!$pumpId) {
+            if (!$pumpId && !$productId) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Se requiere el ID del surtidor (pump_id).'
+                    'message' => 'Se requiere el ID del producto (product_id) o del surtidor (pump_id).'
                 ], 400);
             }
 
-            // 1. Obtener la medición de contómetro para esta fecha y surtidor
-            $measurement = Measurement::where('pump_id', $pumpId)
+            // Obtener todos los pump_ids relevantes
+            $pumpIds = [];
+            if ($productId) {
+                $pumpIds = Pump::where('product_id', $productId)
+                    ->where('deleted', 0)
+                    ->when($locationId, function ($q) use ($locationId) {
+                        $q->whereHas('isle', function ($isleQ) use ($locationId) {
+                            $isleQ->where('location_id', $locationId)->where('deleted', 0);
+                        });
+                    })
+                    ->pluck('id')
+                    ->toArray();
+
+                if ($pumpId && !in_array($pumpId, $pumpIds)) {
+                    $pumpIds[] = (int) $pumpId;
+                }
+            } elseif ($pumpId) {
+                $pumpIds = [(int) $pumpId];
+            }
+
+            if (empty($pumpIds)) {
+                return response()->json([
+                    'success' => true,
+                    'product_id' => (int) $productId,
+                    'date' => $date,
+                    'has_measurement' => false,
+                    'flowmeter_total' => 0.0,
+                    'credit_gallons' => 0.0,
+                    'discount_gallons' => 0.0,
+                    'remaining_direct_gallons' => 0.0
+                ]);
+            }
+
+            // 1. Obtener la sumatoria de las mediciones de contómetro para esta fecha y todos los lados/pumps del producto
+            $measurements = Measurement::whereIn('pump_id', $pumpIds)
                 ->when($locationId, function ($q) use ($locationId) {
                     $q->where('location_id', $locationId);
                 })
                 ->where('deleted', 0)
                 ->whereDate('date', $date)
-                ->first();
+                ->get();
 
-            // Si no hay medición del día exacto, buscar la más reciente del surtidor
-            if (!$measurement) {
-                $measurement = Measurement::where('pump_id', $pumpId)
-                    ->when($locationId, function ($q) use ($locationId) {
-                        $q->where('location_id', $locationId);
-                    })
-                    ->where('deleted', 0)
-                    ->whereDate('date', '<=', $date)
-                    ->orderBy('date', 'desc')
-                    ->orderBy('id', 'desc')
-                    ->first();
+            // Si no hay mediciones para la fecha exacta en algunos pumps, buscar la más reciente <= fecha
+            $flowmeterTotal = 0.0;
+            $hasMeasurement = false;
+
+            if ($measurements->isNotEmpty()) {
+                $hasMeasurement = true;
+                foreach ($measurements as $m) {
+                    $flowmeterTotal += floatval($m->amount_difference);
+                }
+            } else {
+                // Si no hay medición en la fecha exacta para ninguno, buscar las más recientes para cada pump
+                foreach ($pumpIds as $pId) {
+                    $lastM = Measurement::where('pump_id', $pId)
+                        ->when($locationId, function ($q) use ($locationId) {
+                            $q->where('location_id', $locationId);
+                        })
+                        ->where('deleted', 0)
+                        ->whereDate('date', '<=', $date)
+                        ->orderBy('date', 'desc')
+                        ->orderBy('id', 'desc')
+                        ->first();
+
+                    if ($lastM) {
+                        $hasMeasurement = true;
+                        $flowmeterTotal += floatval($lastM->amount_difference);
+                    }
+                }
             }
 
-            $flowmeterTotal = $measurement ? floatval($measurement->amount_difference) : 0.0;
-
-            // 2. Sumar galones de Ventas a Crédito / Contrato (type_sale = 1 ó 2) para ese surtidor y fecha
-            $creditGallons = SaleDetail::whereHas('sale', function ($query) use ($locationId, $date) {
-                if ($locationId) {
-                    $query->where('location_id', $locationId);
-                }
-                $query->where('deleted', 0)
-                    ->whereDate('date', $date)
-                    ->whereIn('type_sale', [1, 2]);
-            })
-                ->where('pump_id', $pumpId)
+            // 2. Sumar galones de Ventas a Crédito / Contrato (type_sale = 1 ó 2) para ese producto/pumps y fecha
+            $creditGallons = SaleDetail::where('deleted', 0)
+                ->whereHas('sale', function ($query) use ($locationId, $date) {
+                    if ($locationId) {
+                        $query->where('location_id', $locationId);
+                    }
+                    $query->where('deleted', 0)
+                        ->whereDate('date', $date)
+                        ->whereIn('type_sale', [1, 2]);
+                })
+                ->where(function ($q) use ($pumpIds, $productId) {
+                    if ($productId) {
+                        $q->where('product_id', $productId);
+                    } elseif (!empty($pumpIds)) {
+                        $q->whereIn('pump_id', $pumpIds);
+                    }
+                })
                 ->sum('quantity');
 
             // 3. Sumar galones de Ventas Directas con Descuento (type_sale = 0 con descuento)
-            $discountGallons = SaleDetail::whereHas('sale', function ($query) use ($locationId, $date) {
-                if ($locationId) {
-                    $query->where('location_id', $locationId);
-                }
-                $query->where('deleted', 0)
-                    ->whereDate('date', $date)
-                    ->where('type_sale', 0);
-            })
-                ->where('pump_id', $pumpId)
+            $discountGallons = SaleDetail::where('deleted', 0)
+                ->whereHas('sale', function ($query) use ($locationId, $date) {
+                    if ($locationId) {
+                        $query->where('location_id', $locationId);
+                    }
+                    $query->where('deleted', 0)
+                        ->whereDate('date', $date)
+                        ->where('type_sale', 0);
+                })
+                ->where(function ($q) use ($pumpIds, $productId) {
+                    if ($productId) {
+                        $q->where('product_id', $productId);
+                    } elseif (!empty($pumpIds)) {
+                        $q->whereIn('pump_id', $pumpIds);
+                    }
+                })
                 ->whereNotNull('discounted_price')
                 ->where('discounted_price', '>', 0)
                 ->whereRaw('ABS(discounted_price - unit_price) > 0.009')
@@ -1445,19 +1507,20 @@ class SaleController extends Controller
             return response()->json([
                 'success' => true,
                 'pump_id' => (int) $pumpId,
+                'product_id' => (int) $productId,
+                'pump_ids' => $pumpIds,
                 'date' => $date,
-                'has_measurement' => $measurement ? true : false,
+                'has_measurement' => $hasMeasurement,
                 'flowmeter_total' => round($flowmeterTotal, 3),
                 'credit_gallons' => round(floatval($creditGallons), 3),
                 'discount_gallons' => round(floatval($discountGallons), 3),
-                'remaining_direct_gallons' => round(floatval($remainingDirectGallons), 3),
-                'measurement_info' => $measurement ? [
-                    'initial' => floatval($measurement->amount_initial),
-                    'final' => floatval($measurement->amount_final),
-                    'difference' => floatval($measurement->amount_difference)
-                ] : null
+                'remaining_direct_gallons' => round(floatval($remainingDirectGallons), 3)
             ]);
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error getFlowmeterGallonsSummary: ' . $e->getMessage(), [
+                'exception' => $e,
+                'request' => $request->all()
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Error al calcular resumen de contómetros: ' . $e->getMessage()
