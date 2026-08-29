@@ -26,6 +26,7 @@ class CreditController extends Controller
         $start_date = $request->start_date;
         $end_date = $request->end_date;
         $client_id = $request->client_id;
+        $client_name = $request->client_name;
         $currentUser = auth()->user();
         $isMaster = $currentUser->role->nombre === 'master';
         // No-master siempre ve su propia sede, sin importar qué location_id
@@ -33,10 +34,10 @@ class CreditController extends Controller
         $location_id = $isMaster ? $request->location_id : $currentUser->location_id;
         $status = $request->has('status') ? $request->status : 'pending';
 
-        $client = Client::find($client_id);
+        $client = $client_id ? Client::find($client_id) : null;
         if ($client) {
-            // Agrega el nombre al request usando merge
-            $request->merge(['client_name' => $client->business_name ? $client->business_name : $client->contact_name]);
+            $client_name = $client->business_name ? $client->business_name : $client->contact_name;
+            $request->merge(['client_name' => $client_name]);
         }
 
         // Cargar todas las relaciones necesarias
@@ -52,7 +53,19 @@ class CreditController extends Controller
             ->when($status, fn($q) => $q->where('status', $status))
             ->when($start_date, fn($q) => $q->whereDate('date', '>=', $start_date))
             ->when($end_date, fn($q) => $q->whereDate('date', '<=', $end_date))
-            ->when($client_id, fn($q) => $q->where('client_id', $client_id))
+            ->when($client_id, function($q) use ($client_id) {
+                $q->where('client_id', $client_id);
+            })
+            ->when(!$client_id && $client_name, function($q) use ($client_name) {
+                $q->where(function($subQ) use ($client_name) {
+                    $subQ->where('client_name', 'LIKE', "%{$client_name}%")
+                        ->orWhereHas('client', function($clientQ) use ($client_name) {
+                            $clientQ->where('business_name', 'LIKE', "%{$client_name}%")
+                                ->orWhere('contact_name', 'LIKE', "%{$client_name}%")
+                                ->orWhere('document', 'LIKE', "%{$client_name}%");
+                        });
+                });
+            })
             ->when($location_id, function($q) use ($location_id) {
                 $q->where(function($query) use ($location_id) {
                     $query->whereHas('sale.location', fn($q) => $q->where('id', $location_id))
@@ -62,29 +75,41 @@ class CreditController extends Controller
             ->orderBy('date', 'desc')
             ->paginate(10)->appends($request->query());
         
-        // Calcular total de créditos pagados con los mismos filtros
-        $totalQuery = Payment::whereIn('status', ['paid', 'pending'])
+        // Base query para calcular totales con los mismos filtros (fechas, sede, cliente)
+        $totalsBaseQuery = Payment::whereIn('status', ['paid', 'pending'])
             ->where('deleted', 0)
-            ->where('status', 'paid')
             ->when($start_date, fn($q) => $q->whereDate('date', '>=', $start_date))
             ->when($end_date, fn($q) => $q->whereDate('date', '<=', $end_date))
-            ->when($client_id, fn($q) => $q->where('client_id', $client_id))
+            ->when($client_id, function($q) use ($client_id) {
+                $q->where('client_id', $client_id);
+            })
+            ->when(!$client_id && $client_name, function($q) use ($client_name) {
+                $q->where(function($subQ) use ($client_name) {
+                    $subQ->where('client_name', 'LIKE', "%{$client_name}%")
+                        ->orWhereHas('client', function($clientQ) use ($client_name) {
+                            $clientQ->where('business_name', 'LIKE', "%{$client_name}%")
+                                ->orWhere('contact_name', 'LIKE', "%{$client_name}%")
+                                ->orWhere('document', 'LIKE', "%{$client_name}%");
+                        });
+                });
+            })
             ->when($location_id, function($q) use ($location_id) {
                 $q->where(function($query) use ($location_id) {
                     $query->whereHas('sale.location', fn($q) => $q->where('id', $location_id))
                           ->orWhereHas('agreement.location', fn($q) => $q->where('id', $location_id));
                 });
-            })
-            ->orderBy('date', 'desc');
+            });
         
-        $totalCreditosPagados = $totalQuery->sum('amount');
+        $totalDeuda = (clone $totalsBaseQuery)->where('status', 'pending')->sum('amount');
+        $totalPagado = (clone $totalsBaseQuery)->where('status', 'paid')->sum('amount');
+        $totalCreditosPagados = $totalPagado;
         
         // Obtener todas las sedes disponibles para el filtro
         $locations = $isMaster
             ? Location::where('deleted', 0)->orderBy('name')->get()
             : Location::where('deleted', 0)->where('id', $currentUser->location_id)->orderBy('name')->get();
 
-        return view('credits.index', compact('credits', 'client', 'totalCreditosPagados', 'locations'));
+        return view('credits.index', compact('credits', 'client', 'totalDeuda', 'totalPagado', 'totalCreditosPagados', 'locations'));
     }
 
     /**

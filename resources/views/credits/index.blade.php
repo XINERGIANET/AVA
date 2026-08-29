@@ -52,8 +52,10 @@
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label text-dark fw-bold mb-1" style="font-size: 0.8rem;">Cliente</label>
-                                    <input type="text" id="search-client" class="form-control form-control-sm" value="{{ request()->client_name ?? '' }}">
-                                    <input type="hidden" id="client_id" name="client_id" value="{{ request()->client_id ?? '' }}">
+                                    <div class="position-relative">
+                                        <input type="text" id="search-client" name="client_name" class="form-control form-control-sm" placeholder="Buscar cliente..." value="{{ request()->client_name ?? ($client ? ($client->business_name ?: $client->contact_name) : '') }}" autocomplete="off">
+                                        <input type="hidden" id="client_id" name="client_id" value="{{ request()->client_id ?? ($client ? $client->id : '') }}">
+                                    </div>
                                 </div>
                                 <div class="col-md-4 text-end d-flex justify-content-end gap-1">
                                     <button type="submit" class="btn btn-primary btn-sm px-3 fw-medium" id="btnFiltrar" style="border-radius: 6px;">
@@ -72,8 +74,9 @@
                             </div>
                         </form>
                         
-                        <div class="d-flex justify-content-end mb-3">
-                            <h6 class="mb-0 text-muted fw-bold">Total vendido: <span class="text-primary">S/ {{ number_format($totalCreditosPagados, 2, '.', ',') }}</span></h6>
+                        <div class="d-flex flex-column align-items-end mb-3">
+                            <h6 class="mb-1 text-muted fw-bold">Total Deuda: <span id="total-deuda-display" class="text-danger fw-bold">S/ {{ number_format($totalDeuda, 2, '.', ',') }}</span></h6>
+                            <h6 class="mb-0 text-muted fw-bold">Total Pagado: <span id="total-pagado-display" class="text-success fw-bold">S/ {{ number_format($totalPagado, 2, '.', ',') }}</span></h6>
                         </div>
 
                         <div class="table-responsive">
@@ -93,7 +96,15 @@
                                 </thead>
                                 <tbody class="text-center">
                                     @foreach ($credits as $credit)
-                                        <tr>
+                                        @php
+                                            $creditAmount = $credit->amount;
+                                            if ($credit->sale) {
+                                                $creditAmount = $credit->sale->total;
+                                            } elseif ($credit->agreement) {
+                                                $creditAmount = $credit->agreement->total;
+                                            }
+                                        @endphp
+                                        <tr class="credit-main-row" data-credit-id="{{ $credit->id }}" data-amount="{{ (float)$creditAmount }}" data-status="{{ $credit->status }}">
                                             <td class="text-start">
                                                 <div class="d-flex align-items-center gap-2 justify-content-center">
                                                     <button class="btn btn-primary p-0 d-flex align-items-center justify-content-center" 
@@ -267,6 +278,79 @@
             link.click();
             document.body.removeChild(link);
         });
+
+        const initialTotalDeuda = {{ (float)$totalDeuda }};
+        const initialTotalPagado = {{ (float)$totalPagado }};
+
+        // Función para filtrar en tiempo real en la tabla y actualizar totales
+        function filterTableByClient(term) {
+            term = (term || '').trim().toLowerCase();
+            if (!term) {
+                $('#datatable tbody tr.credit-main-row').show();
+                // Restaurar display limpio en las filas collapse (respetando Bootstrap)
+                $('#datatable tbody tr.collapse').each(function() {
+                    if (!$(this).hasClass('show')) {
+                        $(this).css('display', '');
+                    }
+                });
+                $('#total-deuda-display').text('S/ ' + initialTotalDeuda.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+                $('#total-pagado-display').text('S/ ' + initialTotalPagado.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+            } else {
+                let sumDeuda = 0;
+                let sumPagado = 0;
+
+                $('#datatable tbody tr.credit-main-row').each(function() {
+                    const $row = $(this);
+                    const creditId = $row.data('credit-id');
+                    const $collapseRow = $('#row-' + creditId);
+                    const clientText = ($row.find('td:nth-child(2)').text() || '').toLowerCase();
+                    const docText = ($row.find('td:nth-child(1)').text() || '').toLowerCase();
+                    const amount = parseFloat($row.data('amount')) || 0;
+                    const status = $row.data('status');
+
+                    if (clientText.includes(term) || docText.includes(term)) {
+                        $row.show();
+                        if ($collapseRow.hasClass('show')) {
+                            $collapseRow.show();
+                        } else {
+                            $collapseRow.css('display', '');
+                        }
+
+                        if (status === 'paid') {
+                            sumPagado += amount;
+                        } else {
+                            sumDeuda += amount;
+                        }
+                    } else {
+                        $row.hide();
+                        $collapseRow.hide();
+                    }
+                });
+
+                $('#total-deuda-display').text('S/ ' + sumDeuda.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+                $('#total-pagado-display').text('S/ ' + sumPagado.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+            }
+        }
+
+        // Filtrado en tiempo real de la tabla al escribir
+        $('#search-client').on('input', function() {
+            const val = $(this).val();
+            if (!val.trim()) {
+                $('#client_id').val('');
+            }
+            filterTableByClient(val);
+        });
+
+        // Al cargar la página, si ya hay un valor de cliente en el input, aplicar el cálculo
+        if ($('#search-client').val()) {
+            filterTableByClient($('#search-client').val());
+        }
+
+        // Auto-submit al cambiar Sede o Estado
+        $('#location_id, #status').on('change', function() {
+            $('#fromFilter').submit();
+        });
+
         $('#search-client').autocomplete({
             source: function(request, response) {
                 clearTimeout(clientSearchTimeout);
@@ -283,10 +367,8 @@
                             success: function(data) {
                                 response($.map(data, function(item) {
                                     return {
-                                        label: item.business_name || item
-                                            .contact_name,
-                                        value: item.business_name || item
-                                            .contact_name,
+                                        label: item.business_name || item.contact_name,
+                                        value: item.business_name || item.contact_name,
                                         id: item.id,
                                     };
                                 }));
@@ -296,11 +378,14 @@
                         // Si no hay letras, limpia el autocomplete
                         response([]);
                     }
-                }, 1500);
+                }, 200);
             },
             appendTo: '.container-fluid',
             select: function(event, ui) {
                 $('#client_id').val(ui.item.id);
+                $('#search-client').val(ui.item.value);
+                // Enviar el formulario para recalcular totales y paginación exacta
+                $('#fromFilter').submit();
             },
         }).autocomplete("instance")._renderItem = function(ul, item) {
             return $("<li>")
