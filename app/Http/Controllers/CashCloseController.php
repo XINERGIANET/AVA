@@ -5,10 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\CashClose;
 use App\Models\Isle;
 use App\Models\Location;
+use App\Models\LocationPrice;
 use App\Models\Loan;
+use App\Models\Measurement;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
+use App\Models\Product;
+use App\Models\Pump;
 use App\Models\Sale;
+use App\Models\SaleDetail;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -329,22 +334,32 @@ class CashCloseController extends Controller
             // 6. Saldo Actual de la Isla (Billetera acumulada en BD)
             $saldoActualIsla = floatval($isle->cash_amount);
 
+            // 7. Reconciliacion de turno (contometro vs. registros en soles) - solo preview, no se persiste aqui
+            $reconciliation = $this->computeShiftReconciliation($isle->location_id, [$isle->id], $cashClose, false);
+
             return response()->json([
                 'status' => true,
-                
+
                 // Datos Totales
-                'calculated_cash_amount' => $saldoActualIsla, 
+                'calculated_cash_amount' => $saldoActualIsla,
                 'initial_cash_amount'    => floatval($cashClose->initial_cash_amount),
-                
+
                 // Datos Desglosados de ESTA sesión
                 'cash_sales'      => floatval($cashSalesToday),
                 'cash_expenses'   => floatval($expensesToday),
                 'total_adicional' => floatval($adicionalToday),
                 'cash_loans_granted' => floatval($cashLoansGranted),
                 'cash_loans_recovered' => floatval($cashLoansRecovered),
-                
+
+                // Reconciliacion de turno (contometro vs. registros)
+                'theoretical_sale_amount' => $reconciliation['theoretical_sale_amount'],
+                'credits_amount'          => $reconciliation['credits_amount'],
+                'transfers_amount'        => $reconciliation['transfers_amount'],
+                'discounts_amount'        => $reconciliation['discounts_amount'],
+                'meter_breakdown'         => $reconciliation['meter_breakdown'],
+
                 // Objeto de cierre
-                'cash_close' => $cashClose, 
+                'cash_close' => $cashClose,
             ]);
 
         } catch (\Exception $e) {
@@ -400,6 +415,49 @@ class CashCloseController extends Controller
             if ($request->filled('date')) {
                 $cashClose->date = $request->input('date');
             }
+
+            if ($cashClose->cash_type === 'isle' && $cashClose->isle) {
+                // Recalculado en el servidor: nunca se confia en montos que mande el cliente para la diferencia.
+                $reconciliation = $this->computeShiftReconciliation($cashClose->isle->location_id, [$cashClose->isle_id], $cashClose, false);
+
+                $cashClose->theoretical_sale_amount = $reconciliation['theoretical_sale_amount'];
+                $cashClose->credits_amount          = $reconciliation['credits_amount'];
+                $cashClose->transfers_amount        = $reconciliation['transfers_amount'];
+                $cashClose->expenses_amount         = $reconciliation['expenses_amount'];
+                $cashClose->discounts_amount        = $reconciliation['discounts_amount'];
+                $cashClose->meter_breakdown         = $reconciliation['meter_breakdown'];
+
+                $registeredSum = $reconciliation['credits_amount']
+                    + $reconciliation['transfers_amount']
+                    + $reconciliation['expenses_amount']
+                    + $reconciliation['discounts_amount']
+                    + (float) $cashClose->final_cash_amount;
+
+                $cashClose->sale_variance_amount = round($registeredSum - $reconciliation['theoretical_sale_amount'], 2);
+            } elseif ($cashClose->cash_type === 'general') {
+                $isleIds = Isle::where('location_id', $cashClose->location_id)
+                    ->where('deleted', 0)
+                    ->pluck('id')
+                    ->toArray();
+
+                $reconciliation = $this->computeShiftReconciliation($cashClose->location_id, $isleIds, $cashClose, true);
+
+                $cashClose->theoretical_sale_amount = $reconciliation['theoretical_sale_amount'];
+                $cashClose->credits_amount          = $reconciliation['credits_amount'];
+                $cashClose->transfers_amount        = $reconciliation['transfers_amount'];
+                $cashClose->expenses_amount         = $reconciliation['expenses_amount'];
+                $cashClose->discounts_amount        = $reconciliation['discounts_amount'];
+                $cashClose->meter_breakdown         = $reconciliation['meter_breakdown'];
+
+                $registeredSum = $reconciliation['credits_amount']
+                    + $reconciliation['transfers_amount']
+                    + $reconciliation['expenses_amount']
+                    + $reconciliation['discounts_amount']
+                    + (float) $cashClose->final_cash_amount;
+
+                $cashClose->sale_variance_amount = round($registeredSum - $reconciliation['theoretical_sale_amount'], 2);
+            }
+
             $cashClose->save();
 
             return response()->json(['status' => true, 'message' => 'Cierre de caja actualizado correctamente', 'cash_close' => $cashClose]);
@@ -516,6 +574,9 @@ class CashCloseController extends Controller
             ->where('type', 'scc')
             ->sum('amount');
 
+        $isleIds = Isle::where('location_id', $location->id)->where('deleted', 0)->pluck('id')->toArray();
+        $reconciliation = $this->computeShiftReconciliation($location->id, $isleIds, $cashClose, true);
+
         return response()->json([
             'status' => true,
             'calculated_cash_amount' => floatval($location->cash_amount ?? 0),
@@ -525,6 +586,13 @@ class CashCloseController extends Controller
             'total_adicional' => 0,
             'cash_loans_granted' => 0,
             'cash_loans_recovered' => 0,
+
+            'theoretical_sale_amount' => $reconciliation['theoretical_sale_amount'],
+            'credits_amount'          => $reconciliation['credits_amount'],
+            'transfers_amount'        => $reconciliation['transfers_amount'],
+            'discounts_amount'        => $reconciliation['discounts_amount'],
+            'meter_breakdown'         => $reconciliation['meter_breakdown'],
+
             'cash_close' => $cashClose,
         ]);
     }
@@ -551,5 +619,128 @@ class CashCloseController extends Controller
 
         return $user->role->nombre === 'master'
             || (int) $user->location_id === $locationId;
+    }
+
+    /**
+     * Reconciliacion de cierre de turno acordada el 8-sep: venta teorica por
+     * contometro (en soles) vs. suma de creditos + transferencias + gastos +
+     * descuentos + efectivo entregado. La comparacion final es solo en soles,
+     * nunca por producto/galonaje (ver plan de referencia).
+     */
+    /**
+     * $isleIds: islas a incluir (una sola isla para cash_type='isle', todas las
+     * islas de la sede para cash_type='general' -- ver $isGeneral).
+     */
+    private function computeShiftReconciliation(int $locationId, array $isleIds, CashClose $cashClose, bool $isGeneral): array
+    {
+        $startDate = $cashClose->created_at;
+        $meterDate = $cashClose->date;
+
+        $pumps = Pump::whereIn('isle_id', $isleIds)->where('deleted', 0)->get();
+        $pumpsByProduct = $pumps->groupBy('product_id');
+
+        $meterBreakdown = [];
+        $theoreticalTotal = 0.0;
+
+        foreach ($pumpsByProduct as $productId => $productPumps) {
+            if (!$productId) {
+                continue;
+            }
+
+            $gallons = (float) Measurement::whereIn('pump_id', $productPumps->pluck('id'))
+                ->where('deleted', 0)
+                ->whereDate('date', $meterDate)
+                ->sum('amount_difference');
+
+            $unitPrice = LocationPrice::where('location_id', $locationId)
+                ->where('product_id', $productId)
+                ->value('unit_price');
+
+            $product = Product::find($productId);
+            $unitPrice = $unitPrice ?? (float) optional($product)->unit_price;
+
+            $subtotal = round($gallons * (float) $unitPrice, 2);
+            $theoreticalTotal += $subtotal;
+
+            $meterBreakdown[] = [
+                'product_id'   => (int) $productId,
+                'product_name' => optional($product)->name ?? 'Producto sin nombre',
+                'gallons'      => round($gallons, 3),
+                'unit_price'   => round((float) $unitPrice, 2),
+                'subtotal'     => $subtotal,
+            ];
+        }
+
+        // "Creditos otorgados" en produccion se registran como Sale.type_sale IN (1,2)
+        // (Contrato/Credito, ver SaleController.php:441,795-808) -- el modelo Loan existe
+        // pero no se usa (0 filas en datos reales), por eso no se usa aqui.
+        // Ventas sin pump_id (camion/granel) quedan fuera a proposito: no pasaron por
+        // ningun contometro, incluirlas generaria un "sobrante" falso.
+        $creditsAmount = (float) Sale::whereIn('type_sale', [1, 2])
+            ->where('deleted', 0)
+            ->where('created_at', '>=', $startDate)
+            ->whereHas('saleDetails.pump', function ($query) use ($isleIds) {
+                $query->whereIn('isle_id', $isleIds);
+            })
+            ->sum('total');
+
+        $transfersAmount = (float) Payment::where('payment_method_id', '!=', 1)
+            ->where('deleted', 0)
+            ->where('status', 'paid')
+            ->whereHas('payment_method', function ($query) {
+                $query->where('name', 'not like', '%Credito%')
+                    ->where('name', 'not like', '%Crédito%');
+            })
+            ->whereHas('sale', function ($query) use ($isleIds, $startDate) {
+                $query->where('created_at', '>=', $startDate)
+                    ->where('deleted', 0)
+                    ->whereHas('saleDetails.pump', function ($pumpQuery) use ($isleIds) {
+                        $pumpQuery->whereIn('isle_id', $isleIds);
+                    });
+            })
+            ->sum('amount');
+
+        // Los gastos de Caja General se registran con isle_id NULL (ExpenseController.php:192);
+        // los de caja por isla, con isle_id de esa isla (ExpenseController.php:233). Son dos
+        // formas de registro distintas, no la misma consulta con un filtro mas amplio.
+        if ($isGeneral) {
+            $expensesAmount = (float) Transaction::where('location_id', $locationId)
+                ->whereNull('isle_id')
+                ->where('type', 'scc')
+                ->where('created_at', '>=', $startDate)
+                ->sum('amount');
+        } else {
+            $expensesAmount = (float) Transaction::whereIn('isle_id', $isleIds)
+                ->where('type', 'scc')
+                ->where('created_at', '>=', $startDate)
+                ->sum('amount');
+        }
+
+        $discountDetails = SaleDetail::where('deleted', 0)
+            ->whereHas('pump', function ($query) use ($isleIds) {
+                $query->whereIn('isle_id', $isleIds);
+            })
+            ->whereHas('sale', function ($query) use ($startDate) {
+                $query->where('created_at', '>=', $startDate)->where('deleted', 0);
+            })
+            ->whereNotNull('discounted_price')
+            ->get(['unit_price', 'discounted_price', 'quantity']);
+
+        $discountsAmount = (float) $discountDetails->sum(function ($detail) {
+            if ($detail->discounted_price === null || $detail->discounted_price === '') {
+                return 0;
+            }
+
+            return max(0, ((float) $detail->unit_price - (float) $detail->discounted_price) * (float) $detail->quantity);
+        });
+
+        return [
+            'theoretical_sale_amount' => round($theoreticalTotal, 2),
+            'credits_amount'          => round($creditsAmount, 2),
+            'transfers_amount'        => round($transfersAmount, 2),
+            'expenses_amount'         => round($expensesAmount, 2),
+            'discounts_amount'        => round($discountsAmount, 2),
+            'meter_breakdown'         => $meterBreakdown,
+        ];
     }
 }

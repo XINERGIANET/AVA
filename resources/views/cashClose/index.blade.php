@@ -75,6 +75,7 @@
                             <table class="table table-hover align-middle mb-0" style="border: 1px solid #e9ecef;">
                                 <thead class="text-center">
                                     <tr>
+                                        <th style="background-color: #2c3e50 !important;"></th>
                                         <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Usuario</th>
                                         <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Locación</th>
                                         <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Isla</th>
@@ -82,12 +83,22 @@
                                         <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Inicial</th>
                                         <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Real</th>
                                         <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Final</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Venta teórica</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Suma registrada</th>
+                                        <th class="fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; background-color: #2c3e50 !important; color: white !important;">Diferencia</th>
                                     </tr>
                                 </thead>
 
                                 <tbody class="text-center">
                                     @forelse ($cashCloses as $cashClose)
                                         <tr>
+                                            <td>
+                                                @if($cashClose->meter_breakdown)
+                                                    <button class="btn btn-sm btn-outline-secondary py-0 px-1" data-bs-toggle="collapse" data-bs-target="#breakdown-{{ $cashClose->id }}" title="Ver detalle por producto">
+                                                        <i class="bi bi-plus"></i>
+                                                    </button>
+                                                @endif
+                                            </td>
                                             <td>{{ $cashClose->user->name ?? $cashClose->user->email ?? 'N/A' }}</td>
                                             <td>{{ $cashClose->location->name ?? 'N/A' }}</td>
                                             <td>{{ $cashClose->isle->name ?? 'Sin isla' }}</td>
@@ -95,10 +106,40 @@
                                             <td>{{ number_format((float) ($cashClose->initial_cash_amount ?? 0), 2, '.', '') }}</td>
                                             <td>{{ number_format((float) ($cashClose->real_cash_amount ?? 0), 2, '.', '') }}</td>
                                             <td>{{ number_format((float) ($cashClose->final_cash_amount ?? 0), 2, '.', '') }}</td>
+                                            <td>{{ $cashClose->theoretical_sale_amount !== null ? number_format((float) $cashClose->theoretical_sale_amount, 2, '.', '') : 'N/A' }}</td>
+                                            <td>{{ $cashClose->registered_sum_amount !== null ? number_format((float) $cashClose->registered_sum_amount, 2, '.', '') : 'N/A' }}</td>
+                                            <td class="{{ $cashClose->sale_variance_amount === null ? '' : ((float) $cashClose->sale_variance_amount >= 0 ? 'text-success fw-bold' : 'text-danger fw-bold') }}">
+                                                {{ $cashClose->sale_variance_amount !== null ? number_format((float) $cashClose->sale_variance_amount, 2, '.', '') : 'N/A' }}
+                                            </td>
                                         </tr>
+                                        @if($cashClose->meter_breakdown)
+                                            <tr class="collapse" id="breakdown-{{ $cashClose->id }}">
+                                                <td colspan="11" class="text-start bg-light">
+                                                    <table class="table table-sm mb-0">
+                                                        <thead><tr><th>Producto</th><th class="text-end">Galones</th><th class="text-end">Precio</th><th class="text-end">Subtotal</th></tr></thead>
+                                                        <tbody>
+                                                            @foreach($cashClose->meter_breakdown as $row)
+                                                                <tr>
+                                                                    <td>{{ $row['product_name'] ?? 'N/A' }}</td>
+                                                                    <td class="text-end">{{ number_format((float) ($row['gallons'] ?? 0), 3) }}</td>
+                                                                    <td class="text-end">{{ number_format((float) ($row['unit_price'] ?? 0), 2) }}</td>
+                                                                    <td class="text-end">{{ number_format((float) ($row['subtotal'] ?? 0), 2) }}</td>
+                                                                </tr>
+                                                            @endforeach
+                                                        </tbody>
+                                                    </table>
+                                                    <div class="small mt-1">
+                                                        Créditos: S/ {{ number_format((float) $cashClose->credits_amount, 2) }} ·
+                                                        Transferencias: S/ {{ number_format((float) $cashClose->transfers_amount, 2) }} ·
+                                                        Gastos: S/ {{ number_format((float) $cashClose->expenses_amount, 2) }} ·
+                                                        Descuentos: S/ {{ number_format((float) $cashClose->discounts_amount, 2) }}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endif
                                     @empty
                                         <tr>
-                                            <td colspan="8" class="text-center">
+                                            <td colspan="11" class="text-center">
                                                 No hay cierres de caja registrados.
                                             </td>
                                         </tr>

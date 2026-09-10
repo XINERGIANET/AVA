@@ -36,6 +36,14 @@ use Barryvdh\DomPDF\Facade\Pdf;
 class SaleController extends Controller
 {
     /**
+     * Nombres reservados para el metodo de pago "pendiente de credito" (ver
+     * resolveCreditPendingPaymentMethodId()) -- no deben ofrecerse como opcion
+     * de pago para una venta directa, ya que ese flujo tiene su propio toggle
+     * "Venta a Credito" que no pasa por este dropdown.
+     */
+    private const CREDIT_LIKE_PAYMENT_METHOD_NAMES = ['credito', 'crédito', 'pendiente', 'pending'];
+
+    /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Contracts\View\View
@@ -146,7 +154,13 @@ class SaleController extends Controller
                 if ($userLocationId) {
                     $q->orWhere('location_id', $userLocationId);
                 }
-            })->get();
+            })
+            ->where(function ($q) {
+                foreach (self::CREDIT_LIKE_PAYMENT_METHOD_NAMES as $name) {
+                    $q->whereRaw('LOWER(name) != ?', [mb_strtolower($name)]);
+                }
+            })
+            ->get();
         $locations = Location::where('deleted', false)->get();
 
         $currentUser = auth()->user();
@@ -842,12 +856,10 @@ class SaleController extends Controller
 
     private function resolveCreditPendingPaymentMethodId(): int
     {
-        $creditLikeNames = ['credito', 'crédito', 'pendiente', 'pending'];
-
         $method = PaymentMethod::query()
             ->where('deleted', 0)
-            ->where(function ($query) use ($creditLikeNames) {
-                foreach ($creditLikeNames as $name) {
+            ->where(function ($query) {
+                foreach (self::CREDIT_LIKE_PAYMENT_METHOD_NAMES as $name) {
                     $query->orWhereRaw('LOWER(name) = ?', [mb_strtolower($name)]);
                 }
             })

@@ -137,6 +137,27 @@
                 <div class="col-6">Saldo sistema<br><strong>S/ <span id="sumCalculated">0.00</span></strong></div>
             </div>
         </div>
+        <div id="closeReconciliation" class="d-none mb-3">
+            <hr class="my-2">
+            <div class="small text-muted mb-1">Reconciliación por contómetro</div>
+            <div class="row g-2 small">
+                <div class="col-6">Venta teórica (contómetro)<br><strong>S/ <span id="sumTheoretical">0.00</span></strong></div>
+                <div class="col-6">Suma registrada<br><strong>S/ <span id="sumRegistered">0.00</span></strong></div>
+            </div>
+            <div class="mt-2 p-2 rounded" id="varianceBox">
+                Diferencia: <strong>S/ <span id="sumVariance">0.00</span></strong> <span id="varianceLabel" class="small"></span>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-secondary mt-2" data-bs-toggle="collapse" data-bs-target="#meterBreakdownCollapse">
+                Ver detalle por producto
+            </button>
+            <div class="collapse mt-2" id="meterBreakdownCollapse">
+                <table class="table table-sm small mb-0">
+                    <thead><tr><th>Producto</th><th class="text-end">Galones</th><th class="text-end">Precio</th><th class="text-end">Subtotal</th></tr></thead>
+                    <tbody id="meterBreakdownBody"></tbody>
+                </table>
+                <div class="small">Créditos: S/ <span id="sumCredits">0.00</span> · Transferencias: S/ <span id="sumTransfers">0.00</span> · Gastos: S/ <span id="sumExpensesReconc">0.00</span> · Descuentos: S/ <span id="sumDiscounts">0.00</span></div>
+            </div>
+        </div>
         <div class="mb-3 d-none" id="vaultLocationGroup">
             <label class="form-label">Boveda destino</label>
             <select class="form-select" id="cashVaultLocation" {{ $isMaster ? '' : 'disabled' }}>
@@ -168,6 +189,23 @@ document.addEventListener('DOMContentLoaded', () => {
         vault: @json(route('vault.from_cash_close'))
     };
     const labels = {open: ['Abrir caja', 'Monto inicial'], expense: ['Registrar egreso', 'Monto del egreso'], vault: ['Enviar a boveda', 'Monto a enviar'], close: ['Cerrar caja', 'Monto contado']};
+    let reconciliation = null;
+
+    function renderVariance() {
+        if (!reconciliation) return;
+        const counted = Number(document.getElementById('cashAmount').value) || 0;
+        const registered = reconciliation.credits + reconciliation.transfers + reconciliation.expenses + reconciliation.discounts + counted;
+        const variance = registered - reconciliation.theoretical;
+        document.getElementById('sumRegistered').textContent = registered.toFixed(2);
+        document.getElementById('sumVariance').textContent = Math.abs(variance).toFixed(2);
+        const box = document.getElementById('varianceBox');
+        const label = document.getElementById('varianceLabel');
+        box.classList.remove('bg-success', 'bg-danger', 'bg-light', 'text-white');
+        if (variance > 0.005) { box.classList.add('bg-success', 'text-white'); label.textContent = '(Sobrante)'; }
+        else if (variance < -0.005) { box.classList.add('bg-danger', 'text-white'); label.textContent = '(Faltante)'; }
+        else { box.classList.add('bg-light'); label.textContent = '(Cuadrado)'; }
+    }
+    document.getElementById('cashAmount').addEventListener('input', renderVariance);
 
     document.querySelectorAll('.js-cash-action').forEach(btn => btn.addEventListener('click', async () => {
         const action = btn.dataset.action;
@@ -186,6 +224,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('vaultLocationGroup').classList.toggle('d-none', action !== 'vault');
         document.getElementById('descriptionGroup').classList.toggle('d-none', action !== 'expense');
         document.getElementById('closeSummary').classList.add('d-none');
+        document.getElementById('closeReconciliation').classList.add('d-none');
+        reconciliation = null;
         if (action === 'close') {
             try {
                 const detailId = cashType === 'general' ? 'general' : btn.dataset.isle;
@@ -201,9 +241,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('sumExpenses').textContent = Number(data.cash_expenses).toFixed(2);
                 document.getElementById('sumCalculated').textContent = Number(data.calculated_cash_amount).toFixed(2);
                 if (data.cash_close && data.cash_close.date) {
-                    document.getElementById('cashDate').value = data.cash_close.date.split('T')[0];
+                    // El backend puede mandar "YYYY-MM-DD HH:MM:SS" (columna sin cast a Carbon)
+                    // o "YYYY-MM-DDTHH:MM:SS.000000Z" (ISO) -- se separa por cualquiera de los dos.
+                    document.getElementById('cashDate').value = data.cash_close.date.split(/[T ]/)[0];
                 }
                 document.getElementById('closeSummary').classList.remove('d-none');
+
+                if (data.theoretical_sale_amount !== undefined) {
+                    reconciliation = {
+                        theoretical: Number(data.theoretical_sale_amount) || 0,
+                        credits: Number(data.credits_amount) || 0,
+                        transfers: Number(data.transfers_amount) || 0,
+                        expenses: Number(data.cash_expenses) || 0,
+                        discounts: Number(data.discounts_amount) || 0,
+                    };
+                    document.getElementById('sumTheoretical').textContent = reconciliation.theoretical.toFixed(2);
+                    document.getElementById('sumCredits').textContent = reconciliation.credits.toFixed(2);
+                    document.getElementById('sumTransfers').textContent = reconciliation.transfers.toFixed(2);
+                    document.getElementById('sumExpensesReconc').textContent = reconciliation.expenses.toFixed(2);
+                    document.getElementById('sumDiscounts').textContent = reconciliation.discounts.toFixed(2);
+
+                    const tbody = document.getElementById('meterBreakdownBody');
+                    tbody.innerHTML = '';
+                    (data.meter_breakdown || []).forEach(row => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `<td>${row.product_name}</td><td class="text-end">${Number(row.gallons).toFixed(3)}</td><td class="text-end">${Number(row.unit_price).toFixed(2)}</td><td class="text-end">${Number(row.subtotal).toFixed(2)}</td>`;
+                        tbody.appendChild(tr);
+                    });
+                    if (!data.meter_breakdown || data.meter_breakdown.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="4" class="text-muted">Sin lecturas de contómetro registradas hoy.</td></tr>';
+                    }
+
+                    document.getElementById('closeReconciliation').classList.remove('d-none');
+                    renderVariance();
+                }
             } catch (error) { AppError.handle({status:0}, {context:'consultar la caja'}); return; }
         }
         modal.show();
